@@ -23,7 +23,7 @@ class Reader(MyThread):
         grp.add_argument('--port', type=int, required=True, metavar='port', help='Port to listen on')
         grp.add_argument("--size", type=int, default=65536, help="Datagram size")
 
-    def runAndCatch(self) -> None:
+    def runIt(self) -> None:
         '''Called on thread start '''
         queues = self.queues
         logger = self.logger
