@@ -12,12 +12,11 @@ import MyLogger
 import queue
 import time
 import subprocess
-from MyThread import MyThread
+from MyThread import MyThread, waitForException
 
 class Pusher(MyThread):
-    def __init__(self, args:argparse.ArgumentParser,
-            logger:logging.Logger, errQueue:queue.Queue) -> None:
-        MyThread.__init__(self, "Pusher", logger, errQueue)
+    def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger) -> None:
+        MyThread.__init__(self, "Pusher", args, logger)
         self.__host = args.host
         self.__prefix = args.prefix
         self.__rsync = args.rsync
@@ -128,9 +127,8 @@ class Pusher(MyThread):
         return False
 
 class Watcher(MyThread):
-    def __init__(self, args:argparse.ArgumentParser, pusher:Pusher,
-            logger:logging.Logger, errQueue:queue.Queue) -> None:
-        MyThread.__init__(self, "Watcher", logger, errQueue)
+    def __init__(self, args:argparse.ArgumentParser, pusher:Pusher, logger:logging.Logger) -> None:
+        MyThread.__init__(self, "Watcher", args, logger, errQueue)
         self.__pusher = pusher
         self.__init = not args.noinitial
         self.__inotify = ins.INotify()
@@ -182,7 +180,6 @@ logger = MyLogger.mkLogger(args)
 
 logger.info("args %s", args)
 
-errQueue = queue.Queue() # Errors from 
 try:
     threads = []
     threads.append(Pusher(args, logger, errQueue))
@@ -190,6 +187,6 @@ try:
     for thrd in threads:
         thrd.start()
 
-    raise(errQueue.get()) # Any errors are raised
+    waitForException() # Wait for any errors from the threads
 except:
     logger.exception("Unexpected exception")
