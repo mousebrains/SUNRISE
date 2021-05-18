@@ -1,7 +1,7 @@
 #
-# pull changes from the shore side server for the shore and Walton Smith
+# pull changes from the shore side server for the Shore and Pelican
 #
-# sudo cp syncPull.Pelican.service /etc/systemd/system/syncPull.service
+# sudo cp syncPull.WaltonSmith.service /etc/systemd/system/syncPull.service
 #
 # sudo systemctl daemon-reload
 # sudo systemctl enable syncPush.service
@@ -10,7 +10,7 @@
 # Apr-2021, Pat Welch, pat@mousebrains.com
 
 [Unit]
-Description=Rsync to the Pelican from the shore side server
+Description=Rsync to the Walton Smith from the shore side server
 
 [Service]
 # Type=simple # Default
@@ -20,7 +20,7 @@ WorkingDirectory=/home/pat
 ExecStart=/home/pat/bin/syncPull.py \
         --logfile=logs/syncPush.log \
 	--bwlimit=20 \
-	--src=WaltonSmith \
+	--src=Pelican \
 	--src=Shore
         
 RestartSec=600
