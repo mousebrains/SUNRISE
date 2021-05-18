@@ -1,0 +1,29 @@
+#
+# Periodically pull new GPS fixes for the Carthe drifters
+#
+# sudo cp Carthe.service /etc/systemd/system/
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable Carthe.service
+# sudo systemctl start Carthe.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Carthe GPS fix puller
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat/logs
+#
+ExecStart=/home/pat/Carthe/Carthe.py \
+	--daysBack=10 \
+	--logfile=Carthe.log \
+	--db=Carthe.db
+	
+RestartSec=120
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
