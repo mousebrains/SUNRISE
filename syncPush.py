@@ -39,7 +39,7 @@ class Pusher(MyThread):
                 help="Fudge seconds to reduce delay if multiple files are queued.")
 
         grp = parser.add_argument_group(description="Host related options")
-        grp.add_argument("--host", type=str, default="glidervm3.ceoas.oregonstate.edu",
+        grp.add_argument("--host", type=str, default="vm3",
                 help="Target machine to push/pull information from/to")
         grp.add_argument("--prefix", type=str, default="Dropbox",
                 help="Path prefix on host machine")
