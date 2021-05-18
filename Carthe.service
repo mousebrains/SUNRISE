@@ -17,7 +17,7 @@ Description=Carthe GPS fix puller
 User=pat
 WorkingDirectory=/home/pat/logs
 #
-ExecStart=/home/pat/Carthe/Carthe.py \
+ExecStart=/home/pat/bin/Carthe.py \
 	--daysBack=10 \
 	--logfile=Carthe.log \
 	--db=Carthe.db
