@@ -1,0 +1,30 @@
+#
+# Listen on a port for a LiveViewGPS message
+#
+# sudo cp LiveViewGPS.service /etc/systemd/system/
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable LiveViewGPS.service
+# sudo systemctl start LiveViewGPS.service
+#
+# Sep-2019, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=LiveViewGPS listener service
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat/logs
+#
+ExecStart=/home/pat/bin/LiveViewGPS.py \
+	--logfile=LiveViewGPS.log \
+	--port=6565 \
+	--db=LiveViewGPS.db
+	
+RestartSec=120
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
