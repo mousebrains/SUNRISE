@@ -1,0 +1,30 @@
+#
+# push changes in the dropbox/Pelican to the shore side server
+#
+# sudo cp syncPush.WaltonSmith.service /etc/systemd/system/syncPush.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable syncPush.service
+# sudo systemctl start syncPush.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Rsync from the WaltonSmith to the shore side server
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat/dropbox
+#
+ExecStart=/home/pat/bin/syncPush.py \
+        --logfile=../logs/syncPush.log \
+	--bwlimit=20 \
+	--src=WaltonSmith
+        
+RestartSec=300
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
