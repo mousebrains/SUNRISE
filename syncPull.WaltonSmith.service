@@ -4,8 +4,8 @@
 # sudo cp syncPull.WaltonSmith.service /etc/systemd/system/syncPull.service
 #
 # sudo systemctl daemon-reload
-# sudo systemctl enable syncPush.service
-# sudo systemctl start syncPush.service
+# sudo systemctl enable syncPull.service
+# sudo systemctl start syncPull.service
 #
 # Apr-2021, Pat Welch, pat@mousebrains.com
 
@@ -18,7 +18,7 @@ User=pat
 WorkingDirectory=/home/pat
 #
 ExecStart=/home/pat/bin/syncPull.py \
-        --logfile=logs/syncPush.log \
+        --logfile=logs/syncPull.log \
 	--bwlimit=20 \
 	--src=Pelican \
 	--src=Shore
