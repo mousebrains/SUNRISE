@@ -1,0 +1,31 @@
+#
+# Watch a set of directories for any changes via
+# inotify. Record the timestamp of the change in
+# a database.
+#
+# sudo cp Monitor.service /etc/systemd/system/
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable Monitor.service
+# sudo systemctl start Monitor.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Monitor a set of directory trees for any changes
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+ExecStart=/home/pat/bin/Monitor.py \
+	--logfile=logs/Monitor.log \
+	--db=logs/Monitor.db \
+	Dropbox
+	
+RestartSec=120
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
