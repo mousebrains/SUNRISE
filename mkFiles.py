@@ -74,14 +74,14 @@ try:
 
     criteria = []
     for item in dirSets[keyArg]:
-        criteria.append("fn LIKE '{}%'".format(item))
-    criteria = " WHERE top=? AND (" + " OR ".join(criteria) + ") AND t>?;"
+        criteria.append("path LIKE '{}%'".format(os.path.join(prefix, item)))
+    criteria = " WHERE t>? AND (" + " OR ".join(criteria) + ");"
 
     tsName = os.path.join(prefix, keyArg + ".timestamp")
 
     with sqlite3.connect(dbName) as db:
         cur = db.cursor()
-        cur.execute("SELECT MAX(t),count(*) FROM " + tblName + criteria, (prefix, timestamp))
+        cur.execute("SELECT MAX(t),count(*) FROM " + tblName + criteria, (timestamp,))
         (tMax, cnt) = cur.fetchone()
         if tMax is not None:
             logger.info("tMax %s cnt %s", tMax, cnt)
@@ -92,10 +92,10 @@ try:
                 for item in dirSets[keyArg]:
                     cmd.append(os.path.join(prefix, item))
             else: # Grab the files that are newer than timestamp
-                cur.execute("SELECT top,fn,t FROM " + tblName + criteria, (prefix, timestamp))
+                cur.execute("SELECT path,t FROM " + tblName + criteria, (timestamp,))
                 tMax = 0
-                for (top, fn, t) in cur:
-                    cmd.append(os.path.join(top, fn))
+                for (path, t) in cur:
+                    cmd.append(path)
                     tMax = max(tMax, t)
 
         cmd.append(tsName)
