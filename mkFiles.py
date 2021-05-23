@@ -2,9 +2,9 @@
 #
 # This generates a dynamic file list then invokes rsync
 #
-# It is designed to be called by a remote rsync client, 
-# The last argument is the directory set, rvp or rvwm, 
-# a period, then a floating point number which is the 
+# It is designed to be called by a remote rsync client,
+# The last argument is the directory set, rvp or rvwm,
+# a period, then a floating point number which is the
 # timestamp to look for files which have been updated
 # since that timestamp.
 #
@@ -51,12 +51,12 @@ logger.addHandler(ch)
 
 
 try:
-    logger.info("%s", sys.argv)
+    logger.info("CALL: %s", sys.argv)
 
     cmd = [rsync] # What rsync sees in argv
     cmd.extend(sys.argv[1:-1]) # Copy verbatim the rsync server options from the client
 
-    # The last argument tells us what to look up, 
+    # The last argument tells us what to look up,
     # rvp.7576.222 is the key into dirSets, and a timestamp to parse out of the Monitor database
     #
     fields = sys.argv[-1].split(".", 1) # Get the last argument and split it apart
@@ -75,32 +75,65 @@ try:
     criteria = []
     for item in dirSets[keyArg]:
         criteria.append("path LIKE '{}%'".format(os.path.join(prefix, item)))
-    criteria = " WHERE t>? AND (" + " OR ".join(criteria) + ");"
+
+    sql = "SELECT path,t FROM " + tblName
+    sql+= " WHERE t>? AND (" + " OR ".join(criteria) + ")"
+    sql+= ";"
 
     tsName = os.path.join(prefix, keyArg + ".timestamp")
 
     with sqlite3.connect(dbName) as db:
+        tMax = timestamp
+        toAdd = set() # Retain unique paths incase we climb a directory tree
+        toDirs = set() # Directory elements sorted by length
         cur = db.cursor()
-        cur.execute("SELECT MAX(t),count(*) FROM " + tblName + criteria, (timestamp,))
-        (tMax, cnt) = cur.fetchone()
-        if tMax is not None:
-            logger.info("tMax %s cnt %s", tMax, cnt)
-            tMax = float(tMax)
-            cnt = int(cnt)
-            logger.info("keyArg %s tMax=%s cnt=%s", keyArg, tMax, cnt)
-            if (timestamp <= 0) or (cnt > 50): # Too many individual files, so grab everything
-                for item in dirSets[keyArg]:
-                    cmd.append(os.path.join(prefix, item))
-            else: # Grab the files that are newer than timestamp
-                cur.execute("SELECT path,t FROM " + tblName + criteria, (timestamp,))
-                tMax = 0
-                for (path, t) in cur:
-                    cmd.append(path)
-                    tMax = max(tMax, t)
+        cur.execute(sql, (timestamp,))
+        for (path, t) in cur: # Walk through returned rows
+            tMax = max(tMax, t)
+            if not os.path.exists(path): # Climb directory tree until we find an existing element
+                origPath = path # For an error message if need be
+                while len(path): # Walk up the tree
+                    path = os.path.dirname(path) # remove last element
+                    if os.path.exists(path): # Found an existing parent directory
+                        toDirs.add(path) # I know this is a directory
+                        toAdd.add(path)
+                        break
+                if len(path) == 0:
+                    logger.error("No existing element found for %s", origPath)
+            else: # Exists
+                toAdd.add(path)
+                if os.path.isdir(path):
+                    toDirs.add(path)
 
-        cmd.append(tsName)
+    keepDirs = set()
+    for item in sorted(toDirs, key=len):
+        path = item
+        while len(path) and (path not in keepDirs):
+            path = os.path.dirname(path)
+        if len(path) == 0:
+            keepDirs.add(item)
 
-    if tMax is not None:
+    keepAdd = set()
+    for item in toAdd:
+        path = item
+        while len(path) and (path not in keepDirs):
+            path = os.path.dirname(path)
+        if len(path) == 0:
+            keepAdd.add(item)
+        else: # Not zero, so in keepDirs
+            keepAdd.add(path)
+
+    if len(keepAdd) > 100: # Too many, so resync everything
+        keepAdd = set()
+        for item in dirSets[keyArg]:
+            keepAdd.add(os.path.join(prefix, item))
+
+    if keepAdd:
+        cmd.extend(keepAdd)
+
+    cmd.append(tsName) # Always sync the timestamp file
+
+    if tMax > timestamp:
         with open(tsName, "w") as fp:
             fp.write("{}\n".format(tMax))
 
