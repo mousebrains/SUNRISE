@@ -9,91 +9,118 @@
 # May-2021, Pat Welch, pat@mousebrains.com
 
 import MyLogger
+import MyInotify
+import MyThread
 import logging
 import argparse
 import sqlite3
-import inotify_simple as ins
-import os
+import os.path
+import queue
 import time
 
-def mkTable(cur:sqlite3.Cursor, tblName:str, logger:logging.Logger) -> None:
-    sql = "CREATE TABLE " + tblName
-    sql+= " ("
-    sql+= "  top TEXT,"
-    sql+= "  fn TEXT,"
-    sql+= "  t REAL,"
-    sql+= "  PRIMARY KEY(top, fn)"
-    sql+= " );"
-    logger.info("Creating table\n%s", sql)
-    cur.execute("DROP TABLE IF EXISTS " + tblName + ";")
-    cur.execute(sql)
+class Monitor(MyThread.MyThread):
+    def __init__(self, queue:queue.Queue,
+            args:argparse.ArgumentParser, logger:logging.Logger) -> None:
+        MyThread.MyThread.__init__(self, "MON", args, logger)
+        self.__queue = queue
+        self.__mkTable()
 
-def insertItem(cur:sqlite3.Cursor, sql:str, topName:str, fn:str) -> None:
-    mtime = os.path.getmtime(fn)
-    path = os.path.relpath(fn, topName)
-    cur.execute(sql, (topName, path, mtime))
+    @staticmethod
+    def addArgs(parser:argparse.ArgumentParser) -> None:
+        parser.add_argument("--db", type=str, default="inotify.db", help="File database")
+        parser.add_argument("--table", type=str, default="inotify", help="Database table name")
 
-def walkTree(cur:sqlite3.Cursor, sql:str, topName:str, logger:logging.Logger) -> None:
-    for (dirpath, dirnames, filenames) in os.walk(topName):
-        for fn in filenames:
-            insertItem(cur, sql, topName, os.path.join(dirpath, fn))
-        for fn in dirnames:
-            insertItem(cur, sql, topName, os.path.join(dirpath, fn))
+    def __mkTable(self) -> None:
+        tbl = self.args.table
+        index = tbl + "_t"
+        self.__sqlInsert = "INSERT OR REPLACE INTO " + tbl + " VALUES(?,?);"
+        sql = "CREATE TABLE " + tbl + " (\n"
+        sql+= "  path TEXT PRIMARY KEY,\n"
+        sql+= "  t REAL\n"
+        sql+= " );"
+        self.logger.info("Creating table\n%s", sql)
+        with sqlite3.connect(self.args.db) as db:
+            cur = db.cursor()
+            cur.execute("BEGIN;")
+            cur.execute("DROP INDEX IF EXISTS " + index + ";")
+            cur.execute("DROP TABLE IF EXISTS " + tbl + ";")
+            cur.execute(sql)
+            cur.execute("CREATE INDEX " + index + " ON " + tbl + " (t);")
+            cur.execute("COMMIT;")
+
+    def __insertItem(self, cur:sqlite3.Cursor, path:str, mtime:float=None) -> None:
+        if mtime is None:
+            if os.path.exists(path):
+                mtime = os.path.getmtime(path)
+            else:
+                mtime = time.time() # File was probably deleted or moved
+        cur.execute(self.__sqlInsert, (path, mtime))
+
+    def __addFiles(self, t:float, names:set) -> None:
+        with sqlite3.connect(self.args.db) as db:
+            cur = db.cursor()
+            cur.execute("BEGIN;")
+            for name in names:
+                self.__insertItem(cur, name, t)
+            cur.execute("COMMIT;")
+
+    def __addDirs(self, t:float, names:set) -> None:
+        with sqlite3.connect(self.args.db) as db:
+            cur = db.cursor()
+            cur.execute("BEGIN;")
+            for name in names:
+                for (dirpath, dirnames, filenames) in os.walk(name):
+                    self.__insertItem(cur, dirpath, t)
+                    for fn in filenames:
+                        self.__insertItem(cur, os.path.join(dirpath, fn), t)
+            cur.execute("COMMIT;")
+
+    def addTree(self, root:str, t:float=None) -> None:
+        with sqlite3.connect(self.args.db) as db:
+            cur = db.cursor()
+            cur.execute("BEGIN;")
+            for (dirpath, dirnames, filenames) in os.walk(root):
+                # dirnames will be walked over into a dirpath, so no need to add dirnames
+                self.__insertItem(cur, dirpath, t)
+                for fn in filenames:
+                    self.__insertItem(cur, os.path.join(dirpath, fn), t)
+            cur.execute("COMMIT;")
+
+    def runIt(self) -> None: # Called on thread start
+        q = self.__queue
+        logger = self.logger
+        logger.info("Starting")
+        while True:
+            (action, t, names) = q.get()
+            q.task_done()
+            logger.info("action %s t %s names %s", action, t, names)
+            if (action == "FILES") or (action == "DELETE"):
+                self.__addFiles(t, names)
+            elif action == "ADD":
+                self.__addDirs(t, names)
+            else:
+                logger.error("Unrecognized action %s", action)
 
 parser = argparse.ArgumentParser()
 MyLogger.addArgs(parser)
-parser.add_argument("--db", type=str, default="inotify.db", help="File database")
-parser.add_argument("--table", type=str, default="inotify", help="Database table name")
-parser.add_argument("dir", nargs="+", help="Directories to watch")
+Monitor.addArgs(parser)
+parser.add_argument("dir", nargs="+", type=str, help="Directory trees to monitor")
 args = parser.parse_args()
 
 logger = MyLogger.mkLogger(args)
+logger.info("args=%s", args)
 
 try:
-    inotify = ins.INotify()
-    wd = {}
-    flags = ins.flags.CREATE \
-            | ins.flags.MODIFY \
-            | ins.flags.CLOSE_WRITE \
-            | ins.flags.MOVED_TO \
-            | ins.flags.MOVED_FROM \
-            | ins.flags.MOVE_SELF \
-            | ins.flags.DELETE \
-            | ins.flags.DELETE_SELF
-    for src in args.dir:
-        wd[inotify.add_watch(os.path.abspath(src), flags)] = src
-except:
-    logger.exception("Error building inotify watchers")
+    inotify = MyInotify.MyInotify(args, logger)
+    monitor = Monitor(inotify.queue, args, logger)
+    
+    for item in args.dir:
+        inotify.addTree(item)
+        monitor.addTree(item)
 
-# We're watching the directories, so we'll catch any actions 
-# that happen while rebuilding the database.
-# But now empty, then fully populate the database by scanning the entire
-# directory tree.
-#
-sql = "INSERT OR REPLACE INTO " + args.table + " VALUES(?,?,?);"
-try:
-    with sqlite3.connect(args.db) as db:
-        cur = db.cursor()
-        cur.execute("BEGIN;")
-        mkTable(cur, args.table, logger)
-        for src in args.dir:
-            walkTree(cur, sql, src, logger)
-        cur.execute("COMMIT;")
+    inotify.start()
+    monitor.start()
+    
+    MyThread.waitForException()
 except:
-    logger.exception("Error walking directory trees")
-
-try:
-    while True:
-        for event in inotify.read(): # Wait for an inotify event, then read it
-            t = time.time()
-            path = os.path.join(wd[event.wd], event.name)
-            with sqlite3.connect(args.db) as db:
-                topName = wd[event.wd]
-                fn = os.path.join(topName, event.name)
-                logger.info("top %s fn %s", topName, fn)
-                cur = db.cursor()
-                cur.execute("BEGIN;")
-                insertItem(cur, sql, topName, fn)
-                cur.execute("COMMIT;")
-except:
-    logger.exception("Error waiting on inotify events")
+    logger.exception("Unexpected exception")
