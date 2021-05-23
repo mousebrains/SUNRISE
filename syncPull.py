@@ -9,59 +9,90 @@ import argparse
 import MyLogger
 import time
 import subprocess
+import os.path
 
 class Pull:
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger) -> None:
-        self.__logger = logger
+        self.args = args
+        self.logger = logger
         cmd = [
                 args.rsync,
                 "--compress",
-                "--compress-level=9",
+                "--compress-level=22",
                 "--archive",
                 "--mkpath",
+                "--relative",
                 "--copy-unsafe-links",
                 "--delete",
+                "--stats",
                 ]
+
+        if args.remote is not None:
+            cmd.extend(["--rsync-path", args.remote])
+
         if args.bwlimit is not None: 
-            cmd.append("--bwlimit={:d}".format(args.bwlimit))
+            cmd.extend(["--bwlimit", str(args.bwlimit)])
 
-        for src in args.src:
-            cmd.append(args.host + ":" + args.prefix + "/" + src)
-
-        cmd.append(args.dest)
         self.__cmd = cmd
-        logger.info("cmd\n%s", " ".join(self.__cmd))
 
     @staticmethod
     def addArgs(parser:argparse.ArgumentParser) -> None:
-        grp = parser.add_argument_group(description="Host related options")
+        grp = parser.add_argument_group(description="Shore side host related options")
         grp.add_argument("--host", type=str, default="vm3",
-                help="Target machine to push/pull information from/to")
-        grp.add_argument("--prefix", type=str, default="Dropbox",
-                help="Path prefix on host machine")
+                help="Target machine to pull information from")
         grp.add_argument("--rsync", type=str, default="/usr/bin/rsync",
                 help="Rsync command to use")
+        grp.add_argument("--remote", type=str, default="bin/mkFiles.py",
+                help="--rsync-path argument")
 
         grp = parser.add_argument_group(description="Pulling related options")
-        grp.add_argument("--src", type=str, action="append", required=True,
-                help="Folder(s) to pull from the host")
-        grp.add_argument("--dest", type=str, default="dropbox", help="Folder to rsync into")
+        grp.add_argument("--src", choices=["rvp", "rvws"], required=True,
+                help="Which ship to fetch sources for, R/V Pelican or R/V Walton Smith")
+        grp.add_argument("--prefix", type=str, default="Dropbox",
+                help="Where the timestamp file lives")
+        grp.add_argument("--dest", type=str, default=".", help="Local folder to rsync into")
         grp.add_argument("--bwlimit", type=int, default=200, help="KB/sec to pull data")
+        grp.add_argument("--dryrun", action="store_true", help="Don't actually run rsync command")
 
     def execute(self) -> bool:
-        sp = subprocess.run(args=self.__cmd, 
+        args = self.args
+        logger = self.logger
+        tsName = os.path.join(args.dest, args.prefix, args.src + ".timestamp")
+        tMax = 0
+        self.logger.info("tsName=%s", tsName)
+        try:
+            with open(tsName, "r") as fp:
+                self.logger.info("opened tsName=%s", tsName)
+                tMax = float(fp.read())
+        except Exception as e:
+            self.logger.info("failed to open tsName=%s", tsName)
+            self.logger.info("%s", e)
+            tMax = 0
+
+        cmd = self.__cmd.copy()
+        cmd.append(args.host + ":" + args.src + "." + str(tMax))
+        cmd.append(args.dest)
+
+        logger.info("CMD: %s", cmd)
+
+        if args.dryrun:
+            return True
+
+        sp = subprocess.run(args=cmd,
                 shell=False,
                 check=False,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT)
-        if sp.returncode == 0:
-            self.__logger.info("Synced")
-            return True
+        output = sp.stdout
         try:
-            output = str(sp.stdout, "utf-8")
+            output = str(output, "utf-8")
         except:
-            output = sp.stdout
-        self.__logger.warning("execute failed for\n%s\n%s", " ".join(self.__cmd), output)
+            pass
+        if sp.returncode == 0:
+            if len(output):
+                logger.info("Sync output\n%s", output)
+            return True
+        logger.warning("execute failed for\n%s", output)
         return False
 
 parser = argparse.ArgumentParser(description="SUNRISE Cruise syncing")
