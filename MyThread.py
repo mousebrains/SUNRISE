@@ -10,6 +10,9 @@ from argparse import ArgumentParser
 
 myQueue = queue.Queue()
 
+def isQueueEmpty() -> bool:
+    return myQueue.empty()
+
 def waitForException():
     e = myQueue.get()
     raise e
