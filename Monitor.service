@@ -20,6 +20,10 @@ User=pat
 WorkingDirectory=/home/pat
 #
 ExecStart=/home/pat/bin/Monitor.py \
+	--mailTo=pat@mousebrains.com \
+	--mailFrom=pat.welch@oregonstate.edu \
+	--mailSubject=Monitor \
+	--smtpHost=mail.ceoas.oregonstate.edu \
 	--logfile=logs/Monitor.log \
 	--db=logs/Monitor.db \
 	Dropbox
