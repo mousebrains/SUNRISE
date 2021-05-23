@@ -20,8 +20,9 @@ WorkingDirectory=/home/pat
 ExecStart=/home/pat/bin/syncPull.py \
         --logfile=logs/syncPull.log \
 	--bwlimit=20 \
-	--src=Pelican \
-	--src=Shore
+	--dest=. \
+	--prefix=Dropbox \
+	--src=rvws
         
 RestartSec=600
 Restart=always

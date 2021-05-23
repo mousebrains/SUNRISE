@@ -65,8 +65,6 @@ class Pull:
                 self.logger.info("opened tsName=%s", tsName)
                 tMax = float(fp.read())
         except Exception as e:
-            self.logger.info("failed to open tsName=%s", tsName)
-            self.logger.info("%s", e)
             tMax = 0
 
         cmd = self.__cmd.copy()
