@@ -119,20 +119,22 @@ class CSV:
         grp.add_argument("--csv", type=str, help="CSV filename")
 
     def save(self) -> None:
+        args = self.args
+
         if args.csv is None:  # Skip CSV generation
             return
 
         columns = ("tRecv", "t", "device", "latitude", "longitude", "battery")
-        sql = "SELECT " + ",".join(columns) + " FROM " + self.args.table
+        sql = "SELECT " + ",".join(columns) + " FROM " + args.table
         qHeader = not os.path.isfile(args.csv)
         if not qHeader: # File already exists
-            sql+= " WHERE qCSV=0 ORDER BY t"
+            sql+= " WHERE qCSV=0"
         sql+= " ORDER BY t;"
 
-        sqlq = "UPDATE " + self.args.table + " SET qCSV=1"
+        sqlq = "UPDATE " + args.table + " SET qCSV=1"
         sqlq+= " WHERE t=? AND device=?;"
 
-        with sqlite3.connect(self.args.db) as db:
+        with sqlite3.connect(args.db) as db:
             cur0 = db.cursor()
             cur1 = None
             fp = None
