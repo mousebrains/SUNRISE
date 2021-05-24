@@ -15,12 +15,13 @@ Description=Rsync from the WaltonSmith to the shore side server
 [Service]
 # Type=simple # Default
 User=pat
-WorkingDirectory=/home/pat/dropbox
+WorkingDirectory=/home/pat/Dropbox
 #
 ExecStart=/home/pat/bin/syncPush.py \
-        --logfile=../logs/syncPush.log \
+        --logfile=/home/pat/logs/syncPush.log \
 	--bwlimit=20 \
-	--src=WaltonSmith
+	--prefix=Dropbox/ \
+	WaltonSmith
         
 RestartSec=300
 Restart=always
