@@ -162,7 +162,7 @@ parser.add_argument("--dt", type=int, default=120, metavar="seconds",
         help="Seconds between data retrival attempts")
 args = parser.parse_args()
 
-logger = MyLogger.mkLogger(args)
+logger = MyLogger.mkLogger(args, fmt="%(asctime)s %(levelname)s: %(message)s")
 logger.info("args=%s", args)
 
 try:
@@ -173,20 +173,20 @@ try:
     data = fetcher.fetch(daysBack=args.daysBack) # Get last 120 days worth of data
     updater.save(data)
     csv.save()
-    # sqlSave(fetchData(urlBase, args.daysBack, logger=logger), args.db, logger=logger)
-    tPrev = time.time()
+
+    now = time.time()
+    tNext = now + args.dt # Next time to fetch
+
     while True:
+        dt = tNext - now
+        tNext += args.dt
+        if dt >= 0.1: # Sleep for a bit
+            logger.info("Sleeping for %s seconds", dt)
+            time.sleep(dt)
+        data = fetcher.fetch()
+        updater.save(data)
+        csv.save()
         now = time.time()
-        dt = args.dt - (now - tPrev)
-        if dt < 0.1:
-            data = fetcher.fetch()
-            updater.save(data)
-            csv.save()
-            tPrev = time.time()
-            dt = args.dt - (tPrev - now)
-        else:
-            tPrev = now
-        logger.info("Sleeping for %s seconds", dt)
-        time.sleep(dt)
+        while tNext <= now: tNext += args.dt # In case there is a long fetch
 except:
     logger.exception("Unexpected exception")
