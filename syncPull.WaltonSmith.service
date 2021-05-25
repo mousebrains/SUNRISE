@@ -19,7 +19,7 @@ WorkingDirectory=/home/pat
 #
 ExecStart=/home/pat/bin/syncPull.py \
         --logfile=logs/syncPull.log \
-	--bwlimit=20 \
+	--bwlimit=50 \
 	--dest=. \
 	--prefix=Dropbox \
 	--src=rvws

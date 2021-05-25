@@ -19,7 +19,7 @@ WorkingDirectory=/home/pat/Dropbox
 #
 ExecStart=/home/pat/bin/syncPush.py \
         --logfile=/home/pat/logs/syncPush.log \
-	--bwlimit=20 \
+	--bwlimit=25 \
 	--prefix=Dropbox/ \
 	WaltonSmith
         
