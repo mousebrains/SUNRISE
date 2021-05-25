@@ -18,9 +18,13 @@ User=pat
 WorkingDirectory=/home/pat/logs
 #
 ExecStart=/home/pat/bin/LiveViewGPS.py \
+	--mailFrom=pat.welch@oregonstate.edu \
+	--mailTo=pat@mousebrains.com \
+	--smtpHost=mail.ceoas.oregonstate.edu \
 	--logfile=LiveViewGPS.log \
 	--port=6565 \
-	--db=LiveViewGPS.db
+	--db=LiveViewGPS.db \
+	--csv=/home/pat/Dropbox/Shore/Drifter/LiveViewGPS.csv
 	
 RestartSec=120
 Restart=always
