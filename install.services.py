@@ -16,7 +16,7 @@ import subprocess
 import time
 import sys
 
-def execCmd(args:tuple) -> bool:
+def execCmd(args:tuple, qIgnoreReturn:bool=False) -> bool:
     sp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
 
     if sp.returncode:
@@ -33,16 +33,16 @@ def execCmd(args:tuple) -> bool:
             pass
         print(output)
 
-    if sp.returncode:
+    if not qIgnoreReturn and sp.returncode:
         sys.exit(sp.returncode)
 
     return True
 
-def execSystemctl(cmd:str, services:list=None) -> bool:
+def execSystemctl(cmd:str, services:list=None, qIgnoreReturn:bool=False) -> bool:
     systemctl = "/usr/bin/systemctl"
     items = [systemctl, cmd]
     if services is not None: items.extend(services)
-    return execCmd(items)
+    return execCmd(items, qIgnoreReturn=qIgnoreReturn)
 
 def shoreInstall() -> None:
     print("Shore side not implemented yet!")
@@ -71,7 +71,7 @@ def shipInstall(name:str, qPrimary:bool) -> None:
     else:
         execSystemctl("disable", services)
 
-    execSystemctl("status", services)
+    execSystemctl("status", services, qIgnoreReturn=True)
 
 parser = argparse.ArgumentParser()
 grp = parser.add_mutually_exclusive_group(required=True)
