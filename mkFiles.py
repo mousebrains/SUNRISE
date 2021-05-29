@@ -3,7 +3,7 @@
 # This generates a dynamic file list then invokes rsync
 #
 # It is designed to be called by a remote rsync client,
-# The last argument is the directory set, rvp or rvwm,
+# The last argument is the directory set, rvp rvws, or rvpi4,
 # a period, then a floating point number which is the
 # timestamp to look for files which have been updated
 # since that timestamp.
@@ -32,7 +32,8 @@ prefix = "Dropbox" # Parent directory
 
 dirSets = { # What to send to the different ships
         "rvp": ("Shore", "WaltonSmith"), # R/V Pelican gets Shore +  R/V Walton Smith
-        "rvws": ("Shore", "Pelican"), # R/V Walton Smith get Short + R/V Pelican
+        "rvws": ("Shore", "Pelican"), # R/V Walton Smith get Shore + R/V Pelican
+        "rvpi4": ("Shore", "Pelican", "WaltonSmith"), # pi4 get Shore+RVWS+RVPELICAN
         }
 
 rsync = "/usr/bin/rsync"
@@ -51,6 +52,7 @@ logger.addHandler(ch)
 
 
 try:
+    if "SSH_CONNECTION" in os.environ: logger.info("CONN: %s", os.environ["SSH_CONNECTION"])
     logger.info("CALL: %s", sys.argv)
 
     cmd = [rsync] # What rsync sees in argv
