@@ -20,7 +20,7 @@ def execCmd(args:tuple, qIgnoreReturn:bool=False) -> bool:
     sp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
 
     if sp.returncode:
-        print("Failure while executing:")
+        print("Failure while executing, {}:".format(sp.returncode))
         print(args)
     else:
         print(" ".join(args))
