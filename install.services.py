@@ -44,34 +44,44 @@ def execSystemctl(cmd:str, services:list=None, qIgnoreReturn:bool=False) -> bool
     if services is not None: items.extend(services)
     return execCmd(items, qIgnoreReturn=qIgnoreReturn)
 
+def copyService(src:str, service:str) -> bool:
+    cpCmd = "/usr/bin/cp"
+    dest = os.path.join("/etc/systemd/system", service + ".service")
+    return execCmd((cpCmd, src, dest))
+
+def enableServices(services:tuple[str], dt:float=5) -> bool:
+    execSystemctl("enable", services)
+    execSystemctl("restart", services)
+    print("Waiting", dt, "seconds for services to start")
+    time.sleep(dt)
+    execSystemctl("status", services, qIgnoreReturn=False)
+
+def disableServices(services:tuple[str], dt:float=5) -> bool:
+    execSystemctl("stop", services, qIgnoreReturn=True)
+    execSystemctl("disable", services)
+    print("Waiting", dt, "seconds for service status")
+    time.sleep(dt)
+    execSystemctl("status", services, qIgnoreReturn=True)
+
 def shoreInstall() -> None:
-    print("Shore side not implemented yet!")
-    sys.exit(1)
+    services = ("Carthe", "LiveViewGPS", "Monitor")
+    for service in services: copyService(f"{service}.service", service)
+
+    execSystemctl("daemon-reload")
+    enableServices(services)
 
 def shipInstall(name:str, qPrimary:bool) -> None:
-    prefix = "/etc/systemd/system"
-    suffix = ".service"
-    cpCmd = "/usr/bin/cp"
-    services = []
-    for key in ["Push", "Pull"]:
-        service = "sync" + key
-        services.append(service)
-        src = f"{service}.{name}{suffix}"
-        dest = os.path.join(prefix, f"{service}{suffix}")
-        execCmd((cpCmd, src, dest))
+    services = ("syncPush", "syncPull")
+    for service in services:
+        src = f"{service}.{name}.service"
+        copyService(src, service)
 
     execSystemctl("daemon-reload")
 
     if qPrimary: # Start the services
-        execSystemctl("enable", services)
-        execSystemctl("restart", services)
-        dt = 5
-        print("Waiting", dt, "seconds for services to start")
-        time.sleep(dt)
+        enableServices(services)
     else:
-        execSystemctl("disable", services)
-
-    execSystemctl("status", services, qIgnoreReturn=True)
+        disableServices(services)
 
 parser = argparse.ArgumentParser()
 grp = parser.add_mutually_exclusive_group(required=True)
