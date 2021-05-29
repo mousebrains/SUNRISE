@@ -14,7 +14,42 @@ import argparse
 import os.path
 import subprocess
 import time
+import socket
 import sys
+
+def discoverByHostname(args:argparse.ArgumentParser) -> None:
+    hostname = socket.gethostname() # Get this comptuer's hostname
+    if hostname == "glidervm3":
+        args.shore = True
+        args.primary = False
+        args.secondary = False
+    elif hostname == "pelican0":
+        args.pelican = True
+        args.primary = True
+        args.secondary = False
+    elif hostname == "pelican1":
+        args.pelican = True
+        args.primary = False
+        args.secondary = True
+    elif hostname == "waltonsmith0":
+        args.waltonsmith = True
+        args.primary = True
+        args.secondary = False
+    elif hostname == "waltonsmith1":
+        args.waltonsmith = True
+        args.primary = False
+        args.secondary = True
+    else:
+        print("Unrecognized hostname,", hostname)
+        sys.exit(1)
+
+    opts = []
+    if args.shore: opts.append("--shore")
+    if args.pelican: opts.append("--pelican")
+    if args.waltonsmith: opts.append("--waltonsmith")
+    if args.primary: opts.append("--primary")
+    if args.secondary: opts.append("--secondary")
+    print("Discovered options:", " ".join(opts))
 
 def execCmd(args:tuple, qIgnoreReturn:bool=False) -> bool:
     sp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
@@ -85,6 +120,7 @@ def shipInstall(name:str, qPrimary:bool) -> None:
 
 parser = argparse.ArgumentParser()
 grp = parser.add_mutually_exclusive_group(required=True)
+grp.add_argument("--discover", action="store_true", help="Use hostname to decide what to do")
 grp.add_argument("--waltonsmith", "--ws", action="store_true",
         help="Services for the R/V Walton Smith")
 grp.add_argument("--pelican", action="store_true", help="Services for the R/V Pelican")
@@ -93,6 +129,9 @@ grp = parser.add_mutually_exclusive_group(required=False)
 grp.add_argument("--primary", action="store_true", help="This is a primary server")
 grp.add_argument("--secondary", action="store_true", help="This is a secondary server")
 args = parser.parse_args()
+
+if args.discover: # Use hostname to set arguments
+    discoverByHostname(args)
 
 if args.shore:
     if args.primary or args.secondary:
