@@ -1,0 +1,31 @@
+#
+# push changes in the dropbox/pi4 to the shore side server
+#
+# sudo cp syncPush.pi4.service /etc/systemd/system/syncPush.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable syncPush.service
+# sudo systemctl start syncPush.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Rsync from the pi4 to the shore side server
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat/Dropbox
+#
+ExecStart=/home/pat/bin/syncPush.py \
+        --logfile=/home/pat/logs/syncPush.log \
+	--bwlimit=100 \
+	--prefix=Dropbox/ \
+	pi4
+        
+RestartSec=300
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

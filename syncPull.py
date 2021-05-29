@@ -46,8 +46,8 @@ class Pull:
                 help="--rsync-path argument")
 
         grp = parser.add_argument_group(description="Pulling related options")
-        grp.add_argument("--src", choices=["rvp", "rvws"], required=True,
-                help="Which ship to fetch sources for, R/V Pelican or R/V Walton Smith")
+        grp.add_argument("--src", choices=["rvp", "rvws", "rvpi4"], required=True,
+                help="Which ship to fetch sources for, R/V Pelican, R/V Walton Smith, or test pi4")
         grp.add_argument("--prefix", type=str, default="Dropbox",
                 help="Where the timestamp file lives")
         grp.add_argument("--dest", type=str, default=".", help="Local folder to rsync into")

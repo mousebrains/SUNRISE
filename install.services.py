@@ -39,6 +39,10 @@ def discoverByHostname(args:argparse.ArgumentParser) -> None:
         args.waltonsmith = True
         args.primary = False
         args.secondary = True
+    elif hostname == "pi4":
+        args.pi4 = True
+        args.primary = True
+        args.secondary = False
     else:
         print("Unrecognized hostname,", hostname)
         sys.exit(1)
@@ -47,6 +51,7 @@ def discoverByHostname(args:argparse.ArgumentParser) -> None:
     if args.shore: opts.append("--shore")
     if args.pelican: opts.append("--pelican")
     if args.waltonsmith: opts.append("--waltonsmith")
+    if args.pi4: opts.append("--pi4")
     if args.primary: opts.append("--primary")
     if args.secondary: opts.append("--secondary")
     print("Discovered options:", " ".join(opts))
@@ -125,6 +130,7 @@ grp.add_argument("--waltonsmith", "--ws", action="store_true",
         help="Services for the R/V Walton Smith")
 grp.add_argument("--pelican", action="store_true", help="Services for the R/V Pelican")
 grp.add_argument("--shore", action="store_true", help="Services for the shore side server")
+grp.add_argument("--pi4", action="store_true", help="Services for the test pi4")
 grp = parser.add_mutually_exclusive_group(required=False)
 grp.add_argument("--primary", action="store_true", help="This is a primary server")
 grp.add_argument("--secondary", action="store_true", help="This is a secondary server")
@@ -138,9 +144,11 @@ if args.shore:
         parser.error("You can not specify --primary nor --secondary with --shore")
 else:
     if not args.primary and not args.secondary:
-        parser.error("You must specify --primary or --secondary with --waltonsmith or --pelican")
+        parser.error("You must specify --primary or --secondary " + \
+                "with --waltonsmith, --pelican or --pi4")
 
 if args.shore:
     shoreInstall()
 else:
-    shipInstall("WaltonSmith" if args.waltonsmith else "Pelican", args.primary)
+    name = "WaltonSmith" if args.waltonsmith else "Pelican" if args.pelican else "pi4"
+    shipInstall(name, args.primary)

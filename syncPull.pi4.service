@@ -1,0 +1,32 @@
+#
+# pull changes from the shore side server for the shore and Walton Smith
+#
+# sudo cp syncPull.pi4.service /etc/systemd/system/syncPull.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable syncPull.service
+# sudo systemctl start syncPull.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Rsync to the pi4 from the shore side server
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+ExecStart=/home/pat/bin/syncPull.py \
+        --logfile=logs/syncPull.log \
+	--bwlimit=62 \
+	--dest=. \
+	--prefix=Dropbox \
+	--src=rvpi4
+        
+RestartSec=600
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
