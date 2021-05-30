@@ -111,10 +111,14 @@ def shoreInstall() -> None:
     enableServices(services)
 
 def shipInstall(name:str, qPrimary:bool) -> None:
-    services = ("syncPush", "syncPull")
+    services = ["syncPush", "syncPull"] # Named services
     for service in services:
         src = f"{service}.{name}.service"
         copyService(src, service)
+
+    monServices = ["monitorPi"]
+    for service in monServices: # Unnamed services
+        copyService(service + ".service", service)
 
     execSystemctl("daemon-reload")
 
@@ -122,6 +126,8 @@ def shipInstall(name:str, qPrimary:bool) -> None:
         enableServices(services)
     else:
         disableServices(services)
+
+    enableServices(monServices) # Always running
 
 parser = argparse.ArgumentParser()
 grp = parser.add_mutually_exclusive_group(required=True)

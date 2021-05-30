@@ -1,0 +1,28 @@
+#
+# send datagrams with ship computer status information
+#
+# sudo cp monitorPi.service /etc/systemd/system/
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable monitorPi.service
+# sudo systemctl start monitorPi.service
+#
+# May-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Monitor my status
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat/logs
+#
+ExecStart=/home/pat/bin/monitorPi.py \
+	--logfile=monitorPi.log \
+	--host=128.193.64.162
+	
+RestartSec=60
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
