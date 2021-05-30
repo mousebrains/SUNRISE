@@ -1,0 +1,33 @@
+#
+# Listen for datagrams with ship computer status information
+#
+# sudo cp shipsMonitor.service /etc/systemd/system/
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable shipsMonitor.service
+# sudo systemctl start shipsMonitor.service
+#
+# May-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Monitor ship datagrams
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat/logs
+#
+ExecStart=/home/pat/bin/shipMonitor.py \
+	--mailFrom=pat.welch@oregonstate.edu \
+	--mailTo=pat@mousebrains.com \
+	--mailSubject=shipMonitor \
+	--smtpHost=mail.ceoas.oregonstate.edu \
+	--logfile=shipMonitor.log \
+	--db=shipMonitor.db \
+	--csv=/home/pat/Dropbox/Shore/monitor/shipMonitor.csv
+	
+RestartSec=60
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

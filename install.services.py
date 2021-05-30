@@ -104,7 +104,7 @@ def disableServices(services:tuple[str], dt:float=5) -> bool:
     execSystemctl("status", services, qIgnoreReturn=True)
 
 def shoreInstall() -> None:
-    services = ("Carthe", "LiveViewGPS", "Monitor")
+    services = ("Carthe", "LiveViewGPS", "Monitor", "shipMonitor")
     for service in services: copyService(f"{service}.service", service)
 
     execSystemctl("daemon-reload")
