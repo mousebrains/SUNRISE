@@ -17,7 +17,7 @@ Description=Monitor ship datagrams
 User=pat
 WorkingDirectory=/home/pat/logs
 #
-ExecStart=/home/pat/bin/shipMonitor.py \
+ExecStart=/home/pat/SUNRISE/shipMonitor.py \
 	--mailFrom=pat.welch@oregonstate.edu \
 	--mailTo=pat@mousebrains.com \
 	--mailSubject=shipMonitor \

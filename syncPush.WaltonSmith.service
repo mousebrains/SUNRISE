@@ -17,7 +17,7 @@ Description=Rsync from the WaltonSmith to the shore side server
 User=pat
 WorkingDirectory=/home/pat/Dropbox
 #
-ExecStart=/home/pat/bin/syncPush.py \
+ExecStart=/home/pat/SUNRISE/syncPush.py \
         --logfile=/home/pat/logs/syncPush.log \
 	--bwlimit=25 \
 	--prefix=Dropbox/ \
