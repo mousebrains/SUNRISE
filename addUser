@@ -1,0 +1,32 @@
+#! /usr/bin/bash
+# 
+# Add a user 
+# $1 is the username
+# $2 is the user's ssh public key
+#
+# June-2021, Pat Welch
+
+if [ $# != 2 ] ; then
+	echo Usage: username user_id_rsa.pub
+	exit 1
+fi
+
+if [ ! -f $2 ] ; then
+	echo SSH public key file does not exist
+	exit 1
+fi
+
+if [ -d /home/$1 ] ; then
+	echo User, $1, already exists
+	exit 1
+fi
+
+sudo adduser $1 \
+	&& sudo usermod -aG sudo $1 \
+	&& sudo usermod -aG sunrise $1 \
+	&& sudo passwd --expire $1 \
+	&& sudo -u $1 mkdir --mode=0700 /home/$1/.ssh \
+	&& sudo cp $2 /home/$1/.ssh/authorized_keys \
+	&& sudo chown $1:$1 /home/$1/.ssh/authorized_keys \
+	&& sudo chmod 600 /home/$1/.ssh/authorized_keys \
+	&& sudo -u $1 ln -s /home/pat/Dropbox /home/$1/Dropbox
