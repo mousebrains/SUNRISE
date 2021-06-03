@@ -17,7 +17,7 @@ Description=Monitor my status
 User=pat
 WorkingDirectory=/home/pat/logs
 #
-ExecStart=/home/pat/bin/monitorPi.py \
+ExecStart=/home/pat/SUNRISE/monitorPi.py \
 	--logfile=monitorPi.log \
 	--host=128.193.64.162
 	

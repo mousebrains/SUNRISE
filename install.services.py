@@ -89,19 +89,19 @@ def copyService(src:str, service:str) -> bool:
     dest = os.path.join("/etc/systemd/system", service + ".service")
     return execCmd((cpCmd, src, dest))
 
-def enableServices(services:tuple[str], dt:float=5) -> bool:
+def statusServices(services:tuple[str], dt:float=5) -> bool:
+    if dt is not None:
+        print("Waiting", dt, "seconds for services to start")
+        time.sleep(dt)
+    return execSystemctl("status", services)
+
+def enableServices(services:tuple[str]) -> bool:
     execSystemctl("enable", services)
     execSystemctl("restart", services)
-    print("Waiting", dt, "seconds for services to start")
-    time.sleep(dt)
-    execSystemctl("status", services, qIgnoreReturn=False)
 
-def disableServices(services:tuple[str], dt:float=5) -> bool:
+def disableServices(services:tuple[str]) -> bool:
     execSystemctl("stop", services, qIgnoreReturn=True)
     execSystemctl("disable", services)
-    print("Waiting", dt, "seconds for service status")
-    time.sleep(dt)
-    execSystemctl("status", services, qIgnoreReturn=True)
 
 def shoreInstall() -> None:
     services = ("Carthe", "LiveViewGPS", "Monitor", "shipMonitor")
@@ -109,6 +109,7 @@ def shoreInstall() -> None:
 
     execSystemctl("daemon-reload")
     enableServices(services)
+    statusServices(services)
 
 def shipInstall(name:str, qPrimary:bool) -> None:
     services = ["syncPush", "syncPull"] # Named services
@@ -128,6 +129,8 @@ def shipInstall(name:str, qPrimary:bool) -> None:
         disableServices(services)
 
     enableServices(monServices) # Always running
+    services.extend(monServices) # All services to check the status of
+    statusServices(services)
 
 parser = argparse.ArgumentParser()
 grp = parser.add_mutually_exclusive_group(required=True)

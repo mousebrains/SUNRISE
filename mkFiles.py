@@ -30,10 +30,12 @@ tblName = "inotify" # Table to access in dbName
 
 prefix = "Dropbox" # Parent directory
 
+commonDirs = ["Shore", "js", "css"] # Common to all dirSets
+
 dirSets = { # What to send to the different ships
-        "rvp": ("Shore", "WaltonSmith"), # R/V Pelican gets Shore +  R/V Walton Smith
-        "rvws": ("Shore", "Pelican"), # R/V Walton Smith get Shore + R/V Pelican
-        "rvpi4": ("Shore", "Pelican", "WaltonSmith"), # pi4 get Shore+RVWS+RVPELICAN
+        "rvp": ["WaltonSmith"], # R/V Pelican gets Shore +  R/V Walton Smith
+        "rvws": ["Pelican"], # R/V Walton Smith get Shore + R/V Pelican
+        "rvpi4": ["Pelican", "WaltonSmith"], # pi4 get Shore+RVWS+RVPELICAN
         }
 
 rsync = "/usr/bin/rsync"
@@ -75,7 +77,7 @@ try:
         raise Exception("Error converting {} to a float".format(timestamp))
 
     criteria = []
-    for item in dirSets[keyArg]:
+    for item in dirSets[keyArg] + commonDirs:
         criteria.append("path LIKE '{}%'".format(os.path.join(prefix, item)))
 
     sql = "SELECT path,t FROM " + tblName

@@ -19,7 +19,7 @@ Description=Monitor a set of directory trees for any changes
 User=pat
 WorkingDirectory=/home/pat
 #
-ExecStart=/home/pat/bin/Monitor.py \
+ExecStart=/home/pat/SUNRISE/Monitor.py \
 	--mailTo=pat@mousebrains.com \
 	--mailFrom=pat.welch@oregonstate.edu \
 	--mailSubject=Monitor \

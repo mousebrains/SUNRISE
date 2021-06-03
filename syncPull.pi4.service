@@ -17,7 +17,7 @@ Description=Rsync to the pi4 from the shore side server
 User=pat
 WorkingDirectory=/home/pat
 #
-ExecStart=/home/pat/bin/syncPull.py \
+ExecStart=/home/pat/SUNRISE/syncPull.py \
         --logfile=logs/syncPull.log \
 	--bwlimit=500 \
 	--dest=. \
