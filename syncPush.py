@@ -31,7 +31,7 @@ class Pusher(MyThread.MyThread):
                 "--relative",
                 "--stats",
                 ]
-        if args.bwlimit is not None:
+        if (args.bwlimit is not None) and (args.bwlimit > 0):
             self.__preCmd.extend(["--bwlimit", str(args.bwlimit)])
         
     @staticmethod
