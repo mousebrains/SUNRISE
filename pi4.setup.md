@@ -93,6 +93,17 @@ sudo apt install samba*
 # Create the mount point if it does not exist
 mkdir /home/pat/Dropbox/WaltonSmith/asv
 # Add the mount point into the samba config file /etc/samba/smb.conf
+#
+# For all machines:
+# [Dropbox]
+#   comment = "Sunrise Dropbox Folder
+#   path = /home/pat/Dropbox
+#   browseable = yes
+#   read only = yes
+#   guest ok = yes
+#
+# For the Walton Smith machines
+#
 # [ASV]
 #   comment = SUNRISE ASV folders
 #   path = /home/pat/Dropbox/WaltonSmith/ASV
