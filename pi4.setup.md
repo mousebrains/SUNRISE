@@ -88,6 +88,21 @@ sudo nginx -t
 # user, group, listen.owner, and listen.group
 sudo systemctl restart nginx php7.4-fpm
 
+# Install SAMBA for smb mounting for the ASVs
+sudo apt install samba*
+# Create the mount point if it does not exist
+mkdir /home/pat/Dropbox/WaltonSmith/asv
+# Add the mount point into the samba config file /etc/samba/smb.conf
+# [ASV]
+#   comment = SUNRISE ASV folders
+#   path = /home/pat/Dropbox/WaltonSmith/ASV
+#   browseable = yes
+#   readonly = no 
+#
+# Create the SMB user with a known password, Sunrise
+sudo smbpasswd -a pat
+sudo systemctl restart smbd
+
 # Install required python packages
 sudo apt install python3-pip
 python3 -m pip install inotify-simple
