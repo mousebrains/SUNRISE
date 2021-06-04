@@ -8,6 +8,9 @@
 # Fully update the server
 sudo apt update
 sudo apt upgrade
+sudo reboot
+
+# login back in using ubuntu and your password
 
 # Install fail2ban
 sudo apt install fail2ban
@@ -48,6 +51,24 @@ sudo deluser --remove-home ubuntu
 # Create Dropbox and logs folder
 mkdir -p Dropbox logs
 
+# Create ssh config file for vm3 in ~/.ssh/config, it should contain:
+Host vm3 glidervm3 glidervm3.ceoas.oregonstate.edu
+  Hostname glidervm3.ceoas.oregonstate.edu
+  User pat
+  IdentityFile ~/.ssh/id_rsa
+  Compression yes
+
+# Create ssh key pair for talking to glidervm3 and install it on glidervm3
+ssh-keygen -b2048
+ssh-copy-id -i ~/.ssh/id_rsa.pub vm3
+
+# Initial sync from vm3
+rsync --archive --compress --compress-level=22 --mkpath --copy-unsafe-links --delete-missing-args --delete --relative --stats vm3:Dropbox/ .
+
+# Set up ACL for my home directory and Dropbox
+setfacl --modify=group:sunrise:rX . Dropbox
+setfacl --recursive --modify=group:sunrise:rwX Dropbox/*
+
 # Install webserver, NGINX, and PHP
 sudo apt install nginx php-fpm
 cd /etc/nginx/sites-available
@@ -70,24 +91,6 @@ sudo systemctl restart nginx php7.4-fpm
 # Install required python packages
 sudo apt install python3-pip
 python3 -m pip install inotify-simple
-
-# Create ssh config file for vm3 in ~/.ssh/config, it should contain:
-Host vm3 glidervm3 glidervm3.ceoas.oregonstate.edu
-  Hostname glidervm3.ceoas.oregonstate.edu
-  User pat
-  IdentityFile ~/.ssh/id_rsa
-  Compression yes
-
-# Create ssh key pair for talking to glidervm3 and install it on glidervm3
-ssh-keygen -b2048
-ssh-copy-id -i ~/.ssh/id_rsa.pub vm3
-
-# Initial sync from vm3
-rsync --archive --compress --compress-level=22 --mkpath --copy-unsafe-links --delete-missing-args --delete --relative --stats vm3:Dropbox/ .
-
-# Set up ACL for my home directory and Dropbox
-setfacl --modify=group:sunrise:rX . Dropbox
-setfacl --recursive --modify=group:sunrise:rwX Dropbox/*
 
 # Set up git
 git config --global user.name "Pat Welch"
