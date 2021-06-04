@@ -17,8 +17,6 @@ class Pull:
         self.logger = logger
         cmd = [
                 args.rsync,
-                "--compress",
-                "--compress-level=22",
                 "--archive",
                 "--mkpath",
                 "--relative",
@@ -26,7 +24,9 @@ class Pull:
                 "--delete",
                 ]
 
-        if args.stats: self.__preCmd.extend(["--stats"])
+        if not args.nocompression:
+            self.__preCmd.extend(["--compress", "--compress-level=22"])
+        if args.stats: self.__preCmd.append("--stats")
 
         if args.remote is not None:
             cmd.extend(["--rsync-path", args.remote])
@@ -54,6 +54,7 @@ class Pull:
         grp.add_argument("--dest", type=str, default=".", help="Local folder to rsync into")
         grp.add_argument("--bwlimit", type=int, default=200, help="KB/sec to pull data")
         grp.add_argument("--stats", action="store_true", help="Collect rsync statistics")
+        grp.add_argument("--nocompression", action="store_true", help="Disable compressions")
         grp.add_argument("--dryrun", action="store_true", help="Don't actually run rsync command")
 
     def execute(self) -> bool:

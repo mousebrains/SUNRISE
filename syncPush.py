@@ -21,8 +21,6 @@ class Pusher(MyThread.MyThread):
         self.__queue = queue
         self.__preCmd = [
                 args.rsync,
-                "--compress",
-                "--compress-level=22",
                 "--archive",
                 "--mkpath",
                 "--copy-unsafe-links",
@@ -30,7 +28,9 @@ class Pusher(MyThread.MyThread):
                 "--delete",
                 "--relative",
                 ]
-        if args.stats: self.__preCmd.extend(["--stats"])
+        if not args.nocompression:
+            self.__preCmd.extend(["--compress", "--compress-level=22"])
+        if args.stats: self.__preCmd.append("--stats")
         if (args.bwlimit is not None) and (args.bwlimit > 0):
             self.__preCmd.extend(["--bwlimit", str(args.bwlimit)])
         
@@ -39,6 +39,7 @@ class Pusher(MyThread.MyThread):
         grp = parser.add_argument_group(description="Pushing related options")
         grp.add_argument("--delay", type=int, default=10,
                 help="Seconds after an inotify event until pushing started")
+        grp.add_argument("--nocompression", action='store_true', help="Turn off compression")
         grp.add_argument("--stats", action='store_true', help="Collect rsync stats")
         grp.add_argument("--bwlimit", type=int, help="KB/sec to push data")
         grp.add_argument("--retry", type=int, default=60,

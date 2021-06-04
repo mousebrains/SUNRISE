@@ -22,7 +22,7 @@ ExecStart=/home/pat/SUNRISE/syncPush.py \
 	--bwlimit=-1 \
 	--prefix='' \
 	--host=waltonsmith1.local \
-	--nocompress \
+	--nocompression \
 	Dropbox
         
 RestartSec=300
