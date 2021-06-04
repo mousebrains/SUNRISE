@@ -24,8 +24,9 @@ class Pull:
                 "--relative",
                 "--copy-unsafe-links",
                 "--delete",
-                "--stats",
                 ]
+
+        if args.stats: self.__preCmd.extend(["--stats"])
 
         if args.remote is not None:
             cmd.extend(["--rsync-path", args.remote])
@@ -52,6 +53,7 @@ class Pull:
                 help="Where the timestamp file lives")
         grp.add_argument("--dest", type=str, default=".", help="Local folder to rsync into")
         grp.add_argument("--bwlimit", type=int, default=200, help="KB/sec to pull data")
+        grp.add_argument("--stats", action="store_true", help="Collect rsync statistics")
         grp.add_argument("--dryrun", action="store_true", help="Don't actually run rsync command")
 
     def execute(self) -> bool:

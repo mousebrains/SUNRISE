@@ -1,0 +1,33 @@
+#
+# push changes in the Dropbox to the local backup server
+#
+# sudo cp syncLocal.WaltonSmith.service /etc/systemd/system/syncLocal.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable syncLocal.service
+# sudo systemctl start syncLocal.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Rsync from the WaltonSmith to the backup Pelican server
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+ExecStart=/home/pat/SUNRISE/syncPush.py \
+        --logfile=/home/pat/logs/syncLocal.log \
+	--bwlimit=-1 \
+	--prefix='' \
+	--host=waltonsmith1.local \
+	--nocompress \
+	Dropbox
+        
+RestartSec=300
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
