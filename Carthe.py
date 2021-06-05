@@ -40,7 +40,7 @@ class Fetcher:
         args = self.args
         logger = self.logger
         urlBase = [args.baseURL + args.apiKey]
-        daysBack = daysBack if daysBack is not None else args.daysBack
+        # daysBack = daysBack if daysBack is not None else args.daysBack
         dt = args.extra
         url = [args.baseURL + args.apiKey]
         if daysBack is not None:
