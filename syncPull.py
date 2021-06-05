@@ -25,7 +25,7 @@ class Pull:
                 ]
 
         if not args.nocompression:
-            self.__preCmd.extend(["--compress", "--compress-level=22"])
+            cmd.extend(["--compress", "--compress-level=22"])
         if args.stats: self.__preCmd.append("--stats")
 
         if args.remote is not None:
