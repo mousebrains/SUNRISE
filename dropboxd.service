@@ -1,0 +1,27 @@
+#
+# Run the Dropbox client, dropboxd
+#
+# sudo cp dropboxd.service /etc/systemd/system
+# sudo systemctl daemon-reload
+# sudo systemctl enable dropboxd.service
+# sudo systemctl start dropboxd.service
+#
+# May-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Dropbox daemon
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+ExecStart=/home/pat/.dropbox-dist/dropboxd
+StandardOutput=file:/home/pat/logs/dropboxd.output
+StandardError=file:/home/pat/logs/dropboxd.errors
+	
+RestartSec=120
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
