@@ -1,4 +1,9 @@
-# Create MicroSD card with Ubuntu server
+# How I set up a Raspberry Pi for use on the ships of the SUNRISE research cruise in 2021
+---
+1. Create microSD card with Ubuntu server for a Raspberry Pi system. 
+  - I used 21.04 64 bit server. 
+  - To burn the microSD card I used the "Raspberry Pi Imager" application on my desktop.
+2. Install the microSD
 # Ubuntu 21.04 ARM 64bit server
 # login in to the default user, ubuntu with password ubuntu
 # login into ubuntu@IP ADDR
@@ -115,7 +120,7 @@ sudo smbpasswd -a pat
 sudo systemctl restart smbd
 
 # Install required python packages
-sudo apt install python3-pip
+sudo apt install python3-pip python3-pandas
 python3 -m pip install inotify-simple
 
 # Set up git
