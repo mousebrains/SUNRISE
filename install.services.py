@@ -23,32 +23,30 @@ def discoverByHostname(args:argparse.ArgumentParser) -> None:
         args.shore = True
         args.primary = False
         args.secondary = False
-        args.ship = False
     elif hostname == "pelican0":
         args.pelican = True
         args.primary = True
         args.secondary = False
-        args.ship = True
     elif hostname == "pelican1":
         args.pelican = True
         args.primary = False
         args.secondary = True
-        args.ship = True
     elif hostname == "waltonsmith0":
         args.waltonsmith = True
         args.primary = True
         args.secondary = False
-        args.ship = True
     elif hostname == "waltonsmith1":
         args.waltonsmith = True
         args.primary = False
         args.secondary = True
-        args.ship = True
     elif hostname == "pi4":
         args.pi4 = True
         args.primary = True
         args.secondary = False
-        args.ship = False
+    elif hostname == "pi5":
+        args.pi4 = True
+        args.primary = False
+        args.secondary = True
     else:
         print("Unrecognized hostname,", hostname)
         sys.exit(1)
@@ -60,7 +58,6 @@ def discoverByHostname(args:argparse.ArgumentParser) -> None:
     if args.pi4: opts.append("--pi4")
     if args.primary: opts.append("--primary")
     if args.secondary: opts.append("--secondary")
-    if args.ship: opts.append("--ship")
     print("Discovered options:", " ".join(opts))
 
 def execCmd(args:tuple, qIgnoreReturn:bool=False) -> bool:
@@ -118,11 +115,9 @@ def shoreInstall() -> None:
     enableServices(services)
     statusServices(services)
 
-def shipInstall(name:str, qPrimary:bool, qShip:bool) -> None:
+def shipInstall(name:str, qPrimary:bool) -> None:
     services = ["syncPush", "syncPull"] # Named services
-
-    if qShip and qPrimary:
-        services.append("syncLocal") # Sync to my local backup server
+    services.append("syncLocal") # Sync to my local backup server
 
     for service in services:
         src = f"{service}.{name}.service"
@@ -154,7 +149,6 @@ grp.add_argument("--pi4", action="store_true", help="Services for the test pi4")
 grp = parser.add_mutually_exclusive_group(required=False)
 grp.add_argument("--primary", action="store_true", help="This is a primary server")
 grp.add_argument("--secondary", action="store_true", help="This is a secondary server")
-grp.add_argument("--ship", action="store_true", help="This is a ship based server")
 args = parser.parse_args()
 
 if args.discover: # Use hostname to set arguments
@@ -172,4 +166,4 @@ if args.shore:
     shoreInstall()
 else:
     name = "WaltonSmith" if args.waltonsmith else "Pelican" if args.pelican else "pi4"
-    shipInstall(name, args.primary, args.ship)
+    shipInstall(name, args.primary)
