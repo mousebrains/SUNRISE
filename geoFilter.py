@@ -13,7 +13,7 @@ from shapely.geometry import Polygon
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, required=True, help="Input shapefile")
 grp = parser.add_mutually_exclusive_group(required=True)
-grp.add_argument("--clip", type=bool, help="Only clip data")
+grp.add_argument("--clip", action="store_true", help="Only clip data")
 grp.add_argument("--filter", type=str, help="Field to filter on null values")
 grp = parser.add_argument_group(description="Filter output results")
 grp.add_argument("--null", type=str, help="null results saved here")
