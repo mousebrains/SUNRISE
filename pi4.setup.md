@@ -95,20 +95,21 @@ Host vm3 glidervm3 glidervm3.ceoas.oregonstate.edu
 </pre>
 34. Create the SMB user with a known password, Sunrise, `sudo smbpasswd -a pat`
 35. Restart samba, `sudo systemctl restart smbd`
-36. Install the required python packages, 
+36. Install the required PHP packages, `sudo apt install php-xmlwriter`
+37. Install the required python packages, 
   - `sudo apt install python3-pip python3-pandas`
   - `python3 -m pip install inotify-simple`
-37. Set up git
+38. Set up git
   - `cd ~`
   - `git config --global user.name "Pat Welch"`
   - `git config --global user.email pat@mousebrains.com`
   - `git config --global core.editor vim`
   - `git config --global pull.rebase false`
   - `git clone git@github.com:mousebrains/SUNRISE.git`
-38. Install services using hostname discover method
+39. Install services using hostname discover method
   - `cd ~/SUNRISE`
   - `sudo ./install.services.py --discover`
-39. To add a user use `~/SUNRISE/addUser` this sets up the user and group memberships
+40. To add a user use `~/SUNRISE/addUser` this sets up the user and group memberships
 ---
 # For ship ops undo the shore side testing:
 - `sudo rm /etc/ssh/sshd_config.d/osu_security.conf`
