@@ -25,13 +25,13 @@
 15. Enable zeroconf/bonjour via AVAHI-DAEMON, `sudo apt install avahi-daemon`
 16. Add the sunrise group, `sudo addgroup sunrise`
 17. Add the primary user via the commands
-  - sudo adduser pat
-  - sudo usermod -aG sudo pat
-  - sudo usermod -aG sunrise pat
+  - `sudo adduser pat`
+  - `sudo usermod -aG sudo pat`
+  - `sudo usermod -aG sunrise pat`
 18. Logout of the ubuntu user
 19. Logback in to the new user, *pat*
 20. Delete the ubuntu user, `sudo deluser --remove-home ubuntu`
-21. Create the Dropbox and logs directories in ~pat, `mkdir -p Dropbox logs`
+21. Create the Dropbox and logs directories in ~pat, `mkdir Dropbox logs`
 22. Create the ssh key pair for talking to the shore side server, glidervm3, `ssh-keygen -b2048`
 23. Create the ssh config file, *~/.ssh/config* with the following content:
 <pre>
@@ -52,7 +52,7 @@ Host vm3 glidervm3 glidervm3.ceoas.oregonstate.edu
   - `sudo cp default sunrise`
   - Edit sunrise and 
     - change root to /home/pat/Dropbox,
-    - uncomment php lines for fastcgi_pass
+    - uncomment php stanza including the *fastcgi_pass unix* line but not the *fastcgi_pass 127.0* line
     - add index.php to index
     - add "autoindex on;" to the location stanza
  - `cd ../sites-enabled`
@@ -61,7 +61,7 @@ Host vm3 glidervm3 glidervm3.ceoas.oregonstate.edu
  - `cd ..`
  - Edit nginx.conf and change the user from www-data to pat
  - Test the nginx configuration is correct, `sudo nginx -t`
- - Edit /etc/php/7.4/fpm/pool.d/www.conf and change www-data to pat for
+ - Edit */etc/php/7.4/fpm/pool.d/www.conf* and change www-data to pat for
    - user
    - group
    - listen.owner
