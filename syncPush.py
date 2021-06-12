@@ -94,7 +94,6 @@ class Pusher(MyThread.MyThread):
     def runSync(self, files:set) -> bool:
         args = self.args
         cmd = self.__preCmd.copy()
-        cmd.append("--boris")
         cmd.extend(files)
         cmd.append(args.host + ":" + args.prefix)
         self.logger.info("CMD:\n%s", " ".join(cmd))
