@@ -94,6 +94,7 @@ class Pusher(MyThread.MyThread):
     def runSync(self, files:set) -> bool:
         args = self.args
         cmd = self.__preCmd.copy()
+        cmd.append("--boris")
         cmd.extend(files)
         cmd.append(args.host + ":" + args.prefix)
         self.logger.info("CMD:\n%s", " ".join(cmd))
@@ -110,12 +111,14 @@ class Pusher(MyThread.MyThread):
         except:
             output = sp.stdout
 
-        if sp.returncode == 0:
+        if sp.returncode in [0, 24, 25]: # No error, vanished source files, or too many deletes
             self.logger.info("Synced %s", ",".join(list(files)))
             if output:
                 self.logger.info("\n%s", output)
             return True
-        self.logger.warning("runSync %s\n%s\n%s", files, " ".join(cmd), output)
+        self.logger.warning("runSync returncode %s", sp.returncode)
+        self.logger.warning("COMMAND:\n%s", " ".join(cmd))
+        self.logger.warning("OUTPUT:\n%s", output)
         return False
 
 parser = argparse.ArgumentParser(description="SUNRISE Cruise syncing")
