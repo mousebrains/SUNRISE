@@ -1,0 +1,9 @@
+#! /usr/bin/bash -x
+#
+# Turn off the primary services, which then makes this a backup machine
+#
+# June-2021, Pat Welch, pat@mousebrains.com
+
+SERVICES="syncLocal syncPush syncPull"
+sudo systemctl stop $SERVICES
+sudo systemctl disable $SERVICES

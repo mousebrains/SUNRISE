@@ -1,0 +1,9 @@
+#! /usr/bin/bash -x
+#
+# Turn on the services to push/pull data to/from shore and to the local backup machine
+#
+# June-2021, Pat Welch, pat@mousebrains.com
+
+SERVICES="syncLocal syncPush syncPull"
+sudo systemctl enable $SERVICES
+sudo systemctl restart $SERVICES
