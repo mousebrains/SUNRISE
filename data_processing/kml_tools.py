@@ -63,6 +63,10 @@ class Writer():
         file_object.write("\t</Document>\n")
         file_object.write("</kml>")
 
+    def append(self,object):
+        """Shorthand for self.children.append"""
+        self.children.append(object)
+
 class Folder():
     """Create a folder for a kml file
 
@@ -96,6 +100,10 @@ class Folder():
         for child in self.children:
             child.write_to_file(file_object,indent=indent+1)
         file_object.write("\t"*indent + "</Folder>\n")
+
+    def append(self,object):
+        """Shorthand for self.children.append"""
+        self.children.append(object)
 
 class Style():
     """Create a kml Style Element
