@@ -30,7 +30,7 @@ tblName = "inotify" # Table to access in dbName
 
 prefix = "Dropbox" # Parent directory
 
-commonDirs = ["Shore", "js", "css", "png", "maps"] # Common to all dirSets
+commonDirs = ["Shore", "js", "css", "png", "maps", "html"] # Common to all dirSets
 
 dirSets = { # What to send to the different ships
         "rvp": ["WaltonSmith"], # R/V Pelican gets Shore +  R/V Walton Smith
