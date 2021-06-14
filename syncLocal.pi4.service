@@ -23,7 +23,8 @@ ExecStart=/home/pat/SUNRISE/syncPush.py \
 	--prefix='' \
 	--host=pi5.local \
 	--nocompression \
-	Dropbox
+	Dropbox \
+	Processed
         
 RestartSec=300
 Restart=always
