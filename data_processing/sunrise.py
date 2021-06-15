@@ -7,15 +7,14 @@ import matplotlib.gridspec as gs
 import matplotlib.units as munits
 import matplotlib.dates as mdates
 from matplotlib.ticker import AutoMinorLocator, MaxNLocator
-import sys
-import os
-from geopy.distance import distance
-from scipy.signal import savgol_filter
+# import sys
+# import os
+# from geopy.distance import distance
 
 CORIOLIS = 7*10**-5
 
-def ADCP_sections(filepath,directory,name,start,end,maxdepth=60):
-    """Create ADCP sections"""
+def ADCP_section(filepath,name,start,end,maxdepth=60):
+    """Create ADCP section"""
 
     rootgrp = netCDF4.Dataset(filepath, "r")
 
@@ -51,9 +50,9 @@ def ADCP_sections(filepath,directory,name,start,end,maxdepth=60):
     v = rootgrp["v"][idx,idx2]
     uship = rootgrp["uship"][idx]
     vship = rootgrp["vship"][idx]
-    heading = rootgrp["heading"][idx] # bearing in degrees clockwise
+    # heading = rootgrp["heading"][idx] # bearing in degrees clockwise
 
-    ship_speed = (uship**2 + vship**2)**0.5
+    # ship_speed = (uship**2 + vship**2)**0.5
 
     # deal with missing data points
     u[u > 10**30] = np.nan
@@ -65,31 +64,31 @@ def ADCP_sections(filepath,directory,name,start,end,maxdepth=60):
     # angle = np.angle(u+1j*v)
 
     # calculate distances
-    distances = np.empty(lat.shape,dtype=np.float64)
-    for i in range(lat.size):
-        distances[i] = distance((lat[i],lon[i]),(lat[0],lon[0])).km*1000
+    # distances = np.empty(lat.shape,dtype=np.float64)
+    # for i in range(lat.size):
+    #     distances[i] = distance((lat[i],lon[i]),(lat[0],lon[0])).km*1000
 
     # ship perpendicular velocity
-    heading_grad = np.abs(np.gradient(np.sin(heading*np.pi/180),distances)) + np.abs(np.gradient(np.cos(heading*np.pi/180),distances))
-    heading_change = heading_grad > 0.01
-    spv = v*np.sin(heading[:,None]*np.pi/180) - u*np.cos(heading[:,None]*np.pi/180)
-    spv[heading_change,:] = np.nan
-    spv[ship_speed<1] = np.nan
-    pm_velocity = savgol_filter(spv,7,1,deriv=1,axis=0)
-    pm_distance = savgol_filter(distances,7,1,deriv=1)
-    pm_vorticity = pm_velocity/pm_distance[:,None]/CORIOLIS
+    # heading_grad = np.abs(np.gradient(np.sin(heading*np.pi/180),distances)) + np.abs(np.gradient(np.cos(heading*np.pi/180),distances))
+    # heading_change = heading_grad > 0.01
+    # spv = v*np.sin(heading[:,None]*np.pi/180) - u*np.cos(heading[:,None]*np.pi/180)
+    # spv[heading_change,:] = np.nan
+    # spv[ship_speed<1] = np.nan
+    # pm_velocity = savgol_filter(spv,7,1,deriv=1,axis=0)
+    # pm_distance = savgol_filter(distances,7,1,deriv=1)
+    # pm_vorticity = pm_velocity/pm_distance[:,None]/CORIOLIS
     # pm_vorticity[heading_change,:] = np.nan
     # pm_vorticity[ship_speed<1] = np.nan
     #pm_vorticity = np.gradient(spv,distances,axis=0)/CORIOLIS
 
-    pmv_nonan = pm_vorticity[~np.isnan(pm_vorticity)]
+    # pmv_nonan = pm_vorticity[~np.isnan(pm_vorticity)]
 
-    pmv_5, pmv_95 = np.percentile(pmv_nonan,[5,95])
+    # pmv_5, pmv_95 = np.percentile(pmv_nonan,[5,95])
 
     # ******************** Get Limits *********************************** #
     vel_max = max(np.nanmax(u),np.nanmax(v),np.nanmax(-u),np.nanmax(-v))
     shear_max = max(np.nanmax(ushear), np.nanmax(vshear), np.nanmax(-ushear), np.nanmax(-vshear))
-    pmv_max = max(pmv_95, -pmv_5)
+    # pmv_max = max(pmv_95, -pmv_5)
     # ******************* Make Plots ************************************ #
 
     converter = mdates.ConciseDateConverter()
@@ -115,7 +114,7 @@ def ADCP_sections(filepath,directory,name,start,end,maxdepth=60):
     axv.set_title("$v$ [m/s]")
 
 
-    axpos = fig1.add_subplot(gs1[0,1])
+    axpos = fig1.add_subplot(gs1[:,1])
     axpos.plot(lon,lat,'k')
     npoints = len(times_use)
     skip = npoints//5
@@ -133,16 +132,16 @@ def ADCP_sections(filepath,directory,name,start,end,maxdepth=60):
     axpos.set_title("Ship Track")
     axpos.legend(bbox_to_anchor=(1, 1), loc='upper left')
     # axpos.legend()
-    axpmv = fig1.add_subplot(gs1[1,1])
-    ppmv = axpmv.pcolor(times_use,depths_use,pm_vorticity.T,cmap=cmo.balance,shading="nearest",vmin=-pmv_max,vmax=pmv_max)
-    axpmv.xaxis_date()
-    axpmv.invert_yaxis()
-    axpmv.set_ylabel("Depth [m]")
-    cb = plt.colorbar(ppmv,ax=axpmv)
-    axpmv.set_title("Poor Man's Vorticity [$f$]")
+    # axpmv = fig1.add_subplot(gs1[1,1])
+    # ppmv = axpmv.pcolor(times_use,depths_use,pm_vorticity.T,cmap=cmo.balance,shading="nearest",vmin=-pmv_max,vmax=pmv_max)
+    # axpmv.xaxis_date()
+    # axpmv.invert_yaxis()
+    # axpmv.set_ylabel("Depth [m]")
+    # cb = plt.colorbar(ppmv,ax=axpmv)
+    # axpmv.set_title("Poor Man's Vorticity [$f$]")
 
     fig1.suptitle(name + ": " + start.strftime("%d-%b %H:%M") + " - " + end.strftime("%d-%b %H:%M"))
-    fig1.savefig(os.path.join(directory,name + "_velocity.png"))
+    # fig1.savefig(os.path.join(directory,name + "_velocity.png"))
 
     fig2 = plt.figure(figsize=(12, 6),constrained_layout=True)
     gs2 = gs.GridSpec(2, 2, figure=fig2, width_ratios=[1,1])
@@ -180,4 +179,6 @@ def ADCP_sections(filepath,directory,name,start,end,maxdepth=60):
     # axang.set_title("$Shear Angle$ [$^r$]")
 
     fig2.suptitle(name + ": " + start.strftime("%d-%b %H:%M") + " - " + end.strftime("%d-%b %H:%M"))
-    fig2.savefig(os.path.join(directory,name + "_shear.png"))
+    # fig2.savefig(os.path.join(directory,name + "_shear.png"))
+
+    return fig1, fig2
