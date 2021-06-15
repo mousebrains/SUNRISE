@@ -1,0 +1,11 @@
+---
+submitter: Jamie # We want some way of naming the subdirectories in Processed
+                   #so that they can be easily identified
+description: "This is a description that we write to a txt file in the output directory"
+start: 2019-06-01T00:00:00 # I'm a fan of using isoformat as much as possible and parsing
+                           # timestrings without timezone info as utc
+end: 2019-06-06T12:00:00 # end
+options:
+  - P300  # Request a section from the Pelican's 600 khz ADCP
+  - P1200 # and the Pelican's 600 khz ADCP
+  - WS600 # Not implemented in realtime.py yet
