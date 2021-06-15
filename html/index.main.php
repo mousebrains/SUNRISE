@@ -16,6 +16,7 @@ foreach (scandir(".") as $key => $val) {
 	}
 }
 ?>
+<li><a href="/Processed">Processed</a></li>
 </ul>
 </body>
 </html>
