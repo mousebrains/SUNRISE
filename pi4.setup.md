@@ -54,7 +54,7 @@ Host vm3 glidervm3 glidervm3.ceoas.oregonstate.edu
   - Add *~/SUNRISE/SAMBA/ws.conf* to */etc/samba/smb.conf*
   - Create the SMB user with a known password, Sunrise, `sudo smbpasswd -a pat`
 35. Restart samba, `sudo systemctl restart smbd`
-36. Install the required PHP packages, `sudo apt install php-xmlwriter php-yaml`
+36. Install the required PHP packages, `sudo apt install php-xml php-yaml`
 37. Install the required python packages, 
   - `sudo apt install python3-pip python3-pandas`
   - `python3 -m pip install inotify-simple`
