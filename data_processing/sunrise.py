@@ -220,19 +220,15 @@ def parse_WSFT(filename, start, end, skip=1, hdrFix = True):
 
         for i in range(len(df['Time'])):
 
-            year = 2021
-            month = 4
-            day = int(df['Date'][i].split()[0])
-            hour = int(df['Time'][i].split()[1].split(':')[0])
-            minute = int(df['Time'][i].split()[1].split(':')[1])
-            second = int(df['Time'][i].split()[1].split(':')[2])
-            newtime=datetime.datetime(year,month,day,hour,minute,second, \
-                                           tzinfo=datetime.timezone.utc)
+            newtime=datetime.datetime.strptime(df['Date'][i] + df['Time'][i], "%d %B%Y %H:%M:%S").\
+                        replace(tzinfo=datetime.timezone.utc)
+            
             if (newtime >= start) and (newtime <= end):
-                longitudes.append(-float(df["Lon Dec. Deg."][i].split()[-1]))
-                latitudes.append(float(df["Lat Dec. Deg."][i].split()[-1]))
+                longitudes.append(-float(df["Lon Dec. Deg.XX"][i].split()[-1]))
+                latitudes.append(float(df["Lat Dec. Deg.XX"][i].split()[-1]))
                 temperatures.append(float(df["MicroTSG1MicroTSG Temperature Degrees C"][i]))
                 salinities.append(float(df['MicroTSG Salinity PSU'][i]))
+                times.append(newtime)
 
         sigmas = [get_sigma0(s,t,lo,la) for s,t,lo,la in zip(salinities,temperatures,longitudes,latitudes)]
 
