@@ -222,7 +222,7 @@ def parse_WSFT(filename, start, end, skip=1, hdrFix = True):
 
             newtime=datetime.datetime.strptime(df['Date'][i] + df['Time'][i], "%d %B%Y %H:%M:%S").\
                         replace(tzinfo=datetime.timezone.utc)
-            
+
             if (newtime >= start) and (newtime <= end):
                 longitudes.append(-float(df["Lon Dec. Deg.XX"][i].split()[-1]))
                 latitudes.append(float(df["Lat Dec. Deg.XX"][i].split()[-1]))
@@ -233,12 +233,15 @@ def parse_WSFT(filename, start, end, skip=1, hdrFix = True):
         sigmas = [get_sigma0(s,t,lo,la) for s,t,lo,la in zip(salinities,temperatures,longitudes,latitudes)]
 
         # Calc salt grad
-        seg_distance = np.zeros(len(latitudes)-1)
-        for i in range(seg_distance.size):
-            seg_distance[i] = distance((latitudes[i+1],longitudes[i+1]),(latitudes[i],longitudes[i])).km
-        distances = np.zeros(len(latitudes))
-        distances[1:] = np.cumsum(seg_distance)
-        salt_grad = np.abs(np.gradient(np.asarray(salinities),distances))
+        if latitudes:
+            seg_distance = np.zeros(len(latitudes)-1)
+            for i in range(seg_distance.size):
+                seg_distance[i] = distance((latitudes[i+1],longitudes[i+1]),(latitudes[i],longitudes[i])).km
+            distances = np.zeros(len(latitudes))
+            distances[1:] = np.cumsum(seg_distance)
+            salt_grad = np.abs(np.gradient(np.asarray(salinities),distances))
+        else:
+            salt_grad = []
 
         return {"longitudes": longitudes,
             "latitudes": latitudes,
@@ -310,12 +313,13 @@ def parse_PFT(filename, start, end):
             Pelican_sigmas.append(sigma0)
 
         # Calc salt grad
-    seg_distance = np.zeros(len(Pelican_latitudes)-1)
-    for i in range(seg_distance.size):
-        seg_distance[i] = distance((Pelican_latitudes[i+1],Pelican_longitudes[i+1]),(Pelican_latitudes[i],Pelican_longitudes[i])).km
-    distances = np.zeros(len(Pelican_latitudes))
-    distances[1:] = np.cumsum(seg_distance)
-    Pelican_salt_grad = np.abs(np.gradient(np.asarray(Pelican_salinities),distances))
+    if Pelican_latitudes:
+        seg_distance = np.zeros(len(Pelican_latitudes)-1)
+        for i in range(seg_distance.size):
+            seg_distance[i] = distance((Pelican_latitudes[i+1],Pelican_longitudes[i+1]),(Pelican_latitudes[i],Pelican_longitudes[i])).km
+        distances = np.zeros(len(Pelican_latitudes))
+        distances[1:] = np.cumsum(seg_distance)
+        Pelican_salt_grad = np.abs(np.gradient(np.asarray(Pelican_salinities),distances))
 
     return {"latitudes": Pelican_latitudes,
         "longitudes": Pelican_longitudes,
@@ -702,10 +706,24 @@ def ADCP_PMV(DATAPATH,start,end,directory,AvgDepth=5,dmax_PMV=1,dmin_PMV=-1,pmv_
         "longitudes": lon,
         "latitudes": lat,
         "times": times,
-        "pm_vorticity": pm_vorticity
+        "pm_vorticity": pm_vorticity,
+        "label": label
     }
 
     return out_dict
+
+def PMV_png(start,end,directory,*args,dmin_PMV=-1, dmax_PMV=1):
+    fig, ax = plt.subplots(figsize=(12,9))
+    for pmv in args:
+        sc =ax.scatter(pmv["longitudes"],pmv["latitudes"],c=pmv["pm_vorticity"],cmap=cmo.curl,vmin=dmin_PMV,vmax=dmax_PMV)
+        ax.plot(pmv["longitudes"][-1],pmv["latitudes"][-1],marker="p",linestyle="None",label=pmv["label"])
+    ax.set_xlabel("Longitude [$^\circ$E]")
+    ax.set_ylabel("Latitude [$^\circ$N]")
+    ax.legend()
+    cb = fig.colorbar(sc)
+    ax.set_title("Poor Man's Vorticity [f] " + start.strftime("%d-%b %H:%M") + " - " +
+    end.strftime("%d-%b %H:%M"))
+    fig.savefig(os.path.join(directory,"Poor_Mans_Vorticity.png"))
 
 def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,plot_WS=True,sal_lims=None,temp_lims=None,density_lims=None,PM_lims=(-1,1)):
     # Set temp limits
@@ -765,19 +783,33 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         pms = axs[0,0].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
                   c=P_FT['salinities'], \
                    vmax=salt_max_PL, vmin=salt_min_PL, cmap=cmo.haline)
+        axs[0,0].set_xlabel("Longitude [$^\circ$E]")
+        axs[0,0].set_ylabel("Latitude [$^\circ$N]")
+        axs[0,0].set_title("Salinity")
         pmt = axs[0,1].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
                   c=P_FT['temperatures'], \
                    vmax=temp_max_PL, vmin=temp_min_PL, cmap=cmo.thermal)
+        axs[0,1].set_xlabel("Longitude [$^\circ$E]")
+        axs[0,1].set_ylabel("Latitude [$^\circ$N]")
+        axs[0,1].set_title("Temperature")
         pmd = axs[1,0].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
                   c=P_FT['sigmas'], \
                   vmax=sigma_max_PL, vmin=sigma_min_PL,cmap=cmo.dense)
+        axs[1,0].set_xlabel("Longitude [$^\circ$E]")
+        axs[1,0].set_ylabel("Latitude [$^\circ$N]")
+        axs[1,0].set_title("Potential Density")
         pmp = axs[1,1].scatter(ADCP_PL['longitudes'][:], ADCP_PL['latitudes'][:],\
                   c=ADCP_PL['pm_vorticity'], \
                   vmax=PM_lims[-1],vmin=PM_lims[0],cmap=cmo.curl)
+        axs[1,1].set_xlabel("Longitude [$^\circ$E]")
+        axs[1,1].set_ylabel("Latitude [$^\circ$N]")
+        axs[1,1].set_title("Poor Man's Vorticity [f]")
         fig.colorbar(pms, ax=axs[0,0])
         fig.colorbar(pmt, ax=axs[0,1])
         fig.colorbar(pmd, ax=axs[1,0])
         fig.colorbar(pmp, ax=axs[1,1])
+        fig.suptitle("Pelican Surface Data" + ": " + start.strftime("%d-%b %H:%M") + " - " + end.strftime("%d-%b %H:%M"))
+        fig.tight_layout()
         fig.savefig(os.path.join(directory,"Pelican_Surface_panels.png"),dpi=100)
         plt.close(fig)
     # WS
@@ -787,19 +819,33 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         pms = axs[0,0].scatter(WS_FT['longitudes'][:], WS_FT['latitudes'][:],\
                   c=WS_FT['salinities'], \
                    vmax=salt_max_WS, vmin=salt_min_WS, cmap=cmo.haline)
+        axs[0,0].set_xlabel("Longitude [$^\circ$E]")
+        axs[0,0].set_ylabel("Latitude [$^\circ$N]")
+        axs[0,0].set_title("Salinity")
         pmt = axs[0,1].scatter(WS_FT['longitudes'][:], WS_FT['latitudes'][:],\
                   c=WS_FT['temperatures'], \
                    vmax=temp_max_WS, vmin=temp_min_WS, cmap=cmo.thermal)
+        axs[0,1].set_xlabel("Longitude [$^\circ$E]")
+        axs[0,1].set_ylabel("Latitude [$^\circ$N]")
+        axs[0,1].set_title("Temperature")
         pmd = axs[1,0].scatter(WS_FT['longitudes'][:], WS_FT['latitudes'][:],\
                   c=WS_FT['sigmas'], \
                   vmax=sigma_max_WS, vmin=sigma_min_WS,cmap=cmo.dense)
+        axs[1,0].set_xlabel("Longitude [$^\circ$E]")
+        axs[1,0].set_ylabel("Latitude [$^\circ$N]")
+        axs[1,0].set_title("Potential Density")
         pmp = axs[1,1].scatter(ADCP_WS['longitudes'][:], ADCP_WS['latitudes'][:],\
                   c=ADCP_WS['pm_vorticity'], \
                   vmax=PM_lims[-1],vmin=PM_lims[0],cmap=cmo.curl)
+        axs[1,1].set_xlabel("Longitude [$^\circ$E]")
+        axs[1,1].set_ylabel("Latitude [$^\circ$N]")
+        axs[1,1].set_title("Poor Man's Vorticity [f]")
         fig.colorbar(pms, ax=axs[0,0])
         fig.colorbar(pmt, ax=axs[0,1])
         fig.colorbar(pmd, ax=axs[1,0])
         fig.colorbar(pmp, ax=axs[1,1])
+        fig.suptitle("Walton Smith Surface Data" + ": " + start.strftime("%d-%b %H:%M") + " - " + end.strftime("%d-%b %H:%M"))
+        fig.tight_layout()
         fig.savefig(os.path.join(directory,"WS_Surface_panels.png"),dpi=100)
         plt.close(fig)
 

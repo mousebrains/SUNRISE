@@ -8,12 +8,12 @@ import sunrise
 
 # DATAPATHS
 OUT_DIRECTORY = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\Processed"
-PELICAN_FT_DATAPATH = '../../underway_data/MIDAS_002.elg'
-WS_FT_DATAPATH = '../../underway_data/20210411212WS21111_Baringer-Dly VDL.dat'
-PELICAN_600_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh300.nc"
-PELICAN_1200_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh1200.nc"
-WS_600_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh300.nc"
-WS_1200_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh1200.nc"
+PELICAN_FT_DATAPATH = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\Pelican\Event Data\MIDAS_011.elg"
+WS_FT_DATAPATH = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\WaltonSmith\WS21163_Hetland_TR-Full-Vdl.dat"
+PELICAN_600_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\Pelican\wh300.nc"
+PELICAN_1200_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\Pelican\wh1200.nc"
+WS_600_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\WaltonSmith\wh600.nc"
+WS_1200_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\WaltonSmith\wh600.nc"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("fn", nargs="+", help="Input yaml files")
@@ -21,9 +21,7 @@ args = parser.parse_args()
 
 for fn in args.fn:
     with open(fn, "r") as fp:
-        print(fn)
         input = yaml.safe_load(fp)
-        print(input)
 
 # parse start and end
 try:
@@ -65,50 +63,69 @@ temp_lims = input.pop("temp_lims",None)
 density_lims = input.pop("density_lims",None)
 
 # Now get the throughflow variables
-if any([input["salinity_kmz"], input["temperature_kmz"], input["density_kmz"],
-    input["salinity_png"], input["temperature_png"], input["density_png"],
-    input["sal_grad_kmz"], input["sal_grad_png"],
-    input["Pelican_surface"], input["WS_surface"]]):
-    P_FT = sunrise.parse_PFT(PELICAN_FT_DATAPATH,start,end)
-    WS_FT = sunrise.parse_WSFT(WS_FT_DATAPATH,start,end)
+try:
+    if any([input["salinity_kmz"], input["temperature_kmz"], input["density_kmz"],
+        input["salinity_png"], input["temperature_png"], input["density_png"],
+        input["sal_grad_kmz"], input["sal_grad_png"],
+        input["Pelican_surface"], input["WS_surface"]]):
+        P_FT = sunrise.parse_PFT(PELICAN_FT_DATAPATH,start,end)
+        WS_FT = sunrise.parse_WSFT(WS_FT_DATAPATH,start,end)
+        print(WS_FT)
 
 
-# Make throughflow plots
-sunrise.throughflow(P_FT,WS_FT,start,end,directory,
-    sal_kmz=input["salinity_kmz"],temp_kmz=input["temperature_kmz"],density_kmz=input["density_kmz"],
-    sal_png=input["salinity_png"],temp_png=input["temperature_png"],density_png=input["density_png"],
-    salg_kmz=input["sal_grad_kmz"], salg_png=input["sal_grad_png"],
-    sal_lims=sal_lims,temp_lims=temp_lims,density_lims=density_lims)
+    # Make throughflow plots
+    sunrise.throughflow(P_FT,WS_FT,start,end,directory,
+        sal_kmz=input["salinity_kmz"],temp_kmz=input["temperature_kmz"],density_kmz=input["density_kmz"],
+        sal_png=input["salinity_png"],temp_png=input["temperature_png"],density_png=input["density_png"],
+        salg_kmz=input["sal_grad_kmz"], salg_png=input["sal_grad_png"],
+        sal_lims=sal_lims,temp_lims=temp_lims,density_lims=density_lims)
+except:
+    raise
 
 # Next Get Poor Man's Vorticity and make kmzs
-if any([input["PMV_kmz"], input["PMV_png"], input["Pelican_surface"], input["WS_surface"]]):
-    P_PMV = sunrise.ADCP_PMV(PELICAN_1200_DATA,start,end,directory,
-        pmv_filename="Pelican_PMV",label="Pelican PMV [f]",kmz=input["PMV_kmz"])
-    WS_PMV = sunrise.ADCP_PMV(WS_1200_DATA,start,end,directory,
-        pmv_filename="WS_PMV",label="WS PMV [f]",kmz=input["PMV_kmz"])
+try:
+    if any([input["PMV_kmz"], input["PMV_png"], input["Pelican_surface"], input["WS_surface"]]):
+        P_PMV = sunrise.ADCP_PMV(PELICAN_1200_DATA,start,end,directory,
+            pmv_filename="Pelican_PMV",label="Pelican PMV [f]",kmz=input["PMV_kmz"])
+        WS_PMV = sunrise.ADCP_PMV(WS_1200_DATA,start,end,directory,
+            pmv_filename="WS_PMV",label="WS PMV [f]",kmz=input["PMV_kmz"])
+
+    if input["PMV_png"]:
+        sunrise.PMV_png(start,end,directory,P_PMV,WS_PMV)
+except:
+    raise
 
 # Now surface summary plots
-if input["Pelican_surface"] or input["WS_surface"]:
-    sunrise.ShipSurface_png(P_FT,WS_FT,P_PMV,WS_PMV,start,end,directory,
-        plot_P=input["Pelican_surface"], plot_WS=input["WS_surface"],
-        sal_lims=sal_lims, temp_lims=temp_lims, density_lims=density_lims)
+try:
+    if input["Pelican_surface"] or input["WS_surface"]:
+        sunrise.ShipSurface_png(P_FT,WS_FT,P_PMV,WS_PMV,start,end,directory,
+            plot_P=input["Pelican_surface"], plot_WS=input["WS_surface"],
+            sal_lims=sal_lims, temp_lims=temp_lims, density_lims=density_lims)
+except:
+    raise
 
 # ADCP sections
-if input["Pelican_600kHz_section"]:
-    sunrise.ADCP_section(PELICAN_600_DATA,start,end,directory,"Pelican 600kHz",maxdepth=60)
-if input["Pelican_1200kHz_section"]:
-    sunrise.ADCP_section(PELICAN_1200_DATA,start,end,directory,"Pelican 1200kHz",maxdepth=15)
-if input["WS_600kHz_section"]:
-    sunrise.ADCP_section(WS_600_DATA,start,end,directory,"WS 600kHz",maxdepth=60)
-if input["WS_1200kHz_section"]:
-    sunrise.ADCP_section(WS_1200_DATA,start,end,directory,"WS 1200kHz",maxdepth=15)
+try:
+    if input["Pelican_600kHz_section"]:
+        sunrise.ADCP_section(PELICAN_600_DATA,start,end,directory,"Pelican 600kHz",maxdepth=60)
+    if input["Pelican_1200kHz_section"]:
+        sunrise.ADCP_section(PELICAN_1200_DATA,start,end,directory,"Pelican 1200kHz",maxdepth=15)
+    if input["WS_600kHz_section"]:
+        sunrise.ADCP_section(WS_600_DATA,start,end,directory,"WS 600kHz",maxdepth=60)
+    if input["WS_1200kHz_section"]:
+        sunrise.ADCP_section(WS_1200_DATA,start,end,directory,"WS 1200kHz",maxdepth=15)
+except:
+    raise
 
 # ADCP vectors
-if input["Pelican_600kHz_vector"]:
-    sunrise.ADCP_vector(PELICAN_600_DATA,start,end,directory,"Pelican 600kHz",DEPTH_LEVELS=5)
-if input["Pelican_1200kHz_vector"]:
-    sunrise.ADCP_vector(PELICAN_1200_DATA,start,end,directory,"Pelican 1200kHz",DEPTH_LEVELS=5)
-if input["WS_600kHz_vector"]:
-    sunrise.ADCP_vector(WS_600_DATA,start,end,directory,"WS 600kHz",DEPTH_LEVELS=5)
-if input["WS_1200kHz_vector"]:
-    sunrise.ADCP_vector(WS_1200_DATA,start,end,directory,"WS 1200kHz",DEPTH_LEVELS=5)
+try:
+    if input["Pelican_600kHz_vector"]:
+        sunrise.ADCP_vector(PELICAN_600_DATA,start,end,directory,"Pelican 600kHz",DEPTH_LEVELS=5)
+    if input["Pelican_1200kHz_vector"]:
+        sunrise.ADCP_vector(PELICAN_1200_DATA,start,end,directory,"Pelican 1200kHz",DEPTH_LEVELS=5)
+    if input["WS_600kHz_vector"]:
+        sunrise.ADCP_vector(WS_600_DATA,start,end,directory,"WS 600kHz",DEPTH_LEVELS=5)
+    if input["WS_1200kHz_vector"]:
+        sunrise.ADCP_vector(WS_1200_DATA,start,end,directory,"WS 1200kHz",DEPTH_LEVELS=5)
+except:
+    raise
