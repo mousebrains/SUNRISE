@@ -803,3 +803,62 @@ def ShipSurface_png(FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,plot_WS=T
         fig.colorbar(pmp, ax=axs[1,1])
         fig.savefig(os.path.join(directory,"WS_Surface_panels.png"),dpi=100)
         plt.close(fig)
+
+def ADCP_vector(filepath,start,end,directory,name,MAX_SPEED=None,VECTOR_LENGTH=1./20.,DEPTH_LEVELS=-1, CMAP=cmo.deep):
+    """Create ADCP vector"""
+
+    rootgrp = netCDF4.Dataset(filepath, "r")
+    decimal_days = rootgrp["time"]
+    yearbase = rootgrp.yearbase
+
+    # start = datetime.datetime.fromisoformat(START)
+    # end = datetime.datetime.fromisoformat(END)
+
+    # Turn times into datetimes
+    times = []
+    base_time = datetime.datetime(yearbase,1,1,tzinfo=datetime.timezone.utc)
+    for dd in decimal_days[:]:
+        dt = datetime.timedelta(days=dd)
+        times.append(base_time + dt)
+
+
+
+    idx = np.zeros(len(times),dtype=bool)
+    for i in range(len(times)):
+        idx[i] = (times[i] >= start) and (times[i] <= end)
+
+    # Get data
+    lon = rootgrp["lon"][idx]
+    lat = rootgrp["lat"][idx]
+    u = rootgrp["u"][idx,:DEPTH_LEVELS]
+    v = rootgrp["v"][idx,:DEPTH_LEVELS]
+    missing = (u > 10**30) | (v > 10**30)
+    u[missing] = 0
+    v[missing] = 0
+    depths = rootgrp["depth"][0,:DEPTH_LEVELS]
+    depth_scaled = (depths - depths[0])/(depths[-1] - depths[0])
+    times_filtered = [time for time, id in zip(times,idx) if id]
+
+    if not times_filtered:
+        # No data in time range
+        return None
+
+    folders = [f"{d:03.0f}m" for d in depths]
+
+    colors = [CMAP(d) for d in depth_scaled]
+
+    # print(rootgrp)
+
+    kml.kml_vectors(directory,
+    name+"_vector",
+    lon,
+    lat,
+    u,
+    v,
+    times_filtered,
+    folders=folders,
+    color=colors,
+    dmax=MAX_SPEED,
+    vmax=VECTOR_LENGTH,
+    compress=True
+    )

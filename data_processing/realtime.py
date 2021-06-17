@@ -92,3 +92,13 @@ if input["WS_600kHz_section"]:
     sunrise.ADCP_section(WS_600_DATA,start,end,directory,"WS 600kHz",maxdepth=60)
 if input["WS_1200kHz_section"]:
     sunrise.ADCP_section(WS_1200_DATA,start,end,directory,"WS 1200kHz",maxdepth=15)
+
+# ADCP vectors
+if input["Pelican_600kHz_vector"]:
+    sunrise.ADCP_vector(PELICAN_600_DATA,start,end,directory,"Pelican 600kHz",MAX_SPEED=None,VECTOR_LENGTH=1./20.,DEPTH_LEVELS=5)
+if input["Pelican_1200kHz_vector"]:
+    sunrise.ADCP_vector(PELICAN_1200_DATA,start,end,directory,"Pelican 1200kHz",MAX_SPEED=None,VECTOR_LENGTH=1./20.,DEPTH_LEVELS=5)
+if input["WS_600kHz_vector"]:
+    sunrise.ADCP_vector(WS_600_DATA,start,end,directory,"WS 600kHz",MAX_SPEED=None,VECTOR_LENGTH=1./20.,DEPTH_LEVELS=5)
+if input["WS_1200kHz_vector"]:
+    sunrise.ADCP_vector(WS_1200_DATA,start,end,directory,"WS 1200kHz",MAX_SPEED=None,VECTOR_LENGTH=1./20.,DEPTH_LEVELS=5)
