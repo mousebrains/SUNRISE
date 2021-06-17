@@ -7,8 +7,10 @@ from datetime import datetime, timezone
 import sunrise
 
 # DATAPATHS
-PELICAN_300_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh300.nc"
+PELICAN_600_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh300.nc"
 PELICAN_1200_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh1200.nc"
+WS_600_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh300.nc"
+WS_1200_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh1200.nc"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("fn", nargs="+", help="Input yaml files")
@@ -39,7 +41,7 @@ except:
 # Construct a directory
 try:
     directory = os.path.join(r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\Processed",
-        input["submitter"] + "_" + str(datetime.utcnow().timestamp()))
+        datetime.utcnow().strftime("%m%d-%H%M_") + input["short_name"])
     print(directory)
     os.mkdir(directory)
 except:
@@ -48,38 +50,44 @@ except:
 
 # Write the description to a text file in the directory
 try:
-    with open(os.path.join(directory,"description.txt"),"w") as f:
+    with open(os.path.join(directory,"0.description.txt"),"w") as f:
         f.write(input["description"])
 except:
     raise
     print("Description file not created")
 
-# For every option in options we create the requested plot
-# Pelican 300khz ADCP
-if "P300" in input["options"]:
-    try:
-        fig_vel, fig_shear = sunrise.ADCP_section(PELICAN_300_DATA,"Pelican 300khz",start,end,maxdepth=60)
-        fig_vel.savefig(os.path.join(directory,"Pelican_300_vel.png"))
-        fig_shear.savefig(os.path.join(directory,"Pelican_300_shear.png"))
-        input["options"].remove("P300")
-    except:
-        raise
-        print("P300 failed")
+# First the throughflow variables
+salinity = input["salinity_kmz"] or input["salinity_png"]
+temperature = input["temperature_kmz"] or input["temperature_png"]
+density = input["density_kmz"] or input["density_png"]
+kmz = input["salinity_png"] or input["temperature_png"] or input["density_png"]
+png = input["salinity_png"] or input["temperature_png"] or input["density_png"]
+sal_lims = input.pop("sal_lims",None)
+temp_lims = input.pop("temp_lims",None)
+density_lims = input.pop("density_lims",None)
 
-# Pelican 1200khz ADCP
-if "P1200" in input["options"]:
-    try:
-        fig_vel, fig_shear = sunrise.ADCP_section(PELICAN_1200_DATA,"Pelican 1200khz",start,end,maxdepth=15)
-        fig_vel.savefig(os.path.join(directory,"Pelican_1200_vel.png"))
-        fig_shear.savefig(os.path.join(directory,"Pelican_1200_shear.png"))
-        input["options"].remove("P1200")
-    except:
-        raise
-        print("P1200 failed")
+FT = sunrise.throughflow(start,end,directory,salinity=salinity,temperature=temperature,density=density,kmz=kmz,png=png,
+    sal_lims=sal_lims,temp_lims=temp_lims,density_lims=density_lims)
 
-# Followed by the rest of the options: WS ADCPs, throughflow plots, kml file generators
+# Next Poor Man's Vorticity
+if any([input["PMV_kmz"], input["PMV_png"], input["Pelican_surface"], input["WS_surface"]]):
+    Pelican_PMV = sunrise.ADCP_PMV(PELICAN_1200_DATA,start,end,directory,
+        pmv_filename="Pelican_PMV",label="Pelican PMV [f]",kmz=input["PMV_kmz"])
+    WS_PMV = sunrise.ADCP_PMV(WS_1200_DATA,start,end,directory,
+        pmv_filename="WS_PMV",label="WS PMV [f]",kmz=input["PMV_kmz"])
 
-# Once we have gone through all the different plot options check that input"options" is empty
+# Now surface summary plots
+if input["Pelican_surface"] or input["WS_surface"]:
+    sunrise.ShipSurface_png(FT,Pelican_PMV,WS_PMV,start,end,directory,
+        plot_P=input["Pelican_surface"], plot_WS=input["WS_surface"],
+        sal_lims=sal_lims, temp_lims=temp_lims, density_lims=density_lims)
 
-for option in input["options"]:
-    print(f"{option} is not a valid option")
+# ADCP sections
+if input["Pelican_600kHz_section"]:
+    sunrise.ADCP_section(PELICAN_600_DATA,start,end,directory,"Pelican 600kHz",maxdepth=60)
+if input["Pelican_1200kHz_section"]:
+    sunrise.ADCP_section(PELICAN_1200_DATA,start,end,directory,"Pelican 1200kHz",maxdepth=15)
+if input["WS_600kHz_section"]:
+    sunrise.ADCP_section(WS_600_DATA,start,end,directory,"WS 600kHz",maxdepth=60)
+if input["WS_1200kHz_section"]:
+    sunrise.ADCP_section(WS_1200_DATA,start,end,directory,"WS 1200kHz",maxdepth=15)

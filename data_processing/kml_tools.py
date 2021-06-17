@@ -224,6 +224,8 @@ class LineString():
         sets the line width style
     styleUrl: str
         the url id of a style element
+    ExtendedData: dict
+        extra data to include as name, value pairs
     """
 
     def __init__(self,coordinates,**kwargs):
@@ -236,6 +238,7 @@ class LineString():
         self.color = kwargs.pop("color",None)
         self.width = kwargs.pop("width",None)
         self.styleUrl = kwargs.pop("styleUrl",None)
+        self.ExtendedData = kwargs.pop("ExtendedData",{})
 
         for key in kwargs:
             print(f"{key} is not a valid input")
@@ -270,7 +273,15 @@ class LineString():
             file_object.write("\t"*(indent+1) + "</TimeStamp>\n")
         if self.description is not None:
             file_object.write("\t"*(indent+1) + "<description>" + self.description + "</description>\n")
-
+        if self.ExtendedData:
+            file_object.write("\t"*(indent+1) + "<ExtendedData>\n")
+            file_object.write("\t"*(indent+2) + "<SchemaData schemaUrl=\"#" +
+                self.ExtendedData.pop("schemaUrl") + "\">\n")
+            for key in self.ExtendedData:
+                file_object.write("\t"*(indent+3) + "<SimpleData name=\"" + key + "\">" +
+                    str(self.ExtendedData[key]) + "</SimpleData>\n")
+            file_object.write("\t"*(indent+2) + "</SchemaData>\n")
+            file_object.write("\t"*(indent+1) + "</ExtendedData>\n")
         file_object.write("\t"*(indent+1) + "<LineString>\n")
         file_object.write("\t"*(indent+2) + "<coordinates>\n")
         for coords in self.coordinates:
@@ -459,6 +470,21 @@ class Point():
         file_object.write("\t"*(indent+1) + "</Point>\n")
         file_object.write("\t"*indent + "</Placemark>\n")
 
+class Schema():
+
+    def __init__(self,name,id,*args):
+        self.name = name
+        self.id = id
+        self.fields = list(args)
+
+    def write_to_file(self,file_object,indent=0):
+        file_object.write("\t"*indent + "<Schema name=\"" + self.name + "\" id=\"" + self.id + "\">\n")
+        for field in self.fields:
+            file_object.write("\t"*(indent+1) + "<SimpleField type=\"" + field["type"] +
+                "\" name=\"" + field["name"] + "\">\n")
+            file_object.write("\t"*(indent+2) + " <displayName><![CDATA[" + field["name"] + "]]></displayName>\n")
+            file_object.write("\t"*(indent+1) + "</SimpleField>\n")
+        file_object.write("\t"*indent + "</Schema>\n")
 
 def kml_hex(color):
     """Convert matplotlib color to kml hex
@@ -499,7 +525,7 @@ def kml_hex(color):
     hex_color = f"{int(a*255):02x}{int(b*255):02x}{int(g*255):02x}{int(r*255):02x}"
     return hex_color
 
-def kml_coloured_line(directory,filename,data,lon,lat,times,cmap,label,dmin=None,dmax=None):
+def kml_coloured_line(directory,filename,data,data_key,lon,lat,times,cmap,label,dmin=None,dmax=None):
     """Make a kmz file with a line coloured by data
 
     This creates a series of line segments coloured using a colormap. The
@@ -515,8 +541,10 @@ def kml_coloured_line(directory,filename,data,lon,lat,times,cmap,label,dmin=None
         name of the kmz file without .kmz file extension
         - this function also creates filename.png and filename.kml
         that get zipped up into filename.kmz and then deleted
-    data: list/array
-        data to plot e.g. salinity
+    data: dictionary
+        data to include e.g. salinity, temperature
+    data_key: str
+        key of data to colour the line
     lon: list/array
         longitudes of the data points
     lat: list/array
@@ -536,34 +564,53 @@ def kml_coloured_line(directory,filename,data,lon,lat,times,cmap,label,dmin=None
         None
     """
 
-    # Check we have data
-    if not data:
+    # Check key is valid and we have data
+    if (data_key not in data):
+        return None
+
+    if len(data[data_key]) == 0:
         return None
 
     base = Writer()
 
     if dmin is None:
-        dmin = np.nanmin(data)
+        dmin = np.nanmin(data[data_key])
     if dmax is None:
-        dmax = np.nanmax(data)
+        dmax = np.nanmax(data[data_key])
 
     # first scale the data
-    data = [(d - dmin)/(dmax - dmin) for d in data]
+    colour_data = [(d - dmin)/(dmax - dmin) for d in data[data_key]]
 
     # make the lines
     lines_folder = Folder("lines")
+    schema = Schema("Data", "Data",
+        {"name": "Latitude", "type": "float"},
+        {"name": "Longitude", "type": "float"},
+        {"name": "Time", "type": "string"})
+    for key in data:
+        schema.fields.append({"name": key, "type": "float"})
+    base.children.append(schema)
     base.children.append(lines_folder)
     for i in range(len(times)-1):
         coords = [(lon[i],lat[i]),(lon[i+1],lat[i+1])]
         TimeSpan = (times[i],times[i+1])
         width = 5
         #r,g,b,a = cmap((data[i] + data[i+1])/2)
-        color = kml_hex(cmap((data[i] + data[i+1])/2))
+        color = kml_hex(cmap((colour_data[i] + colour_data[i+1])/2))
+        ExtendedData = {
+            "schemaUrl": "Data",
+            "Time": times[i].strftime("%d-%b %H:%M"),
+            "Latitude": f"{lat[i]:.3f}",
+            "Longitude": f"{lon[i]:.3f}",
+            }
+        for key in data:
+            ExtendedData[key] = f"{data[key][i]:.3f}"
         lines_folder.children.append(LineString(
             coords,
             TimeSpan=TimeSpan,
             width=width,
             color=color,
+            ExtendedData=ExtendedData
         ))
 
     # Now make a colour bar
