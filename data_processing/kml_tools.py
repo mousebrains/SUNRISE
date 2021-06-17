@@ -617,20 +617,20 @@ def kml_coloured_line(directory,filename,data,data_key,lon,lat,times,cmap,label,
     dummy = [[dmin,dmax]]
     pc = plt.imshow(dummy, cmap=cmap)
     plt.close()
-    fig = plt.figure(figsize=(1.0, 4.0), facecolor=None, frameon=False)
+    fig = plt.figure(figsize=(1.0, 2.8), facecolor=None, frameon=False)
     cax = fig.add_axes([0.0, 0.05, 0.2, 0.90])
     cb = plt.colorbar(pc, cax=cax)
     cb.set_label(label, color='0.9')
     for lab in cb.ax.get_yticklabels():
         plt.setp(lab, 'color', '0.9')
-    plt.savefig(filename + ".png")
+    plt.savefig(os.path.join(directory,filename + "_cb.png"))
     plt.close(fig)
 
     colourbar_folder = Folder("colorbar")
     base.children.append(colourbar_folder)
 
     colourbar_folder.children.append(ScreenOverlay(
-            filename + ".png",
+            filename + "_cb.png",
             overlayXY=(0,0),
             screenXY=(0.93,0.075),
             rotationXY=(0.5,0.5),
@@ -644,11 +644,11 @@ def kml_coloured_line(directory,filename,data,data_key,lon,lat,times,cmap,label,
     # Zip into kmz
     zp = ZipFile(os.path.join(directory,filename + ".kmz"),'w')
     zp.write(os.path.join(directory,filename + ".kml"),filename + ".kml")
-    zp.write(os.path.join(directory,filename + ".png"),filename + ".png")
+    zp.write(os.path.join(directory,filename + "_cb.png"),filename + "_cb.png")
     zp.close()
 
     # Tidy up
-    os.remove(os.path.join(directory,filename + ".png"))
+    os.remove(os.path.join(directory,filename + "_cb.png"))
     os.remove(os.path.join(directory,filename + ".kml"))
 
 def kml_vectors(directory,filename,lon,lat,east,north,times,folders=None,color="k",vmax=1/20,dmax=None,\
@@ -772,7 +772,7 @@ def kml_vectors(directory,filename,lon,lat,east,north,times,folders=None,color="
     cb.set_label("Speed [m/s]", color='0.9')
     for lab in cb.ax.get_yticklabels():
         plt.setp(lab, 'color', '0.9')
-    plt.savefig(filename + "_cb_mag.png")
+    plt.savefig(os.path.join(directory,filename + "_cb_mag.png"))
     plt.close()
 
     colourbar_folder = Folder("colorbar")

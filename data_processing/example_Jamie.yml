@@ -5,18 +5,22 @@ description: "This is a description that we write to a txt file in the output di
 start: 2019-06-01T00:00:00 # I'm a fan of using isoformat as much as possible and parsing
                            # timestrings without timezone info as utc
 end: 2021-06-06T12:00:00 # end
-Pelican_600kHz_section: false
-Pelican_1200kHz_section: false
-WS_600kHz_section: false
-WS_1200kHz_section: false
-salinity_kmz: false
-temperature_kmz: false
-density_kmz: false
-PMV_kmz: false
-salinity_png: false
-temperature_png: false
-density_png: false
-PMV_png: false
+Pelican_600kHz_section: true
+Pelican_600kHz_vectors: true
+Pelican_1200kHz_section: true
+Pelican_1200kHz_vectors: true
+WS_600kHz_section: true
+WS_600kHz_vectors: true
+WS_1200kHz_section: true
+WS_1200kHz_vectors: true
+salinity_kmz: true
+temperature_kmz: true
+density_kmz: true
+PMV_kmz: true
+salinity_png: true
+temperature_png: true
+density_png: true
+PMV_png: true
 Pelican_surface: true
 WS_surface: true
 sal_lims:

@@ -7,10 +7,11 @@ from datetime import datetime, timezone
 import sunrise
 
 # DATAPATHS
-PELICAN_600_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh300.nc"
-PELICAN_1200_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh1200.nc"
-WS_600_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh300.nc"
-WS_1200_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\wh1200.nc"
+PELICAN_600_DATA = "/Users/megangan/Desktop/Cruise/TwoShips_test/Pelican_data/wh300.nc"
+PELICAN_1200_DATA = "/Users/megangan/Desktop/Cruise/TwoShips_test/Pelican_data/wh1200.nc"
+WS_600_DATA = "/Users/megangan/Desktop/Cruise/TwoShips_test/WS_data/wh600.nc"
+WS_1200_DATA = "/Users/megangan/Desktop/Cruise/TwoShips_test/WS_data/wh1200.nc"
+OUTPUT_PATH = "/Users/megangan/Desktop/Cruise/TwoShips_test/Processed"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("fn", nargs="+", help="Input yaml files")
@@ -40,7 +41,7 @@ except:
 
 # Construct a directory
 try:
-    directory = os.path.join(r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\Processed",
+    directory = os.path.join(OUTPUT_PATH,
         datetime.utcnow().strftime("%m%d-%H%M_") + input["short_name"])
     print(directory)
     os.mkdir(directory)
@@ -60,7 +61,7 @@ except:
 salinity = input["salinity_kmz"] or input["salinity_png"]
 temperature = input["temperature_kmz"] or input["temperature_png"]
 density = input["density_kmz"] or input["density_png"]
-kmz = input["salinity_png"] or input["temperature_png"] or input["density_png"]
+kmz = input["salinity_kmz"] or input["temperature_kmz"] or input["density_kmz"]
 png = input["salinity_png"] or input["temperature_png"] or input["density_png"]
 sal_lims = input.pop("sal_lims",None)
 temp_lims = input.pop("temp_lims",None)
@@ -74,7 +75,7 @@ if any([input["PMV_kmz"], input["PMV_png"], input["Pelican_surface"], input["WS_
     Pelican_PMV = sunrise.ADCP_PMV(PELICAN_1200_DATA,start,end,directory,
         pmv_filename="Pelican_PMV",label="Pelican PMV [f]",kmz=input["PMV_kmz"])
     WS_PMV = sunrise.ADCP_PMV(WS_1200_DATA,start,end,directory,
-        pmv_filename="WS_PMV",label="WS PMV [f]",kmz=input["PMV_kmz"])
+        pmv_filename="Walton_Smith_PMV",label="WS PMV [f]",kmz=input["PMV_kmz"])
 
 # Now surface summary plots
 if input["Pelican_surface"] or input["WS_surface"]:

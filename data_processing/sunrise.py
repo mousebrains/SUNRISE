@@ -16,8 +16,8 @@ import kml_tools as kml
 
 CORIOLIS = 7*10**-5
 PRESSURE = 0 # pressure [dbar] at throughflow
-PELICAN_DATAPATH = '../../underway_data/MIDAS_002.elg'
-WALTON_SMITH_DATAPATH = '../../underway_data/20210411212WS21111_Baringer-Dly VDL.dat'
+PELICAN_DATAPATH = '/Users/megangan/Desktop/Cruise/TwoShips_test/Pelican_data/MIDAS_002.elg'
+WALTON_SMITH_DATAPATH = '/Users/megangan/Desktop/Cruise/TwoShips_test/WS_data/WS21111_Baringer-Full-Vdl.dat'
 
 def ADCP_section(filepath,start,end,directory,name,maxdepth=60):
     """Create ADCP section"""
@@ -230,14 +230,24 @@ def parse_WSFT(filename, start, end, skip=1, hdrFix = True):
             newtime=datetime.datetime(year,month,day,hour,minute,second, \
                                            tzinfo=datetime.timezone.utc)
             if (newtime >= start) and (newtime <= end):
-                longitudes.append(-float(df["Lon Dec. Deg.XX"][i].split()[-1]))
-                latitudes.append(float(df["Lat Dec. Deg.XX"][i].split()[-1]))
+                longitudes.append(-float(df["Lon Dec. Deg."][i].split()[-1]))
+                latitudes.append(float(df["Lat Dec. Deg."][i].split()[-1]))
                 temperatures.append(float(df["MicroTSG1MicroTSG Temperature Degrees C"][i]))
                 salinities.append(float(df['MicroTSG Salinity PSU'][i]))
 
         sigmas = [get_sigma0(s,t,lo,la) for s,t,lo,la in zip(salinities,temperatures,longitudes,latitudes)]
 
-        return longitudes, latitudes, times, salinities, temperatures, sigmas
+
+        # Calc salt grad
+        seg_distance = np.zeros(len(latitudes)-1)
+        for i in range(seg_distance.size):
+            seg_distance[i] = distance((latitudes[i+1],longitudes[i+1]),(latitudes[i],longitudes[i])).km*1000.
+        distances = np.zeros(len(latitudes))
+        distances[1:] = np.cumsum(seg_distance)
+        salt_grad = np.abs(np.gradient(np.asarray(salinities),distances))
+
+
+        return longitudes, latitudes, times, salinities, temperatures, sigmas, salt_grad
 
 def parse_PFT(filename, start, end):
 
@@ -300,12 +310,21 @@ def parse_PFT(filename, start, end):
                 sigma0 = float("nan")
             Pelican_sigmas.append(sigma0)
 
+    # Calc salt grad
+    seg_distance = np.zeros(len(Pelican_latitudes)-1)
+    for i in range(seg_distance.size):
+        seg_distance[i] = distance((Pelican_latitudes[i+1],Pelican_longitudes[i+1]),(Pelican_latitudes[i],Pelican_longitudes[i])).km*1000.
+    distances = np.zeros(len(Pelican_latitudes))
+    distances[1:] = np.cumsum(seg_distance)
+    Pelican_salt_grad = np.abs(np.gradient(np.asarray(Pelican_salinities),distances))
+
     return (Pelican_latitudes,
         Pelican_longitudes,
         Pelican_times,
         Pelican_salinities,
         Pelican_temperatures,
-        Pelican_sigmas)
+        Pelican_sigmas,
+        Pelican_salt_grad)
 
 def parse_ASV(filename, start, end):
 
@@ -338,7 +357,8 @@ def throughflow(start,end,directory,salinity=True,temperature=True,density=True,
         Pelican_times,
         Pelican_salinities,
         Pelican_temperatures,
-        Pelican_sigmas) = parse_PFT(PELICAN_DATAPATH,start,end)
+        Pelican_sigmas,
+        Pelican_salt_grad) = parse_PFT(PELICAN_DATAPATH,start,end)
 
     # *************************** WALTON SMITH ******************************** #
 
@@ -347,16 +367,19 @@ def throughflow(start,end,directory,salinity=True,temperature=True,density=True,
     WS_times, \
     WS_salinities, \
     WS_temperatures, \
-    WS_sigmas) = parse_WSFT(WALTON_SMITH_DATAPATH,start,end)
+    WS_sigmas,
+    WS_salt_grad) = parse_WSFT(WALTON_SMITH_DATAPATH,start,end)
 
     Pelican_data = {
         "Salinity": Pelican_salinities,
+        "Salinity Gradient": Pelican_salt_grad,
         "Temperature": Pelican_temperatures,
         "Potential Density": Pelican_sigmas
     }
 
     WS_data = {
         "Salinity": WS_salinities,
+        "Salinity Gradient": WS_salt_grad,
         "Temperature": WS_temperatures,
         "Potential Density": WS_sigmas
     }
@@ -395,6 +418,18 @@ def throughflow(start,end,directory,salinity=True,temperature=True,density=True,
                 dmin=sal_min)
 
             kml.kml_coloured_line(directory,
+                "Pelican_Salinity_Gradient",
+                Pelican_data,
+                "Salinity Gradient",
+                Pelican_longitudes,
+                Pelican_latitudes,
+                Pelican_times,
+                cmo.matter,
+                "Pelican Salinity Gradient",
+                dmax=None,
+                dmin=None)
+
+            kml.kml_coloured_line(directory,
                 "Walton_Smith_Salinity",
                 WS_data,
                 "Salinity",
@@ -405,6 +440,19 @@ def throughflow(start,end,directory,salinity=True,temperature=True,density=True,
                 "Walton Smith Salinity",
                 dmax=sal_max,
                 dmin=sal_min)
+
+            kml.kml_coloured_line(directory,
+                "Walton_Smith_Salinity_Gradient",
+                WS_data,
+                "Salinity Gradient",
+                WS_longitudes,
+                WS_latitudes,
+                WS_times,
+                cmo.matter,
+                "Walton Smith Salinity Gradient",
+                dmax=None,
+                dmin=None)
+
         if png:
             fig, ax = plt.subplots(figsize=(12,9))
             sc = ax.scatter(Pelican_longitudes + WS_longitudes,
