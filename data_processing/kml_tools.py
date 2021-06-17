@@ -613,25 +613,28 @@ def kml_coloured_line(directory,filename,data,data_key,lon,lat,times,cmap,label,
             ExtendedData=ExtendedData
         ))
 
-    # Now make a colour bar
-    a = [[dmin,dmax]]
-    plt.figure(figsize=(9, 1))
-    img = plt.imshow(a, cmap=cmap)
-    plt.gca().set_visible(False)
-    cax = plt.axes([0.1, 0.4, 0.8, 0.2])
-    cb = plt.colorbar(orientation='horizontal', cax=cax)
-    cb.ax.tick_params(labelsize=18)
-    cax.set_title(label,fontsize=18)
-    plt.savefig(os.path.join(directory,filename + ".png"))
+    # Add colorbars
+    dummy = [[dmin,dmax]]
+    pc = plt.imshow(dummy, cmap=cmap)
     plt.close()
+    fig = plt.figure(figsize=(1.0, 4.0), facecolor=None, frameon=False)
+    cax = fig.add_axes([0.0, 0.05, 0.2, 0.90])
+    cb = plt.colorbar(pc, cax=cax)
+    cb.set_label(label, color='0.9')
+    for lab in cb.ax.get_yticklabels():
+        plt.setp(lab, 'color', '0.9')
+    plt.savefig(filename + ".png")
+    plt.close(fig)
 
-    colourbar_folder = Folder("colorbars")
+    colourbar_folder = Folder("colorbar")
     base.children.append(colourbar_folder)
-    for i in range(8):
-        colourbar_folder.children.append(ScreenOverlay(
+
+    colourbar_folder.children.append(ScreenOverlay(
             filename + ".png",
-            screenXY=(0.95,0.95-0.1*i),
-            name=f"CB{i+1}_{label}"
+            overlayXY=(0,0),
+            screenXY=(0.93,0.075),
+            rotationXY=(0.5,0.5),
+            size=(0,0)
         ))
 
     # Write kml file
@@ -648,7 +651,8 @@ def kml_coloured_line(directory,filename,data,data_key,lon,lat,times,cmap,label,
     os.remove(os.path.join(directory,filename + ".png"))
     os.remove(os.path.join(directory,filename + ".kml"))
 
-def kml_vectors(directory,filename,lon,lat,east,north,times,folders=None,color="k",vmax=1/20,dmax=None,compress=True):
+def kml_vectors(directory,filename,lon,lat,east,north,times,folders=None,color="k",vmax=1/20,dmax=None,\
+        dmax_mag=None,cmap_mag=plt.cm.Purples,compress=True):
     """Display vector data
 
     Turn vector data into a kml or kmz file e.g. ADCP data. Can handle multiple
@@ -699,6 +703,14 @@ def kml_vectors(directory,filename,lon,lat,east,north,times,folders=None,color="
         if dmax == 0:
             dmax = 1
 
+    if dmax_mag is None:
+        magnitudes = np.sqrt(np.array(north)**2 + np.array(east)**2)
+        dmax_mag = np.amax(magnitudes)
+        if dmax_mag == 0:
+            dmax_mag = 1
+
+
+    # Vectors and magnitudes
     if folders is None:
         vectors_folder = Folder(filename)
         base.children.append(vectors_folder)
@@ -719,6 +731,22 @@ def kml_vectors(directory,filename,lon,lat,east,north,times,folders=None,color="
             for j in range(len(folders)):
                 vectors_folder = Folder(folders[j])
                 base.children.append(vectors_folder)
+
+                # add magnitude
+                mag = np.sqrt((north[:,j]**2 + east[:,j]**2))
+                for i in range(len(times)-1):
+                    coords = [(lon[i],lat[i]),(lon[i+1],lat[i+1])]
+                    TimeSpan = (times[i],times[i+1])
+                    #r,g,b,a = cmap((data[i] + data[i+1])/2)
+                    color_mag = kml_hex(cmap_mag((mag[i] + mag[i+1])/2./dmax_mag))
+                    vectors_folder.children.append(LineString(
+                        coords,
+                        TimeSpan=TimeSpan,
+                        width=10,
+                        color=color_mag,
+                    ))
+
+                # add vectors
                 for i in range(len(times)):
                     coords = [(lon[i],lat[i]), (lon[i]+east[i][j]*vmax/dmax*conv,
                         lat[i]+north[i][j]*vmax/dmax)]
@@ -732,16 +760,46 @@ def kml_vectors(directory,filename,lon,lat,east,north,times,folders=None,color="
                         width=1
                     ))
 
+
+
+    # Add colorbars for magnitudes
+    dummy = [[0,dmax_mag]]
+    pc = plt.imshow(dummy, cmap=cmap_mag)
+    plt.close()
+    fig = plt.figure(figsize=(1.0, 2.8), facecolor=None, frameon=False)
+    cax = fig.add_axes([0.0, 0.05, 0.2, 0.90])
+    cb = plt.colorbar(pc, cax=cax)
+    cb.set_label("Speed [m/s]", color='0.9')
+    for lab in cb.ax.get_yticklabels():
+        plt.setp(lab, 'color', '0.9')
+    plt.savefig(filename + "_cb_mag.png")
+    plt.close()
+
+    colourbar_folder = Folder("colorbar")
+    base.children.append(colourbar_folder)
+
+    colourbar_folder.children.append(ScreenOverlay(
+            filename + "_cb_mag.png",
+            overlayXY=(0,0),
+            screenXY=(0.9,0.075),
+            rotationXY=(0.5,0.5),
+            size=(0,0)
+        ))
+
+
     with open(os.path.join(directory,filename + ".kml"),'w') as f:
         base.write_to_file(f)
 
     if compress:
         zp = ZipFile(os.path.join(directory,filename + ".kmz"),'w')
         zp.write(os.path.join(directory,filename + ".kml"),filename + ".kml")
+        zp.write(os.path.join(directory,filename + "_cb_mag.png"),filename + "_cb_mag.png")
+
         zp.close()
 
         # Tidy up
         os.remove(os.path.join(directory,filename + ".kml"))
+        os.remove(os.path.join(directory,filename + "_cb_mag.png"))
 
 def kml_path(directory,filename,lon,lat,times,color="k",width=1,iconpath=None,iconscale=1,name=None,labelscale=0):
     """Display asset path
