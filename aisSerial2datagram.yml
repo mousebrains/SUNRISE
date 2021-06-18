@@ -1,0 +1,4 @@
+# a list of dictionaries with ip: and port: in the dictionary
+
+- {ip: 192.168.0.69, port: 8982, name:pelican0}
+- {ip: 192.168.0.55, port: 8982, name: pelican1}
