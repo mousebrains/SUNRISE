@@ -17,6 +17,17 @@ import kml_tools as kml
 CORIOLIS = 7*10**-5
 PRESSURE = 0 # pressure [dbar] at throughflow
 
+class ASV_DATAPOINT():
+
+    def __init__(self,time):
+        self.time = time
+        self.lons = []
+        self.lats = []
+        self.temps = []
+        self.sals = []
+        self.u = []
+        self.v = []
+        self.w = []
 
 def ADCP_section(filepath,start,end,directory,name,maxdepth=60):
     """Create ADCP section"""
@@ -64,8 +75,8 @@ def ADCP_section(filepath,start,end,directory,name,maxdepth=60):
     v[v > 10**30] = np.nan
 
     #shear
-    ushear = np.gradient(u,depths_use,axis=1)
-    vshear = np.gradient(v,depths_use,axis=1)
+    ushear = -np.gradient(u,depths_use,axis=1)
+    vshear = -np.gradient(v,depths_use,axis=1)
     # angle = np.angle(u+1j*v)
 
     # ******************** Get Limits *********************************** #
@@ -341,16 +352,56 @@ def parse_ASV(filename, start, end):
     ADCP_v = []
     ADCP_w = []
 
+    datapoints = {}
     with open(filename, 'r') as f:
         for line in f:
             received, identifier, timestring, data = line.split('-- ')
-            print(timestring[:19])
             time = datetime.datetime.strptime(timestring[:19],"%Y/%m/%d %H:%M:%S")
             time = time.replace(tzinfo=datetime.timezone.utc)
-            print(identifier)
-            print(time)
-            print(data)
-            print()
+            identifier_strip = identifier.strip()
+            if identifier_strip == "navinfo":
+                timestring = time.isoformat()
+                if timestring not in datapoints:
+                    datapoints[timestring] = ASV_DATAPOINT(time)
+                data_split = data.split()
+                if data_split[0] == "LAT":
+                    datapoints[timestring].lats.append(data_split[1])
+                else:
+                    print("Unexpected Order")
+                if data_split[2] == "LON":
+                    datapoints[timestring].lons.append(data_split[3])
+                else:
+                    print("Unexpected Order")
+            if identifier_strip == "keelctd":
+                timestring = time.isoformat()
+                if timestring not in datapoints:
+                    datapoints[timestring] = ASV_DATAPOINT(time)
+                data_split = data.split()
+                if data_split[4] == "Temp":
+                    datapoints[timestring].temps.append(data_split[5])
+                else:
+                    print("Unexpected Order")
+                if data_split[6] == "Sal":
+                    datapoints[timestring].sals.append(data_split[7])
+                else:
+                    print("Unexpected Order")
+            if identifier_strip == "adcp":
+                timestring = time.isoformat()
+                if timestring not in datapoints:
+                    datapoints[timestring] = ASV_DATAPOINT(time)
+                data_split = data.split()
+                if data_split[4] == "u":
+                    datapoints[timestring].u.append(data_split[5])
+                else:
+                    print("Unexpected Order")
+                if data_split[6] == "v":
+                    datapoints[timestring].v.append(data_split[7])
+                else:
+                    print("Unexpected Order")
+                if data_split[8] == "w":
+                    datapoints[timestring].w.append(data_split[9])
+                else:
+                    print("Unexpected Order")
 
 def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,density_kmz=True,salg_kmz=True,sal_png=True,temp_png=True,density_png=True,salg_png=True,sal_lims=None,temp_lims=None,density_lims=None):
     """Get throughflow data from Pelican, WS, and ASVs (ASV not yet implemented) and create kmz/pngs"""
