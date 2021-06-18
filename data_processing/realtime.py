@@ -7,13 +7,13 @@ from datetime import datetime, timezone
 import sunrise
 
 # DATAPATHS
-OUT_DIRECTORY = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\Processed"
-PELICAN_FT_DATAPATHS = [r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\Pelican\Event Data\MIDAS_01.elg"]
-WS_FT_DATAPATH = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\WaltonSmith\WS21163_Hetland_TR-Full-Vdl.dat"
-PELICAN_600_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\Pelican\wh300.nc"
-PELICAN_1200_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\Pelican\wh1200.nc"
-WS_600_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\WaltonSmith\wh600.nc"
-WS_1200_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\WaltonSmith\wh600.nc"
+OUT_DIRECTORY ="/home/pat/Processed"
+PELICAN_FT_DATAPATHS = ["/home/lixinqu/Dropbox/Pelican/test/Event-Data/MIDAS_008.elg"]
+WS_FT_DATAPATH = "/home/lixinqu/Dropbox/WaltonSmith/test/WS21163_Hetland_TR-Full-Vdl.dat"
+PELICAN_600_DATA = "/home/lixinqu/Dropbox/Pelican/test/wh300.nc"
+PELICAN_1200_DATA = "/home/lixinqu/Dropbox/Pelican/test/wh1200.nc"
+WS_600_DATA = "/home/lixinqu/Dropbox/WaltonSmith/test/wh600.nc"
+WS_1200_DATA = "/home/lixinqu/Dropbox/WaltonSmith/test/wh600.nc"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("fn", nargs="+", help="Input yaml files")
