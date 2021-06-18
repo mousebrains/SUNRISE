@@ -70,7 +70,7 @@ try:
         input["Pelican_surface"], input["WS_surface"]]):
         P_FT = sunrise.parse_PFT(PELICAN_FT_DATAPATH,start,end)
         WS_FT = sunrise.parse_WSFT(WS_FT_DATAPATH,start,end)
-        print(WS_FT)
+        # print(WS_FT)
 
 
     # Make throughflow plots
