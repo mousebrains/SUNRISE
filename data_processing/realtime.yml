@@ -1,0 +1,74 @@
+plots:
+  - {name: Pelican_600kHz_section,
+    display_name: Pelican 600kHz ADCP Section,
+    description: Create velocity and shear sections from the Pelican's 600kHz ADCP}
+  - {name: Pelican_1200kHz_section,
+    display_name: Pelican 1200kHz ADCP Section,
+    description: Create velocity and shear sections from the Pelican's 1200kHz ADCP}
+  - {name: WS_600kHz_section,
+    display_name: Walton Smith 600kHz ADCP Section,
+    description: Create velocity and shear sections from the Walton Smith's 600kHz ADCP}
+  - {name: WS_1200kHz_section,
+    display_name: Walton Smith 1200kHz ADCP Section,
+    description: Create velocity and sher sections from the Walton Smith's 1200kHz ADCP}
+  - {name: Pelican_600kHz_vector,
+    display_name: Pelican 600kHz ADCP Vector KML,
+    description: Create a kml file of velocity vectors from top 5 bins of the Pelican's 600kHz ADCP}
+  - {name: Pelican_1200kHz_vector,
+    display_name: Pelican 1200kHz ADCP Vector KML,
+    description: Create a kml file of velocity vectors from top 5 bins of the Pelican's 1200kHz ADCP}
+  - - {name: WS_600kHz_vector,
+    display_name: Walton Smith 600kHz ADCP Vector KML,
+    description: Create a kml file of velocity vectors from top 5 bins of the Walton Smith's 600kHz ADCP}
+  - {name: WS_1200kHz_vector,
+    display_name: Walton Smith 1200kHz ADCP Vector KML,
+    description: Create a kml file of velocity vectors from top 5 bins of the Walton Smith's 1200kHz ADCP}
+  - {name: salinity_kmz,
+    display_name: Salinity KMZs,
+    description: Create salinity kmzs from flow through of all assets}
+  - {name: temperature_kmz,
+    display_name: Temperature KMZs,
+    description: Create temperature kmzs from flow through of all assets}
+  - {name: density_kmz,
+    display_name: Potential Density KMZs,
+    description: Create potential density kmzs from flow through of all assets}
+  - {name: PMV_kmz,
+    display_name: Poor Man's Vorticity KMZs,
+    description: Create poor man's vorticity kmzs using 1200kHz ADCP on Pelican and Walton Smith}
+  - {name: sal_grad_kmz,
+    display_name: Salinity Gradient KMZs,
+    description: Create salinity gradient magnitude kmzs from flow through of all assets}
+  - {name: salinity_png,
+    display_name: Salinity PNG,
+    description: Create a png of ship tracks of all assets coloured by salinity}
+  - {name: temperature_png,
+    display_name: Temperature PNG,
+    description: Create a png of ship tracks of all assets coloured by temperature}
+  - {name: density_png,
+    display_name: Potential Density PNG,
+    description: Create a png of ship tracks of all assets coloured by potential density}
+  - {name: pmv_png,
+    display_name: Poor Man's Vorticity PNG,
+    description: Create a png of ship tracks coloured by poor man's vorticity from 1200kHz ADCP}
+  - {name: sal_grad_png,
+    display_name: Salinity Gradient PNG,
+    description: Create a png of ship tracks of all assets coloured by magnitude of the salinity gradient}
+  - {name: Pelican_surface,
+    display_name: Pelican Surface Summary,
+    description: Create a png displaying salinity, temperature, potential density, and poor man's vorticity from the Pelican}
+  - {name: WS_surface,
+    display_name: Walton Smith Surface Summary,
+    description: Create a png displaying salinity, temperature, potential density, and poor man;s vorticity from the Walton Smith}
+limits:
+  - {name: sal_lims,
+    display_name: Salinity Limits,
+    default_min: 31, # I'm envisioning that we have a auto/manual toggle and this would be the default fill value if manual
+    default_max: 37}
+  - {name: temp_lims,
+    display_name: Temperature Limits,
+    default_min: 26,
+    default_max: 33}
+  - {name: density_lims,
+    display_name: Density Limits,
+    default_min: -5,
+    default_max: 20}
