@@ -42,7 +42,7 @@ except:
 # Construct a directory
 try:
     directory = os.path.join(OUT_DIRECTORY,
-        datetime.utcnow().strftime("%m%d-%H%M_") + input["short_name"])
+        start.strftime("%Y%m%d-%H%M_") + end.strftime("%Y%m%d-%H%M_") + input["short_name"])
     print(directory)
     os.mkdir(directory)
 except:
