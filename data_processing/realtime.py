@@ -8,7 +8,7 @@ import sunrise
 
 # DATAPATHS
 OUT_DIRECTORY = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\Processed"
-PELICAN_FT_DATAPATH = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\Pelican\Event Data\MIDAS_011.elg"
+PELICAN_FT_DATAPATHS = [r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\Pelican\Event Data\MIDAS_01.elg"]
 WS_FT_DATAPATH = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\WaltonSmith\WS21163_Hetland_TR-Full-Vdl.dat"
 PELICAN_600_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\Pelican\wh300.nc"
 PELICAN_1200_DATA = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\realship_test\Pelican\wh1200.nc"
@@ -68,7 +68,7 @@ try:
         input["salinity_png"], input["temperature_png"], input["density_png"],
         input["sal_grad_kmz"], input["sal_grad_png"],
         input["Pelican_surface"], input["WS_surface"]]):
-        P_FT = sunrise.parse_PFT(PELICAN_FT_DATAPATH,start,end)
+        P_FT = sunrise.parse_PFT(PELICAN_FT_DATAPATHS,start,end)
         WS_FT = sunrise.parse_WSFT(WS_FT_DATAPATH,start,end)
         # print(WS_FT)
 

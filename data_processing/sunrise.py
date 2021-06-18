@@ -251,7 +251,7 @@ def parse_WSFT(filename, start, end, skip=1, hdrFix = True):
             "sigmas": sigmas,
             "sal_grad": salt_grad}
 
-def parse_PFT(filename, start, end):
+def parse_PFT(filenames, start, end):
 
     Pelican_latitudes = []
     Pelican_longitudes = []
@@ -260,57 +260,58 @@ def parse_PFT(filename, start, end):
     Pelican_temperatures = []
     Pelican_sigmas = []
 
-    with open(filename, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            time = row["Time"]
-            if time[-2:] != "00":
-                continue
-            date = row["Date"]
-            date = datetime.datetime.strptime(date,"%m/%d/%Y")
-            time = datetime.time.fromisoformat(time)
-            time = datetime.datetime.combine(date, time, tzinfo=datetime.timezone.utc)
-            if time > end:
-                break
-            if time < start:
-                continue
+    for filename in filenames:
+        with open(filename, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                time = row["Time"]
+                if time[-2:] != "00":
+                    continue
+                date = row["Date"]
+                date = datetime.datetime.strptime(date,"%m/%d/%Y")
+                time = datetime.time.fromisoformat(time)
+                time = datetime.datetime.combine(date, time, tzinfo=datetime.timezone.utc)
+                if time > end:
+                    break
+                if time < start:
+                    continue
 
-            lat = row["ADU800-GGA-Lat"]
-            Pelican_latitudes.append(float(lat[0:2]) + float(lat[2:-1])/60)
-            lon = row["ADU800-GGA-Lon"]
-            Pelican_longitudes.append(-1*float(lon[0:3]) - float(lon[3:-1])/60)
+                lat = row["ADU800-GGA-Lat"]
+                Pelican_latitudes.append(float(lat[0:2]) + float(lat[2:-1])/60)
+                lon = row["ADU800-GGA-Lon"]
+                Pelican_longitudes.append(-1*float(lon[0:3]) - float(lon[3:-1])/60)
 
-            Pelican_times.append(time)
+                Pelican_times.append(time)
 
-            # Pelican temperature
-            temp = row["Thermosalinograph-Data-Temp"]
-            if not temp:
-                # Handle empty temperature field
-                temp = "nan"
-            try:
-                Pelican_temperatures.append(float(temp))
-            except:
-                print("Unexpected Temperature Value")
-                Pelican_temperatures.append(float("nan"))
+                # Pelican temperature
+                temp = row["Thermosalinograph-Data-Temp"]
+                if not temp:
+                    # Handle empty temperature field
+                    temp = "nan"
+                try:
+                    Pelican_temperatures.append(float(temp))
+                except:
+                    print("Unexpected Temperature Value")
+                    Pelican_temperatures.append(float("nan"))
 
-            # Pelican Salinity
-            sal = row["Thermosalinograph-Data-Salinity"]
-            if not sal:
-                # Handle empty salinity field
-                sal = "nan"
-            try:
-                Pelican_salinities.append(float(sal))
-            except:
-                print("Unexpected Salinity Value")
-                Pelican_salinities.append(float("nan"))
+                # Pelican Salinity
+                sal = row["Thermosalinograph-Data-Salinity"]
+                if not sal:
+                    # Handle empty salinity field
+                    sal = "nan"
+                try:
+                    Pelican_salinities.append(float(sal))
+                except:
+                    print("Unexpected Salinity Value")
+                    Pelican_salinities.append(float("nan"))
 
-            # Pelican potential density
-            try:
-                sigma0 = get_sigma0(float(sal), float(temp),
-                    Pelican_longitudes[-1], Pelican_latitudes[-1])
-            except:
-                sigma0 = float("nan")
-            Pelican_sigmas.append(sigma0)
+                # Pelican potential density
+                try:
+                    sigma0 = get_sigma0(float(sal), float(temp),
+                        Pelican_longitudes[-1], Pelican_latitudes[-1])
+                except:
+                    sigma0 = float("nan")
+                Pelican_sigmas.append(sigma0)
 
         # Calc salt grad
     if Pelican_latitudes:
