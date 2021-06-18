@@ -48,22 +48,30 @@ class Reader(MyThread):
                 q.put((t, senderAddr, data))
 
 class Writer(MyThread):
-    ''' Wait on a queue, decrypt them, then save the results in a growing CSV file '''
+    ''' Wait on a queue, decrypt them, then save the results in a growing JSON file '''
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger) -> None:
         MyThread.__init__(self, "Writer", args, logger)
         self.qIn = queue.Queue()
-
+        self.headers = set()
+        
     @staticmethod
     def addArgs(parser:argparse.ArgumentParser) -> None:
-        parser.add_argument("--csv", type=str, required=True, help="Output CSV filename")
-
+        parser.add_argument("--json", type=str, required=True, help="Output json filename")
+        
     def __decrypt(self, msg:bytes) -> list:
-        pass
+        plaintext = msg.decode("utf-8")
+        gramlist = plaintext.split("!")
+        return ais.stream.decode(gramlist)
 
-    def __writeCSV(self, fields:list) -> None:
+    def __writeJSON(self, fields:list) -> None:
         if fields is None: return
-        with open(self.args.csv, "a") as fp:
-            fp.write(",".join(fields) + "\n")
+        with open(self.args.json, "a") as fp:
+            for d in fields:
+                logger.info("Datagram: %s\n Writing to %s\n", d, self.args.json)
+                json.dump(d, fp)
+                fp.write("\n")
+
+            
 
     def runIt(self) -> None:
         '''Called on thread start '''
@@ -75,9 +83,9 @@ class Writer(MyThread):
             (ipAddr, port) = addr
             logger.info("t %s addr %s %s\n%s", t, ipAddr, port, msg)
             # Decrypt the msg
-            # fields = self.__decrypt(msg)
+            fields = self.__decrypt(msg)
             # write CSV records
-            # self.__writeCSV(fields)
+            self.__writeJSON(fields)
             qIn.task_done()
 
 parser = argparse.ArgumentParser(description="Listen for a LiveGPS message")
