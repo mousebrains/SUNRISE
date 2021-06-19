@@ -33,6 +33,11 @@ class Trigger(MyThread.MyThread):
             q.task_done()
             logger.info("action %s t %s names %s", action, t, names)
             # Lixin insert trigger code here for subprocess
+            process = subprocess.run(["python3",\
+                    "/home/pat/SUNRISE/data_processing/realtime.py",\
+                    names],\
+                    check=True, stdout=subprocess.PIPE, universal_newlines=True)
+            logger.info(process.stdout)
 
 parser = argparse.ArgumentParser()
 MyLogger.addArgs(parser)
