@@ -941,7 +941,7 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94)
         pms = axs[0,0].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
                   c=P_FT['salinities'], \
-                   vmax=salt_max_PL, vmin=salt_min_PL, cmap=cmo.haline)
+                   vmax=sal_max_PL, vmin=sal_min_PL, cmap=cmo.haline)
         axs[0,0].set_xlabel("Longitude [$^\circ$E]")
         axs[0,0].set_ylabel("Latitude [$^\circ$N]")
         axs[0,0].set_title("Salinity")
@@ -977,7 +977,7 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94)
         pms = axs[0,0].scatter(WS_FT['longitudes'][:], WS_FT['latitudes'][:],\
                   c=WS_FT['salinities'], \
-                   vmax=salt_max_WS, vmin=salt_min_WS, cmap=cmo.haline)
+                   vmax=sal_max_WS, vmin=sal_min_WS, cmap=cmo.haline)
         axs[0,0].set_xlabel("Longitude [$^\circ$E]")
         axs[0,0].set_ylabel("Latitude [$^\circ$N]")
         axs[0,0].set_title("Salinity")
