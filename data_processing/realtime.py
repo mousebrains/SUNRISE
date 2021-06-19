@@ -15,6 +15,7 @@ PELICAN_1200_DATA = "/home/pat/Dropbox/Pelican/test/ADCP/wh1200.nc"
 WS_600_DATA = "/home/pat/Dropbox/WaltonSmith/test/wh600.nc"
 WS_1200_DATA = "/home/pat/Dropbox/WaltonSmith/test/wh600.nc"
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("fn", nargs="+", help="Input yaml files")
 args = parser.parse_args()
