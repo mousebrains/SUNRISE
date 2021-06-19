@@ -42,7 +42,7 @@ try:
     print(msg)
     _ = clog_f.write(msg)
 except:
-    errmsg = "Error! Restart in %04d seconds" % sleep_time
+    errmsg = "Error! Retry in 30 minutes" %
     print(errmsg)
     _ = clog_f.write(errmsg)
 
