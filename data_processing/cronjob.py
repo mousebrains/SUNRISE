@@ -24,11 +24,11 @@ print(timestamp)
 _ = clog_f.write(timestamp)
 
 # Set time window
-#END_TIME = datetime.now().replace(tzinfo=timezone.utc)
+END_TIME = datetime.now().replace(tzinfo=timezone.utc)
 # for testing
-END_TIME = datetime(2021,6,17,0,0,0,tzinfo=timezone.utc)
+# END_TIME = datetime(2021,6,17,0,0,0,tzinfo=timezone.utc)
 
-START_TIME = END_TIME - timedelta(days=10)
+START_TIME = END_TIME - timedelta(days=12)
 
 # Make job file
 job_file = OUTPUT_DIR + "/crobjob-%s.yml" % datetime.now().strftime("%Y-%m-%dT%H-%M")
@@ -42,7 +42,7 @@ try:
     print(msg)
     _ = clog_f.write(msg)
 except:
-    errmsg = "Error! Retry in 30 minutes" 
+    errmsg = "Error! Retry in 30 minutes"
     print(errmsg)
     _ = clog_f.write(errmsg)
 
