@@ -16,6 +16,7 @@ import kml_tools as kml
 
 CORIOLIS = 7*10**-5
 PRESSURE = 0 # pressure [dbar] at throughflow
+DEFAULT_LIMS = {"lower": False, "lowerLim": "0", "upper": False, "upperLim": "0"}
 
 class ASV_DATAPOINT():
 
@@ -463,8 +464,7 @@ def parse_ASV(filename, start, end):
         "sigmas": sigmas,
         "sal_grad": salt_grad}
 
-
-def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,density_kmz=True,salg_kmz=True,sal_png=True,temp_png=True,density_png=True,salg_png=True,sal_lims=None,temp_lims=None,density_lims=None):
+def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,density_kmz=True,salg_kmz=True,sal_png=True,temp_png=True,density_png=True,salg_png=True,sal_lims=DEFAULT_LIMS,temp_lims=DEFAULT_LIMS,density_lims=DEFAULT_LIMS):
     """Get throughflow data from Pelican, WS, and ASVs (ASV not yet implemented) and create kmz/pngs"""
     # ******************************* PELICAN ********************************* #
 
@@ -502,23 +502,30 @@ def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,dens
     # *************************** CREATE KMZ/PNG *************************** #
 
     if sal_kmz or sal_png:
-        if sal_lims is None:
+        if not sal_lims["lower"]:
             try:
-                sal_max_P = np.nanmax(Pelican_salinities)
                 sal_min_P = np.nanmin(Pelican_salinities)
             except ValueError: # empty list
-                sal_max_P = 0
                 sal_min_P = 100
             try:
-                sal_max_WS = np.nanmax(WS_salinities)
                 sal_min_WS = np.nanmin(WS_salinities)
             except ValueError: # empty list
-                sal_max_WS = 0
                 sal_min_WS = 100
-            sal_max = max(sal_max_P, sal_min_P)
             sal_min = min(sal_min_P, sal_min_WS)
         else:
-            sal_min, sal_max = sal_lims
+            sal_min = float(sal_lims["lowerLim"])
+        if not sal_lims["upper"]:
+            try:
+                sal_max_P = np.nanmax(Pelican_salinities)
+            except ValueError: # empty list
+                sal_max_P = 0
+            try:
+                sal_max_WS = np.nanmax(WS_salinities)
+            except ValueError: # empty list
+                sal_max_WS = 0
+            sal_max = max(sal_max_P, sal_max_WS)
+        else:
+            sal_max = float(sal_lims["upperLim"])
 
     if sal_kmz:
         kml.kml_coloured_line(directory,
@@ -567,23 +574,30 @@ def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,dens
         fig.savefig(os.path.join(directory,"Salinity.png"))
 
     if temp_kmz or temp_png:
-        if temp_lims is None:
+        if not temp_lims["lower"]:
             try:
-                temp_max_P = np.nanmax(Pelican_temperatures)
                 temp_min_P = np.nanmin(Pelican_temperatures)
             except ValueError: # empty list
-                temp_max_P = 0
                 temp_min_P = 100
             try:
-                temp_max_WS = np.nanmax(WS_temperatures)
                 temp_min_WS = np.nanmin(WS_temperatures)
             except ValueError: # empty list
-                temp_max_WS = 0
                 temp_min_WS = 100
-            temp_max = max(temp_max_P, temp_min_P)
             temp_min = min(temp_min_P, temp_min_WS)
         else:
-            temp_min, temp_max = temp_lims
+            temp_min = float(temp_lims["lowerLim"])
+        if not temp_lims["upper"]:
+            try:
+                temp_max_P = np.nanmax(Pelican_temperatures)
+            except ValueError: # empty list
+                temp_max_P = 0
+            try:
+                temp_max_WS = np.nanmax(WS_temperatures)
+            except ValueError: # empty list
+                temp_max_WS = 0
+            temp_max = max(temp_max_P, temp_max_WS)
+        else:
+            temp_max = float(temp_lims["upperLim"])
 
     if temp_kmz:
         kml.kml_coloured_line(directory,
@@ -632,23 +646,30 @@ def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,dens
         fig.savefig(os.path.join(directory,"Temperature.png"))
 
     if density_kmz or density_png:
-        if density_lims is None:
+        if not density_lims["lower"]:
             try:
-                sigma_max_P = np.nanmax(Pelican_sigmas)
                 sigma_min_P = np.nanmin(Pelican_sigmas)
             except ValueError: # empty list
-                sigma_max_P = -100
                 sigma_min_P = 100
             try:
-                sigma_max_WS = np.nanmax(WS_sigmas)
                 sigma_min_WS = np.nanmin(WS_sigmas)
             except ValueError: # empty list
-                sigma_max_WS = -100
                 sigma_min_WS = 100
-            sigma_max = max(sigma_max_P, sigma_min_P)
             sigma_min = min(sigma_min_P, sigma_min_WS)
         else:
-            sigma_min, sigma_max = density_lims
+            sigma_min = float(density_lims["lowerLim"])
+        if not density_lims["upper"]:
+            try:
+                sigma_max_P = np.nanmax(Pelican_sigmas)
+            except ValueError: # empty list
+                sigma_max_P = 0
+            try:
+                sigma_max_WS = np.nanmax(WS_sigmas)
+            except ValueError: # empty list
+                sigma_max_WS = 0
+            sigma_max = max(sigma_max_P, sigma_max_WS)
+        else:
+            sigma_max = float(density_lims["upperLim"])
 
     if density_kmz:
         kml.kml_coloured_line(directory,
@@ -838,57 +859,82 @@ def PMV_png(start,end,directory,*args,dmin_PMV=-1, dmax_PMV=1):
     end.strftime("%d-%b %H:%M"))
     fig.savefig(os.path.join(directory,"Poor_Mans_Vorticity.png"))
 
-def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,plot_WS=True,sal_lims=None,temp_lims=None,density_lims=None,PM_lims=(-1,1)):
+def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,plot_WS=True,sal_lims=DEFAULT_LIMS,temp_lims=DEFAULT_LIMS,density_lims=DEFAULT_LIMS,PM_lims=(-1,1)):
     # Set temp limits
-    if temp_lims is None:
+    if not temp_lims["lower"]:
         try:
-            temp_max_PL = np.nanmax(P_FT['temperatures'][:])
-            temp_min_PL = np.nanmin(P_FT['temperatures'][:])
+            temp_min_P = np.nanmin(Pelican_temperatures)
         except ValueError: # empty list
-            temp_max_PL = 0
-            temp_min_PL = 100
+            temp_min_P = 100
         try:
-            temp_max_WS = np.nanmax(WS_FT['temperatures'][:])
-            temp_min_WS = np.nanmin(WS_FT['temperatures'][:])
+            temp_min_WS = np.nanmin(WS_temperatures)
         except ValueError: # empty list
-            temp_max_WS = 0
             temp_min_WS = 100
     else:
-        temp_min_PL, temp_max_PL = temp_lims
-        temp_min_WS, temp_max_WS = temp_lims
-    # Set salt limits
-    if sal_lims is None:
+        temp_min_P = float(temp_lims["lowerLim"])
+        temp_min_WS = float(temp_lims["lowerLim"])
+    if not temp_lims["upper"]:
         try:
-            salt_max_PL = np.nanmax(P_FT['salinities'][:])
-            salt_min_PL = np.nanmin(P_FT['salinities'][:])
+            temp_max_P = np.nanmax(Pelican_temperatures)
         except ValueError: # empty list
-            salt_max_PL = 0
-            salt_min_PL = 100
+            temp_max_P = 0
         try:
-            salt_max_WS = np.nanmax(WS_FT['salinities'][:])
-            salt_min_WS = np.nanmin(WS_FT['salinities'][:])
+            temp_max_WS = np.nanmax(WS_temperatures)
         except ValueError: # empty list
-            salt_max_WS = 0
-            salt_min_WS = 100
+            temp_max_WS = 0
     else:
-        salt_min_PL, salt_max_PL = sal_lims
-        salt_min_WS, salt_max_WS = sal_lims
-    if density_lims is None:
+        temp_max_P = float(temp_lims["upperLim"])
+        temp_max_WS = float(temp_lims["upperLim"])
+    # Set salt limits
+    if not sal_lims["lower"]:
         try:
-            sigma_max_PL = np.nanmax(P_FT['sigmas'])
-            sigma_min_PL = np.nanmin(P_FT['sigmas'])
+            sal_min_P = np.nanmin(Pelican_salinities)
         except ValueError: # empty list
-            sigma_max_PL = -100
-            sigma_min_PL = 100
+            sal_min_P = 100
         try:
-            sigma_max_WS = np.nanmax(WS_FT['sigmas'])
-            sigma_min_WS = np.nanmin(WS_FT['sigmas'])
+            sal_min_WS = np.nanmin(WS_salinities)
         except ValueError: # empty list
-            sigma_max_WS = -100
+            sal_min_WS = 100
+    else:
+        sal_min_P = float(sal_lims["lowerLim"])
+        sal_min_WS = float(sal_lims["lowerLim"])
+    if not sal_lims["upper"]:
+        try:
+            sal_max_P = np.nanmax(Pelican_salinities)
+        except ValueError: # empty list
+            sal_max_P = 0
+        try:
+            sal_max_WS = np.nanmax(WS_salinities)
+        except ValueError: # empty list
+            sal_max_WS = 0
+    else:
+        sal_max_P = float(sal_lims["upperLim"])
+        sal_max_WS = float(sal_lims["upperLim"])
+
+    if not density_lims["lower"]:
+        try:
+            sigma_min_P = np.nanmin(Pelican_sigmas)
+        except ValueError: # empty list
+            sigma_min_P = 100
+        try:
+            sigma_min_WS = np.nanmin(WS_sigmas)
+        except ValueError: # empty list
             sigma_min_WS = 100
     else:
-        sigma_min_PL, sigma_max_PL = density_lims
-        sigma_min_WS, sigma_max_WS = density_lims
+        sigma_min_P = float(density_lims["lowerLim"])
+        sigma_min_WS = float(density_lims["lowerLim"])
+    if not density_lims["upper"]:
+        try:
+            sigma_max_P = np.nanmax(Pelican_sigmas)
+        except ValueError: # empty list
+            sigma_max_P = 0
+        try:
+            sigma_max_WS = np.nanmax(WS_sigmas)
+        except ValueError: # empty list
+            sigma_max_WS = 0
+    else:
+        sigma_max_P = float(density_lims["upperLim"])
+        sigma_max_WS = float(density_lims["upperLim"])
     # Pelican
     if plot_P:
         fig, axs = plt.subplots(2, 2, figsize=(12, 9))
@@ -962,36 +1008,51 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         fig.savefig(os.path.join(directory,"WS_Surface_panels.png"),dpi=100)
         plt.close(fig)
 
-def ASVSurface_png(ASVdata,start,end,directory,sal_lims=None,temp_lims=None,density_lims=None):
+def ASVSurface_png(ASVdata,start,end,directory,sal_lims=DEFAULT_LIMS,temp_lims=DEFAULT_LIMS,density_lims=DEFAULT_LIMS):
     """ASVdata is a dictionary of {"ASVname": data}"""
     for name, ASV in ASVdata.items():
-        if temp_lims is None:
+        if not temp_lims["lower"]:
+            try:
+                temp_min = np.nanmin(ASV["temperatures"])
+            except ValueError: # empty list
+                temp_min = -5
+        else:
+            temp_min = float(temp_lims["lowerLim"])
+        if not temp_lims["upper"]:
             try:
                 temp_max = np.nanmax(ASV["temperatures"])
-                temp_min = np.nanmin(ASV["temperatures"])
-            except ValueError:
-                temp_max = 33
-                temp_min = 26
+            except ValueError: # empty list
+                temp_max = 35
         else:
-            temp_min, temp_max = temp_lims
-        if sal_lims is None:
+            temp_max = float(temp_lims["upperLim"])
+        if not sal_lims["lower"]:
+            try:
+                sal_min = np.nanmin(ASV["salinities"])
+            except ValueError: # empty list
+                sal_min = -5
+        else:
+            sal_min = float(sal_lims["lowerLim"])
+        if not sal_lims["upper"]:
             try:
                 sal_max = np.nanmax(ASV["salinities"])
-                sal_min = np.nanmin(ASV["salinities"])
-            except ValueError:
-                sal_max = 37
-                sal_min = 31
+            except ValueError: # empty list
+                sal_max = 35
         else:
-            sal_min, sal_max = sal_lims
-        if density_lims is None:
+            sal_max = float(sal_lims["upperLim"])
+        if not density_lims["lower"]:
             try:
-                density_max = np.nanmax(ASV["sigmas"])
-                density_min = np.nanmin(ASV["sigmas"])
-            except ValueError:
-                density_max = 20
-                density_min = -5
+                sigma_min = np.nanmin(ASV["densities"])
+            except ValueError: # empty list
+                sigma_min = -5
         else:
-            density_min, density_max = density_lims
+            sigma_min = float(density_lims["lowerLim"])
+        if not density_lims["upper"]:
+            try:
+                sigma_max = np.nanmax(ASV["densities"])
+            except ValueError: # empty list
+                sigma_max = 35
+        else:
+            sigma_max = float(density_lims["upperLim"])
 
         fig, axs = plt.subplots(2, 2, figsize=(12, 9))
         fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94)
