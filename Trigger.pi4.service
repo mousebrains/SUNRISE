@@ -1,0 +1,31 @@
+#
+# Watch a set of directories for any changes via
+# inotify. Then trigger plot generation.
+#
+# sudo cp Trigger.service /etc/systemd/system/
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable Trigger.service
+# sudo systemctl start Trigger.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Monitor a set of directory trees for any changes, then trigger plot generation
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+ExecStart=/home/pat/SUNRISE/data_processing/Trigger.py \
+	--logfile=/home/pat/Trigger.log \
+	Dropbox/WaltonSmith/Sections \
+	Dropbox/Pelican/Sections \
+	Dropbox/Shore/Sections
+	
+RestartSec=10
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
