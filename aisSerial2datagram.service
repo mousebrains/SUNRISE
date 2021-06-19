@@ -1,0 +1,30 @@
+#
+# Listen to a serial port for AIS messages and send them out as datagrams
+# to a list of servers/ports
+#
+# sudo cp aisSerial2datagram.service /etc/systemd/system/
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable aisSerial2datagram.service
+# sudo systemctl start aisSerial2datagram.service
+#
+# June-2021 Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=AIS serial to datagrame service
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat/logs
+#
+ExecStart=/home/pat/SUNRISE/aisSerial2datagram.py \
+	--logfile=aisSerial2datagram.log \
+	--config=/home/pat/SUNRISE/aisSerial2datagram.yml
+	
+RestartSec=10
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
