@@ -8,7 +8,7 @@ import sunrise
 
 # DATAPATHS
 OUT_DIRECTORY ="/home/pat/Processed"
-PELICAN_FT_DATAPATHS = ["~/Dropbox/Pelican/test/Event-Data/MIDAS_008.elg"]
+PELICAN_FT_DATAPATHS = ["~/Dropbox/Pelican/test/MIDAS/MIDAS_008.elg"]
 WS_FT_DATAPATH = "~/Dropbox/WaltonSmith/test/WS21163_Hetland_TR-Full-Vdl.dat"
 PELICAN_600_DATA = "~/Dropbox/Pelican/test/wh300.nc"
 PELICAN_1200_DATA = "~/Dropbox/Pelican/test/wh1200.nc"
