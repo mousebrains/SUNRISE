@@ -19,7 +19,7 @@ User=pat
 WorkingDirectory=/home/pat
 #
 ExecStart=/home/pat/SUNRISE/data_processing/Trigger.py \
-	--logfile=/home/pat/Trigger.log \
+	--logfile=/home/pat/logs/Trigger.log \
 	Dropbox/WaltonSmith/Sections \
 	Dropbox/Pelican/Sections \
 	Dropbox/Shore/Sections
