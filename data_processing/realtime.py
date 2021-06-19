@@ -57,6 +57,8 @@ else:
 try:
     with open(os.path.join(directory,"0.description.txt"),"w") as f:
         f.write(input["description"])
+        f.write("\n\n** Comments ** \n")
+        f.write(input["comment"])
 except:
     raise
     print("Description file not created")
