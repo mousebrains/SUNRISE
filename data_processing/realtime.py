@@ -90,14 +90,14 @@ except:
 
 # Next Get Poor Man's Vorticity and make kmzs
 try:
-    if any([plots["PMV_kmz"], plots["PMV_png"], plots["Pelican_surface"], plots["WS_surface"]]):
+    if any([plots["PMV_kmz"], plots["pmv_png"], plots["Pelican_surface"], plots["WS_surface"]]):
         P_PMV = sunrise.ADCP_PMV(PELICAN_1200_DATA,start,end,directory,
             pmv_filename="Pelican_PMV",label="Pelican PMV [f]",kmz=plots["PMV_kmz"])
         WS_PMV = sunrise.ADCP_PMV(WS_1200_DATA,start,end,directory,
             pmv_filename="WS_PMV",label="WS PMV [f]",kmz=plots["PMV_kmz"])
 
-    if plots["PMV_png"]:
-        sunrise.PMV_png(start,end,directory,P_PMV,WS_PMV)
+    if plots["pmv_png"]:
+        sunrise.pmv_png(start,end,directory,P_PMV,WS_PMV)
 except:
     raise
 
