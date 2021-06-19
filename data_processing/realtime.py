@@ -26,7 +26,7 @@ for fn in args.fn:
 
 # parse start and end
 try:
-    if isinstance(start,str):
+    if input["start"],str):
         start = datetime.fromisoformat(input["start"])
     else:
         start = input["start"]
@@ -34,7 +34,7 @@ try:
     if start.tzinfo is None:
         start = start.replace(tzinfo=timezone.utc)
 
-    if isinstance(start,str):
+    if isinstance(input["stop"],str):
         end = datetime.fromisoformat(input["stop"])
     else:
         end = input["stop"]
