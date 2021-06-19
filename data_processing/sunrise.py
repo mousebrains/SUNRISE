@@ -941,19 +941,19 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94)
         pms = axs[0,0].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
                   c=P_FT['salinities'], \
-                   vmax=sal_max_PL, vmin=sal_min_PL, cmap=cmo.haline)
+                   vmax=sal_max_P, vmin=sal_min_P, cmap=cmo.haline)
         axs[0,0].set_xlabel("Longitude [$^\circ$E]")
         axs[0,0].set_ylabel("Latitude [$^\circ$N]")
         axs[0,0].set_title("Salinity")
         pmt = axs[0,1].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
                   c=P_FT['temperatures'], \
-                   vmax=temp_max_PL, vmin=temp_min_PL, cmap=cmo.thermal)
+                   vmax=temp_max_P, vmin=temp_min_P, cmap=cmo.thermal)
         axs[0,1].set_xlabel("Longitude [$^\circ$E]")
         axs[0,1].set_ylabel("Latitude [$^\circ$N]")
         axs[0,1].set_title("Temperature")
         pmd = axs[1,0].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
                   c=P_FT['sigmas'], \
-                  vmax=sigma_max_PL, vmin=sigma_min_PL,cmap=cmo.dense)
+                  vmax=sigma_max_P, vmin=sigma_min_P,cmap=cmo.dense)
         axs[1,0].set_xlabel("Longitude [$^\circ$E]")
         axs[1,0].set_ylabel("Latitude [$^\circ$N]")
         axs[1,0].set_title("Potential Density")
