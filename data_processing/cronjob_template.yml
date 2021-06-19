@@ -2,7 +2,6 @@
 short_name: Rolling        # My directory naming convention is Processing/%m%d-%H%M_{short_name} where %m%d-%H%M uses the submission time/date
 description: "This is a description that we write to a txt file in the output directory"
 start: #START_TIME# # I'm a fan of using isoformat as much as possible and parsing
-                           # timestrings without timezone info as utc
 end: #END_TIME#   # end
 Pelican_600kHz_section: true   # create shear and velocity sections from Pelican 600kHz (png)
 Pelican_1200kHz_section: true  # create shear and velocity sections from Pelican 1200kHz (png)
