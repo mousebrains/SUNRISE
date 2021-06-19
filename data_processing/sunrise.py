@@ -29,6 +29,30 @@ class ASV_DATAPOINT():
         self.v = []
         self.w = []
 
+    def get_lon(self):
+        if self.lons:
+            return np.nanmean(self.lons)
+        else:
+            return None
+
+    def get_lat(self):
+        if self.lats:
+            return np.nanmean(self.lats)
+        else:
+            return None
+
+    def get_temp(self):
+        if self.temps:
+            return np.nanmean(self.temps)
+        else:
+            return np.nan
+
+    def get_sal(self):
+        if self.sals:
+            return np.nanmean(self.sals)
+        else:
+            return np.nan
+
 def ADCP_section(filepath,start,end,directory,name,maxdepth=60):
     """Create ADCP section"""
 
@@ -348,6 +372,7 @@ def parse_ASV(filename, start, end):
     times = []
     salinities = []
     temperatures = []
+    sigmas = []
     ADCP_u = []
     ADCP_v = []
     ADCP_w = []
@@ -355,53 +380,89 @@ def parse_ASV(filename, start, end):
     datapoints = {}
     with open(filename, 'r') as f:
         for line in f:
-            received, identifier, timestring, data = line.split('-- ')
-            time = datetime.datetime.strptime(timestring[:19],"%Y/%m/%d %H:%M:%S")
-            time = time.replace(tzinfo=datetime.timezone.utc)
-            identifier_strip = identifier.strip()
-            if identifier_strip == "navinfo":
-                timestring = time.isoformat()
-                if timestring not in datapoints:
-                    datapoints[timestring] = ASV_DATAPOINT(time)
-                data_split = data.split()
-                if data_split[0] == "LAT":
-                    datapoints[timestring].lats.append(data_split[1])
-                else:
-                    print("Unexpected Order")
-                if data_split[2] == "LON":
-                    datapoints[timestring].lons.append(data_split[3])
-                else:
-                    print("Unexpected Order")
-            if identifier_strip == "keelctd":
-                timestring = time.isoformat()
-                if timestring not in datapoints:
-                    datapoints[timestring] = ASV_DATAPOINT(time)
-                data_split = data.split()
-                if data_split[4] == "Temp":
-                    datapoints[timestring].temps.append(data_split[5])
-                else:
-                    print("Unexpected Order")
-                if data_split[6] == "Sal":
-                    datapoints[timestring].sals.append(data_split[7])
-                else:
-                    print("Unexpected Order")
-            if identifier_strip == "adcp":
-                timestring = time.isoformat()
-                if timestring not in datapoints:
-                    datapoints[timestring] = ASV_DATAPOINT(time)
-                data_split = data.split()
-                if data_split[4] == "u":
-                    datapoints[timestring].u.append(data_split[5])
-                else:
-                    print("Unexpected Order")
-                if data_split[6] == "v":
-                    datapoints[timestring].v.append(data_split[7])
-                else:
-                    print("Unexpected Order")
-                if data_split[8] == "w":
-                    datapoints[timestring].w.append(data_split[9])
-                else:
-                    print("Unexpected Order")
+            try:
+                received, identifier, timestring, data = line.split('-- ')
+                time = datetime.datetime.strptime(timestring[:19],"%Y/%m/%d %H:%M:%S")
+                time = time.replace(tzinfo=datetime.timezone.utc)
+                identifier_strip = identifier.strip()
+                if identifier_strip == "navinfo":
+                    timestring = time.isoformat()
+                    if timestring not in datapoints:
+                        datapoints[timestring] = ASV_DATAPOINT(time)
+                    data_split = data.split()
+                    if all([data_split[0] == "LAT",data_split[2] == "LON",data_split[1] != "0",data_split[3] != "0"]):
+                        datapoints[timestring].lats.append(float(data_split[1]))
+                        datapoints[timestring].lons.append(float(data_split[3]))
+                if identifier_strip == "keelctd":
+                    timestring = time.isoformat()
+                    if timestring not in datapoints:
+                        datapoints[timestring] = ASV_DATAPOINT(time)
+                    data_split = data.split()
+                    if data_split[4] == "Temp":
+                        datapoints[timestring].temps.append(float(data_split[5]))
+                    else:
+                        print("Unexpected Order")
+                    if data_split[6] == "Sal":
+                        datapoints[timestring].sals.append(float(data_split[7]))
+                    else:
+                        print("Unexpected Order")
+                if identifier_strip == "adcp":
+                    timestring = time.isoformat()
+                    if timestring not in datapoints:
+                        datapoints[timestring] = ASV_DATAPOINT(time)
+                    data_split = data.split()
+                    if data_split[4] == "u":
+                        datapoints[timestring].u.append(data_split[5])
+                    else:
+                        print("Unexpected Order")
+                    if data_split[6] == "v":
+                        datapoints[timestring].v.append(data_split[7])
+                    else:
+                        print("Unexpected Order")
+                    if data_split[8] == "w":
+                        datapoints[timestring].w.append(data_split[9])
+                    else:
+                        print("Unexpected Order")
+            except:
+                print("Something went wrong")
+
+        timestrings = datapoints.keys()
+        sorted_keys = sorted(timestrings)
+        print(sorted_keys)
+        for key in sorted_keys:
+            data = datapoints[key]
+            lon = data.get_lon()
+            lat = data.get_lat()
+            if lon is not None and lat is not None:
+                temp = data.get_temp()
+                sal = data.get_sal()
+                sigma = get_sigma0(sal,temp,lon,lat)
+                times.append(data.time)
+                latitudes.append(lat)
+                longitudes.append(lon)
+                salinities.append(sal)
+                temperatures.append(temp)
+                sigmas.append(sigma)
+
+    # Calc salt grad
+    if latitudes:
+        seg_distance = np.zeros(len(latitudes)-1)
+        for i in range(seg_distance.size):
+            seg_distance[i] = distance((latitudes[i+1],longitudes[i+1]),(latitudes[i],longitudes[i])).km
+        distances = np.zeros(len(latitudes))
+        distances[1:] = np.cumsum(seg_distance)
+        salt_grad = np.abs(np.gradient(np.asarray(salinities),distances))
+    else:
+        salt_grad = []
+
+    return {"longitudes": longitudes,
+        "latitudes": latitudes,
+        "times": times,
+        "salinities": salinities,
+        "temperatures": temperatures,
+        "sigmas": sigmas,
+        "sal_grad": salt_grad}
+
 
 def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,density_kmz=True,salg_kmz=True,sal_png=True,temp_png=True,density_png=True,salg_png=True,sal_lims=None,temp_lims=None,density_lims=None):
     """Get throughflow data from Pelican, WS, and ASVs (ASV not yet implemented) and create kmz/pngs"""
@@ -899,6 +960,71 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         fig.suptitle("Walton Smith Surface Data" + ": " + start.strftime("%d-%b %H:%M") + " - " + end.strftime("%d-%b %H:%M"))
         fig.tight_layout()
         fig.savefig(os.path.join(directory,"WS_Surface_panels.png"),dpi=100)
+        plt.close(fig)
+
+def ASVSurface_png(ASVdatas,names,start,end,directory,sal_lims=None,temp_lims=None,density_lims=None):
+    for ASV, name in zip(ASVdatas,names):
+        if temp_lims is None:
+            try:
+                temp_max = np.nanmax(ASV["temperatures"])
+                temp_min = np.nanmin(ASV["temperatures"])
+            except ValueError:
+                temp_max = 33
+                temp_min = 26
+        else:
+            temp_min, temp_max = temp_lims
+        if sal_lims is None:
+            try:
+                sal_max = np.nanmax(ASV["salinities"])
+                sal_min = np.nanmin(ASV["salinities"])
+            except ValueError:
+                sal_max = 37
+                sal_min = 31
+        else:
+            sal_min, sal_max = sal_lims
+        if density_lims is None:
+            try:
+                density_max = np.nanmax(ASV["sigmas"])
+                density_min = np.nanmin(ASV["sigmas"])
+            except ValueError:
+                density_max = 20
+                density_min = -5
+        else:
+            density_min, density_max = density_lims
+
+        fig, axs = plt.subplots(2, 2, figsize=(12, 9))
+        fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94)
+        pms = axs[0,0].scatter(ASV['longitudes'][:], ASV['latitudes'][:],\
+                  c=ASV['salinities'], \
+                   vmax=sal_max, vmin=sal_min, cmap=cmo.haline)
+        axs[0,0].set_xlabel("Longitude [$^\circ$E]")
+        axs[0,0].set_ylabel("Latitude [$^\circ$N]")
+        axs[0,0].set_title("Salinity")
+        pmt = axs[0,1].scatter(ASV['longitudes'][:], ASV['latitudes'][:],\
+                  c=ASV['temperatures'], \
+                   vmax=temp_max, vmin=temp_min, cmap=cmo.thermal)
+        axs[0,1].set_xlabel("Longitude [$^\circ$E]")
+        axs[0,1].set_ylabel("Latitude [$^\circ$N]")
+        axs[0,1].set_title("Temperature")
+        pmd = axs[1,0].scatter(ASV['longitudes'][:], ASV['latitudes'][:],\
+                  c=ASV['sigmas'], \
+                  vmax=density_max, vmin=density_min,cmap=cmo.dense)
+        axs[1,0].set_xlabel("Longitude [$^\circ$E]")
+        axs[1,0].set_ylabel("Latitude [$^\circ$N]")
+        axs[1,0].set_title("Potential Density")
+        # pmp = axs[1,1].scatter(ADCP_WS['longitudes'][:], ADCP_WS['latitudes'][:],\
+        #           c=ADCP_WS['pm_vorticity'], \
+        #           vmax=PM_lims[-1],vmin=PM_lims[0],cmap=cmo.curl)
+        # axs[1,1].set_xlabel("Longitude [$^\circ$E]")
+        # axs[1,1].set_ylabel("Latitude [$^\circ$N]")
+        # axs[1,1].set_title("Poor Man's Vorticity [f]")
+        fig.colorbar(pms, ax=axs[0,0])
+        fig.colorbar(pmt, ax=axs[0,1])
+        fig.colorbar(pmd, ax=axs[1,0])
+        # fig.colorbar(pmp, ax=axs[1,1])
+        fig.suptitle("ASV " + name + ": " + start.strftime("%d-%b %H:%M") + " - " + end.strftime("%d-%b %H:%M"))
+        fig.tight_layout()
+        fig.savefig(os.path.join(directory,"ASV_" + name + ".png"),dpi=100)
         plt.close(fig)
 
 def ADCP_vector(filepath,start,end,directory,name,MAX_SPEED=1,VECTOR_LENGTH=1./20.,DEPTH_LEVELS=-1, CMAP=cmo.thermal):

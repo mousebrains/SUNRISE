@@ -6,4 +6,5 @@ end = datetime(year=2021,month=6,day=6,tzinfo=timezone.utc)
 directory = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\Processed"
 
 # sunrise.throughflow(start,end,directory)
-sunrise.parse_ASV(r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\kayak_status_UBOX02.txt",start,end)
+a = sunrise.parse_ASV(r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\kayak_status_UBOX04.txt",start,end)
+sunrise.ASVSurface_png([a],["test"],start,end,directory)

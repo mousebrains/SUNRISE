@@ -17,7 +17,7 @@ plots:
   - {name: Pelican_1200kHz_vector,
     display_name: Pelican 1200kHz ADCP Vector KML,
     description: Create a kml file of velocity vectors from top 5 bins of the Pelican's 1200kHz ADCP}
-  - - {name: WS_600kHz_vector,
+  - {name: WS_600kHz_vector,
     display_name: Walton Smith 600kHz ADCP Vector KML,
     description: Create a kml file of velocity vectors from top 5 bins of the Walton Smith's 600kHz ADCP}
   - {name: WS_1200kHz_vector,
