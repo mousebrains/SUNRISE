@@ -1,4 +1,5 @@
 ---
+rolling: true
 name: Test
 start: 2021-06-19T14:55
 stop: 2021-06-20T20:55

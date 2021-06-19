@@ -41,14 +41,17 @@ except:
     "'YYYY-mm-ddTHH:MM:SS' or 'YYYY-mm-ddTHH:MM:SSzzzzzz'")
 
 # Construct a directory
-try:
-    directory = os.path.join(OUT_DIRECTORY,
-        start.strftime("%Y-%m-%dT%H:%M_") + end.strftime("%Y-%m-%dT%H:%M_") + input["name"].strip() + datetime.utcnow().strftime("_%m-%dT%H:%M"))
-    print(directory)
-    os.mkdir(directory)
-except:
-    raise
-    sys.exit("Directory Creation Failed")
+if input.pop("rolling",False):
+    directory = os.path.join(OUT_DIRECTORY,"Rolling-2Days")
+else:
+    try:
+        directory = os.path.join(OUT_DIRECTORY,
+            start.strftime("%Y-%m-%dT%H:%M_") + end.strftime("%Y-%m-%dT%H:%M_") + input["name"].strip() + datetime.utcnow().strftime("_%m-%dT%H:%M"))
+        print(directory)
+        os.mkdir(directory)
+    except:
+        raise
+        sys.exit("Directory Creation Failed")
 
 # Write the description to a text file in the directory
 try:
