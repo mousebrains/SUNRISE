@@ -69,12 +69,11 @@ class Pusher(MyThread.MyThread):
         while True:
             now = time.time()
             dt = None if tMin is None else (delay - (now - tMin))
-            # if dt is not None and dt <= 0:
-                # (files, tMin) = self.syncIt(files, now)
-                # dt = None if tMin is None else (delay - (now - tMin))
             try:
                 logger.info("dt %s", dt)
-                (action, t, files) = q.get(timeout=max(0.1, dt))
+                if dt is not None and isinstance(dt, float) and dt < 0.1:
+                    dt = 0.1
+                (action, t, files) = q.get(timeout=dt)
                 logger.info("action %s t %s files %s", action, t, files)
                 if tMin is None:
                     tMin = t
