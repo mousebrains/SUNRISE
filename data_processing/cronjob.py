@@ -42,7 +42,7 @@ try:
     print(msg)
     _ = clog_f.write(msg)
 except:
-    errmsg = "Error! Retry in 30 minutes" %
+    errmsg = "Error! Retry in 30 minutes" 
     print(errmsg)
     _ = clog_f.write(errmsg)
 
