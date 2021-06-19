@@ -357,6 +357,8 @@ def parse_PFT(filenames, start, end):
         distances = np.zeros(len(Pelican_latitudes))
         distances[1:] = np.cumsum(seg_distance)
         Pelican_salt_grad = np.abs(np.gradient(np.asarray(Pelican_salinities),distances))
+    else:
+        Pelicam_salt_grad = []
 
     return {"latitudes": Pelican_latitudes,
         "longitudes": Pelican_longitudes,
