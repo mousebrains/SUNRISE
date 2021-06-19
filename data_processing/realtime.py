@@ -10,8 +10,8 @@ import sunrise
 OUT_DIRECTORY ="/home/pat/Processed"
 PELICAN_FT_DATAPATHS = ["~/Dropbox/Pelican/test/MIDAS/MIDAS_008.elg"]
 WS_FT_DATAPATH = "~/Dropbox/WaltonSmith/test/WS21163_Hetland_TR-Full-Vdl.dat"
-PELICAN_600_DATA = "~/Dropbox/Pelican/test/wh300.nc"
-PELICAN_1200_DATA = "~/Dropbox/Pelican/test/wh1200.nc"
+PELICAN_600_DATA = "~/Dropbox/Pelican/test/ADCP/wh300.nc"
+PELICAN_1200_DATA = "~/Dropbox/Pelican/test/ADCP/wh1200.nc"
 WS_600_DATA = "~/Dropbox/WaltonSmith/test/wh600.nc"
 WS_1200_DATA = "~/Dropbox/WaltonSmith/test/wh600.nc"
 
@@ -42,7 +42,7 @@ except:
 # Construct a directory
 try:
     directory = os.path.join(OUT_DIRECTORY,
-        start.strftime("%Y-%m-%dT%H-%M_") + end.strftime("%Y-%m-%dT%H-%M_") + input["short_name"].strip())
+        start.strftime("%Y-%m-%dT%H-%M_") + end.strftime("%Y-%m-%dT%H-%M_") + input["short_name"].strip() + datetime.utcnow().strpftime("%m%d-%H%M"))
     print(directory)
     os.mkdir(directory)
 except:
