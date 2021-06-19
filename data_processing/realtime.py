@@ -31,7 +31,7 @@ try:
     if start.tzinfo is None:
         start = start.replace(tzinfo=timezone.utc)
 
-    end = datetime.fromisoformat(input["end"])
+    end = datetime.fromisoformat(input["stop"])
 
     if end.tzinfo is None:
         end = end.replace(tzinfo=timezone.utc)
