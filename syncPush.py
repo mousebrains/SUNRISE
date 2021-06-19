@@ -74,7 +74,7 @@ class Pusher(MyThread.MyThread):
                 # dt = None if tMin is None else (delay - (now - tMin))
             try:
                 logger.info("dt %s", dt)
-                (action, t, files) = q.get(timeout=dt)
+                (action, t, files) = q.get(timeout=max(0.1, dt))
                 logger.info("action %s t %s files %s", action, t, files)
                 if tMin is None:
                     tMin = t
