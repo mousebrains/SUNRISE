@@ -863,11 +863,11 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
     # Set temp limits
     if not temp_lims["lower"]:
         try:
-            temp_min_P = np.nanmin(Pelican_temperatures)
+            temp_min_P = np.nanmin(P_FT["temperatures"])
         except ValueError: # empty list
             temp_min_P = 100
         try:
-            temp_min_WS = np.nanmin(WS_temperatures)
+            temp_min_WS = np.nanmin(WS_FT["temperatures"])
         except ValueError: # empty list
             temp_min_WS = 100
     else:
@@ -875,11 +875,11 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         temp_min_WS = float(temp_lims["lowerLim"])
     if not temp_lims["upper"]:
         try:
-            temp_max_P = np.nanmax(Pelican_temperatures)
+            temp_max_P = np.nanmax(P_FT["temperatures"])
         except ValueError: # empty list
             temp_max_P = 0
         try:
-            temp_max_WS = np.nanmax(WS_temperatures)
+            temp_max_WS = np.nanmax(WS_FT["temperatures"])
         except ValueError: # empty list
             temp_max_WS = 0
     else:
@@ -888,11 +888,11 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
     # Set salt limits
     if not sal_lims["lower"]:
         try:
-            sal_min_P = np.nanmin(Pelican_salinities)
+            sal_min_P = np.nanmin(P_FT["salinities"])
         except ValueError: # empty list
             sal_min_P = 100
         try:
-            sal_min_WS = np.nanmin(WS_salinities)
+            sal_min_WS = np.nanmin(WS_FT["salinities"])
         except ValueError: # empty list
             sal_min_WS = 100
     else:
@@ -900,11 +900,11 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         sal_min_WS = float(sal_lims["lowerLim"])
     if not sal_lims["upper"]:
         try:
-            sal_max_P = np.nanmax(Pelican_salinities)
+            sal_max_P = np.nanmax(P_FT["salinities"])
         except ValueError: # empty list
             sal_max_P = 0
         try:
-            sal_max_WS = np.nanmax(WS_salinities)
+            sal_max_WS = np.nanmax(WS_FT["salinities"])
         except ValueError: # empty list
             sal_max_WS = 0
     else:
@@ -913,11 +913,11 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
 
     if not density_lims["lower"]:
         try:
-            sigma_min_P = np.nanmin(Pelican_sigmas)
+            sigma_min_P = np.nanmin(P_FT["sigmas"])
         except ValueError: # empty list
             sigma_min_P = 100
         try:
-            sigma_min_WS = np.nanmin(WS_sigmas)
+            sigma_min_WS = np.nanmin(WS_FT["sigmas"])
         except ValueError: # empty list
             sigma_min_WS = 100
     else:
@@ -925,11 +925,11 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         sigma_min_WS = float(density_lims["lowerLim"])
     if not density_lims["upper"]:
         try:
-            sigma_max_P = np.nanmax(Pelican_sigmas)
+            sigma_max_P = np.nanmax(P_FT["sigmas"])
         except ValueError: # empty list
             sigma_max_P = 0
         try:
-            sigma_max_WS = np.nanmax(WS_sigmas)
+            sigma_max_WS = np.nanmax(WS_FT["sigmas"])
         except ValueError: # empty list
             sigma_max_WS = 0
     else:
