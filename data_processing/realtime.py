@@ -26,12 +26,12 @@ for fn in args.fn:
 
 # parse start and end
 try:
-    start = input["start"]
+    start = datetime.fromisoformat(input["start"])
 
     if start.tzinfo is None:
         start = start.replace(tzinfo=timezone.utc)
 
-    end = input["end"]
+    end = datetime.fromisoformat(input["end"])
 
     if end.tzinfo is None:
         end = end.replace(tzinfo=timezone.utc)
