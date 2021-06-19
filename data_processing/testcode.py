@@ -19,4 +19,4 @@ for fn in args.fn:
     with open(fn, "r") as fp:
         input = yaml.safe_load(fp)
 
-print(input["limits"])
+print(input)
