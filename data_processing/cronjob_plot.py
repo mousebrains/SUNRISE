@@ -55,10 +55,10 @@ except:
     raise
     print("Description file not created")
 
-# First the limits
-sal_lims = input.pop("sal_lims",None)
-temp_lims = input.pop("temp_lims",None)
-density_lims = input.pop("density_lims",None)
+# First the limits # don't need these for the cronjob
+# sal_lims = input.pop("sal_lims",None)
+# temp_lims = input.pop("temp_lims",None)
+# density_lims = input.pop("density_lims",None)
 
 # Now get the throughflow variables
 try:
@@ -75,8 +75,7 @@ try:
     sunrise.throughflow(P_FT,WS_FT,start,end,directory,
         sal_kmz=input["salinity_kmz"],temp_kmz=input["temperature_kmz"],density_kmz=input["density_kmz"],
         sal_png=input["salinity_png"],temp_png=input["temperature_png"],density_png=input["density_png"],
-        salg_kmz=input["sal_grad_kmz"], salg_png=input["sal_grad_png"],
-        sal_lims=sal_lims,temp_lims=temp_lims,density_lims=density_lims)
+        salg_kmz=input["sal_grad_kmz"], salg_png=input["sal_grad_png"])
 except:
     raise
 
@@ -97,8 +96,7 @@ except:
 try:
     if input["Pelican_surface"] or input["WS_surface"]:
         sunrise.ShipSurface_png(P_FT,WS_FT,P_PMV,WS_PMV,start,end,directory,
-            plot_P=input["Pelican_surface"], plot_WS=input["WS_surface"],
-            sal_lims=sal_lims, temp_lims=temp_lims, density_lims=density_lims)
+            plot_P=input["Pelican_surface"], plot_WS=input["WS_surface"])
 except:
     raise
 
