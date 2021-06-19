@@ -8,12 +8,12 @@ import sunrise
 
 # DATAPATHS
 OUT_DIRECTORY ="/home/pat/Processed/Rolling-2Days"
-PELICAN_FT_DATAPATHS = ["/home/lixinqu/Dropbox/Pelican/test/Event-Data/MIDAS_008.elg"]
-WS_FT_DATAPATH = "/home/lixinqu/Dropbox/WaltonSmith/test/WS21163_Hetland_TR-Full-Vdl.dat"
-PELICAN_600_DATA = "/home/lixinqu/Dropbox/Pelican/test/wh300.nc"
-PELICAN_1200_DATA = "/home/lixinqu/Dropbox/Pelican/test/wh1200.nc"
-WS_600_DATA = "/home/lixinqu/Dropbox/WaltonSmith/test/wh600.nc"
-WS_1200_DATA = "/home/lixinqu/Dropbox/WaltonSmith/test/wh600.nc"
+PELICAN_FT_DATAPATHS = ["/home/pat/Dropbox/Pelican/test/Event-Data/MIDAS_008.elg"]
+WS_FT_DATAPATH = "/home/pat/Dropbox/WaltonSmith/test/WS21163_Hetland_TR-Full-Vdl.dat"
+PELICAN_600_DATA = "/home/pat/Dropbox/Pelican/test/wh300.nc"
+PELICAN_1200_DATA = "/home/pat/Dropbox/Pelican/test/wh1200.nc"
+WS_600_DATA = "/home/pat/Dropbox/WaltonSmith/test/wh600.nc"
+WS_1200_DATA = "/home/pat/Dropbox/WaltonSmith/test/wh600.nc"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("fn", nargs="+", help="Input yaml files")
