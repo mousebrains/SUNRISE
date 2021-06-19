@@ -1,8 +1,7 @@
 ---
-rolling: true
-name: Rolling
-start: #START_TIME#
-stop: #END_TIME#
+name: Jamie2
+start: 2021-06-07T16:33
+stop: 2021-06-19T16:33
 plots:
 - Pelican_600kHz_section: true
 - Pelican_1200kHz_section: true
@@ -41,5 +40,5 @@ limits:
     upper: false
     upperLim: "20"
 description: ""
-comment: ""
+comment: This is a test
 ...

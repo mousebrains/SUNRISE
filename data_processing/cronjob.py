@@ -7,7 +7,7 @@ import os
 template_file = "cronjob_template.yml"
 
 # Plot file
-plot_file = 'cronjob_plot.py'
+plot_file = 'realtime.py'
 
 # OUTPUT directory
 OUTPUT_DIR = "/home/pat/Processed/Rolling-2Days"
