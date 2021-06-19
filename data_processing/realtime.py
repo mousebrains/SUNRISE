@@ -26,7 +26,7 @@ for fn in args.fn:
 
 # parse start and end
 try:
-    if input["start"],str):
+    if isinstance(input["start"],str):
         start = datetime.fromisoformat(input["start"])
     else:
         start = input["start"]
