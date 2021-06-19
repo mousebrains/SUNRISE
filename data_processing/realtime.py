@@ -66,8 +66,8 @@ density_lims = input["limits"][2]["density_lims"]
 plots_list = input["plots"]
 plots = {}
 for dict in plots_list:
-    key, value = next(dict.items())
-    plots[key] = value
+    for key, value in dict.items():
+        plots[key] = value
 # Now get the throughflow variables
 try:
     if any([plots["salinity_kmz"], plots["temperature_kmz"], plots["density_kmz"],
