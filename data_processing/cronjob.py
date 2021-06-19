@@ -26,9 +26,9 @@ _ = clog_f.write(timestamp)
 # Set time window
 #END_TIME = datetime.now().replace(tzinfo=timezone.utc)
 # for testing
-END_TIME = datetime(2021,6,11,0,0,0,tzinfo=timezone.utc)
+END_TIME = datetime(2021,6,17,0,0,0,tzinfo=timezone.utc)
 
-START_TIME = END_TIME - timedelta(days=2)
+START_TIME = END_TIME - timedelta(days=10)
 
 # Make job file
 job_file = OUTPUT_DIR + "/crobjob-%s.yml" % datetime.now().strftime("%Y-%m-%dT%H-%M")
@@ -45,7 +45,6 @@ except:
     errmsg = "Error! Restart in %04d seconds" % sleep_time
     print(errmsg)
     _ = clog_f.write(errmsg)
-    
+
 # Remove job file
 os.system('rm %s' % job_file)
-
