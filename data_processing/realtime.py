@@ -97,7 +97,7 @@ try:
             pmv_filename="WS_PMV",label="WS PMV [f]",kmz=plots["PMV_kmz"])
 
     if plots["pmv_png"]:
-        sunrise.pmv_png(start,end,directory,P_PMV,WS_PMV)
+        sunrise.PMV_png(start,end,directory,P_PMV,WS_PMV)
 except:
     raise
 
