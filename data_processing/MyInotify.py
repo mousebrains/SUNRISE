@@ -1,0 +1,96 @@
+#! /usr/bin/env python3
+#
+# Use inotify_simple to interface to the glibc version of inotify
+# This is customized to only trigger on moving files into a directory or close on write
+# and is not recursive
+#
+# June-2021, Pat Welch, pat@mousebrains.com
+
+import argparse
+import MyThread
+import inotify_simple as ins
+import logging
+import os
+import time
+import queue
+import re
+
+class MyInotify(MyThread.MyThread):
+    def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger):
+        MyThread.MyThread.__init__(self, "INotify", args, logger)
+        self.queue = queue.Queue()
+        self.__mapping = {}
+        self.__inotify = ins.INotify()
+        self.__flags = ins.flags.CLOSE_WRITE | ins.flags.MOVED_TO 
+    
+    def __repr__(self) -> str:
+        items = []
+        for key in self.__mapping:
+            items.append("{} -> {}".format(key, self.__mapping[key]))
+        return "\n".join(items)
+
+    def __addWatch(self, dirName:str) -> None:
+        wd = self.__inotify.add_watch(dirName, self.__flags)
+        self.__mapping[wd] = dirName
+        self.logger.debug("add %s %s", wd, dirName)
+
+    def addTree(self, root:str) -> None:
+        inotify = self.__inotify
+        self.__addWatch(root)
+
+    def runIt(self) -> None: # Called on thread start
+        inotify = self.__inotify
+        items = self.__mapping
+        logger = self.logger
+        q = self.queue
+        logger.info("Starting")
+        while True:
+            events = inotify.read()
+            t0 = time.time()
+            files = set()
+            try:
+                for event in events:
+                    wd = event.wd
+                    if (wd not in items):
+                        if not (event.mask & ins.flags.IGNORED):
+                            logger.warning("Missing wd for %s", event)
+                        continue
+                    path = items[wd] if event.name == "" else os.path.join(items[wd], event.name)
+                    files.add(path)
+                    logger.info("event wd=%s name=%s %s %s", wd, event.name, path,
+                            ",".join(map(str, ins.flags.from_mask(event.mask))))
+                if files:
+                    q.put(("FILES", t0, files))
+            except:
+                logger.exception("GotMe")
+
+if __name__ == "__main__":
+    import MyLogger
+
+    parser = argparse.ArgumentParser()
+    MyLogger.addArgs(parser)
+    parser.add_argument("dirs", nargs='+', type=str, help="directories to watch")
+    args = parser.parse_args()
+
+    logger = MyLogger.mkLogger(args)
+    try:
+        inotify = MyInotify(args, logger)
+
+        for item in args.dirs:
+            inotify.addTree(item)
+
+        inotify.start() # Start the thread
+        logger.info("isQueueEmpty %s", MyThread.isQueueEmpty())
+        while MyThread.isQueueEmpty():
+            logger.info("Looping")
+            try:
+                info = inotify.queue.get(timeout=60)
+                inotify.queue.task_done()
+                logger.info("info %s", info)
+            except queue.Empty:
+                pass
+
+        MyThread.waitForException() # There should be something here
+    except:
+        logger.exception("Unexpected exception")
+        
