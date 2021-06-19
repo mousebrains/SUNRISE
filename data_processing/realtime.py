@@ -59,9 +59,9 @@ except:
     print("Description file not created")
 
 # First the limits
-sal_lims = input["limits"][0]["sal_limits"]
-temp_lims = input["limits"][1]["temp_limits"]
-density_lims = input["limits"][2]["density_limits"]
+sal_lims = input["limits"][0]["sal_lims"]
+temp_lims = input["limits"][1]["temp_lims"]
+density_lims = input["limits"][2]["density_lims"]
 
 # Now get the throughflow variables
 try:
