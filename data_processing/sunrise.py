@@ -962,8 +962,9 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         fig.savefig(os.path.join(directory,"WS_Surface_panels.png"),dpi=100)
         plt.close(fig)
 
-def ASVSurface_png(ASVdatas,names,start,end,directory,sal_lims=None,temp_lims=None,density_lims=None):
-    for ASV, name in zip(ASVdatas,names):
+def ASVSurface_png(ASVdata,start,end,directory,sal_lims=None,temp_lims=None,density_lims=None):
+    """ASVdata is a dictionary of {"ASVname": data}"""
+    for name, ASV in ASVdata.items():
         if temp_lims is None:
             try:
                 temp_max = np.nanmax(ASV["temperatures"])

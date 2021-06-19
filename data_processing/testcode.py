@@ -7,4 +7,4 @@ directory = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\Processed"
 
 # sunrise.throughflow(start,end,directory)
 a = sunrise.parse_ASV(r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data\kayak_status_UBOX04.txt",start,end)
-sunrise.ASVSurface_png([a],["test"],start,end,directory)
+sunrise.ASVSurface_png({"test": a},start,end,directory)
