@@ -38,11 +38,11 @@ os.system("sed -e 's/#START_TIME#/%s/g' -e 's/#END_TIME#/%s/g' %s > %s" \
 # Plot
 try:
     os.system('python3 %s %s' % (plot_file, job_file))
-    msg = "Done!"
+    msg = "Done!\n"
     print(msg)
     _ = clog_f.write(msg)
 except:
-    errmsg = "Error! Retry in 30 minutes"
+    errmsg = "Error! Retry in 30 minutes\n"
     print(errmsg)
     _ = clog_f.write(errmsg)
 
