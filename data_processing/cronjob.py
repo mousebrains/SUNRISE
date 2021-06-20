@@ -14,7 +14,7 @@ OUTPUT_DIR = "/home/pat/Processed/Rolling-2Days"
 
 # log job_file
 clog = OUTPUT_DIR + "/clog.txt"
-clog_f = open(clog, 'w')
+clog_f = open(clog, 'a')
 
 # Print current time
 CURRENT_TIME = datetime.now().replace(tzinfo=timezone.utc)
