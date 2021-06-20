@@ -6,7 +6,7 @@ header("Content-Type: application/xml");
 function mkLink(XMLWriter $r, string $url, string $name=NULL, string $descrip=NULL) {
 	$r->startElement("NetworkLink"); // Start the NetworkLink element
 	if (!is_null($name)) $r->writeElement("name", $name);
-	if (!is_null($descrip)) $r->writeElement("description", $descrip); 
+	if (!is_null($descrip)) $r->writeElement("description", $descrip);
 	$r->startElement("Link"); // The link information
 	$r->writeElement("href", $url); // Where the information is
 	$r->endElement(); // end the Link
@@ -32,30 +32,25 @@ $r->writeAttribute("xmlns", "http://www.opengis.net/kml/2.2");
 $r->startElement("Document");
 $r->writeElement("name", "SUNRISE (" . $hostname .")");
 
-$r->startElement("Folder");
-$r->writeElement("name", "Pelican");
-$r->endElement(); // Folder
 
 $r->startElement("Folder");
-$r->writeElement("name", "Walton Smith");
-$r->endElement(); // Folder
-
+$r->writeElement("name", "2 Day Rolling");
 mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_1200kHz_vector.kmz", "Pelican 1200kHz Vector");
-mkLink($r, $prefix . "/Shore/Satellite_KML/kml.php", "Satellite Images");
-mkLink($r, $prefix . "/Shore/TXLA_model_forecast_KML/kml.php", "TXLA Forecasts");
-mkLink($r, $prefix . "/Shore/Charts_etc/isobaths.kmz", "isobaths");
-mkLink($r, $prefix . "/Shore/Charts_etc/Oil Platforms.kmz", "Platforms");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_600kHz_vector.kmz", "Pelican 600kHz Vector");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/WS_1200kHz_vector.kmz", "Walton Smith 1200kHz Vector");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/WS_600kHz_vector.kmz", "Walton Smith 600kHz Vector");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_PMV.kmz", "Pelican Poor Man's Vorticity");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/WS_PMV.kmz", "Walton Smith Poor Man's Vorticity");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Salinity.kmz", "Pelican Salinity");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Temperature.kmz", "Pelican Temperature");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Density.kmz", "Pelican Density");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Salinity_Gradient.kmz", "Pelican Salinity Gradient");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Salinity.kmz", "Walton Smith Salinity");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Temperature.kmz", "Walton Smith Temperature");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Density.kmz", "Walton Smith Density");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Salinity_Gradient.kmz", "Walton Smith Salinity Gradient");
 
-$r->startElement("Folder");
-$r->writeElement("name", "Corridors");
-mkLink($r, $prefix . "/Shore/Charts_etc/East_target_region_corridors.kmz", "Eastern");
-mkLink($r, $prefix . "/Shore/Charts_etc/target_region_corridors.kmz", "Central");
-mkLink($r, $prefix . "/Shore/Charts_etc/west_corridor_regions.kmz", "Western");
 $r->endElement(); // Folder
-
-mkLink($r, $prefix . "/Shore/Charts_etc/NOAA_chart_11340_1.kmz", "NOAA Chart");
-mkLink($r, $prefix . "/Shore/Charts_etc/Ship heatmap.kmz", "Ship Heatmap");
-
 $r->endElement(); // Document
 $r->endElement(); // kml
 $r->endDocument(); // XML
