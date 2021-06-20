@@ -118,6 +118,7 @@ def shoreInstall() -> None:
 def shipInstall(name:str, qPrimary:bool) -> None:
     services = ["syncPush", "syncPull"] # Named services
     services.append("syncLocal") # Sync to my local backup server
+    services.append("Trigger") # Trigger plot generation on section files being created
 
     for service in services:
         src = f"{service}.{name}.service"

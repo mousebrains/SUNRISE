@@ -19,7 +19,7 @@ WorkingDirectory=/home/pat
 #
 ExecStart=/home/pat/SUNRISE/syncPull.py \
         --logfile=logs/syncPull.log \
-	--bwlimit=50 \
+	--bwlimit=100 \
 	--dest=. \
 	--prefix=Dropbox \
 	--src=rvws

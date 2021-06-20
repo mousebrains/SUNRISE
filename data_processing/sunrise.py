@@ -16,6 +16,7 @@ import kml_tools as kml
 
 CORIOLIS = 7*10**-5
 PRESSURE = 0 # pressure [dbar] at throughflow
+DEFAULT_LIMS = {"lower": False, "lowerLim": "0", "upper": False, "upperLim": "0"}
 
 class ASV_DATAPOINT():
 
@@ -28,6 +29,30 @@ class ASV_DATAPOINT():
         self.u = []
         self.v = []
         self.w = []
+
+    def get_lon(self):
+        if self.lons:
+            return np.nanmean(self.lons)
+        else:
+            return None
+
+    def get_lat(self):
+        if self.lats:
+            return np.nanmean(self.lats)
+        else:
+            return None
+
+    def get_temp(self):
+        if self.temps:
+            return np.nanmean(self.temps)
+        else:
+            return np.nan
+
+    def get_sal(self):
+        if self.sals:
+            return np.nanmean(self.sals)
+        else:
+            return np.nan
 
 def ADCP_section(filepath,start,end,directory,name,maxdepth=60):
     """Create ADCP section"""
@@ -332,6 +357,8 @@ def parse_PFT(filenames, start, end):
         distances = np.zeros(len(Pelican_latitudes))
         distances[1:] = np.cumsum(seg_distance)
         Pelican_salt_grad = np.abs(np.gradient(np.asarray(Pelican_salinities),distances))
+    else:
+        Pelican_salt_grad = []
 
     return {"latitudes": Pelican_latitudes,
         "longitudes": Pelican_longitudes,
@@ -348,6 +375,7 @@ def parse_ASV(filename, start, end):
     times = []
     salinities = []
     temperatures = []
+    sigmas = []
     ADCP_u = []
     ADCP_v = []
     ADCP_w = []
@@ -355,55 +383,90 @@ def parse_ASV(filename, start, end):
     datapoints = {}
     with open(filename, 'r') as f:
         for line in f:
-            received, identifier, timestring, data = line.split('-- ')
-            time = datetime.datetime.strptime(timestring[:19],"%Y/%m/%d %H:%M:%S")
-            time = time.replace(tzinfo=datetime.timezone.utc)
-            identifier_strip = identifier.strip()
-            if identifier_strip == "navinfo":
-                timestring = time.isoformat()
-                if timestring not in datapoints:
-                    datapoints[timestring] = ASV_DATAPOINT(time)
-                data_split = data.split()
-                if data_split[0] == "LAT":
-                    datapoints[timestring].lats.append(data_split[1])
-                else:
-                    print("Unexpected Order")
-                if data_split[2] == "LON":
-                    datapoints[timestring].lons.append(data_split[3])
-                else:
-                    print("Unexpected Order")
-            if identifier_strip == "keelctd":
-                timestring = time.isoformat()
-                if timestring not in datapoints:
-                    datapoints[timestring] = ASV_DATAPOINT(time)
-                data_split = data.split()
-                if data_split[4] == "Temp":
-                    datapoints[timestring].temps.append(data_split[5])
-                else:
-                    print("Unexpected Order")
-                if data_split[6] == "Sal":
-                    datapoints[timestring].sals.append(data_split[7])
-                else:
-                    print("Unexpected Order")
-            if identifier_strip == "adcp":
-                timestring = time.isoformat()
-                if timestring not in datapoints:
-                    datapoints[timestring] = ASV_DATAPOINT(time)
-                data_split = data.split()
-                if data_split[4] == "u":
-                    datapoints[timestring].u.append(data_split[5])
-                else:
-                    print("Unexpected Order")
-                if data_split[6] == "v":
-                    datapoints[timestring].v.append(data_split[7])
-                else:
-                    print("Unexpected Order")
-                if data_split[8] == "w":
-                    datapoints[timestring].w.append(data_split[9])
-                else:
-                    print("Unexpected Order")
+            try:
+                received, identifier, timestring, data = line.split('-- ')
+                time = datetime.datetime.strptime(timestring[:19],"%Y/%m/%d %H:%M:%S")
+                time = time.replace(tzinfo=datetime.timezone.utc)
+                identifier_strip = identifier.strip()
+                if identifier_strip == "navinfo":
+                    timestring = time.isoformat()
+                    if timestring not in datapoints:
+                        datapoints[timestring] = ASV_DATAPOINT(time)
+                    data_split = data.split()
+                    if all([data_split[0] == "LAT",data_split[2] == "LON",data_split[1] != "0",data_split[3] != "0"]):
+                        datapoints[timestring].lats.append(float(data_split[1]))
+                        datapoints[timestring].lons.append(float(data_split[3]))
+                if identifier_strip == "keelctd":
+                    timestring = time.isoformat()
+                    if timestring not in datapoints:
+                        datapoints[timestring] = ASV_DATAPOINT(time)
+                    data_split = data.split()
+                    if data_split[4] == "Temp":
+                        datapoints[timestring].temps.append(float(data_split[5]))
+                    else:
+                        print("Unexpected Order")
+                    if data_split[6] == "Sal":
+                        datapoints[timestring].sals.append(float(data_split[7]))
+                    else:
+                        print("Unexpected Order")
+                if identifier_strip == "adcp":
+                    timestring = time.isoformat()
+                    if timestring not in datapoints:
+                        datapoints[timestring] = ASV_DATAPOINT(time)
+                    data_split = data.split()
+                    if data_split[4] == "u":
+                        datapoints[timestring].u.append(data_split[5])
+                    else:
+                        print("Unexpected Order")
+                    if data_split[6] == "v":
+                        datapoints[timestring].v.append(data_split[7])
+                    else:
+                        print("Unexpected Order")
+                    if data_split[8] == "w":
+                        datapoints[timestring].w.append(data_split[9])
+                    else:
+                        print("Unexpected Order")
+            except:
+                print("Something went wrong")
 
-def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,density_kmz=True,salg_kmz=True,sal_png=True,temp_png=True,density_png=True,salg_png=True,sal_lims=None,temp_lims=None,density_lims=None):
+        timestrings = datapoints.keys()
+        sorted_keys = sorted(timestrings)
+        print(sorted_keys)
+        for key in sorted_keys:
+            data = datapoints[key]
+            lon = data.get_lon()
+            lat = data.get_lat()
+            if lon is not None and lat is not None:
+                temp = data.get_temp()
+                sal = data.get_sal()
+                sigma = get_sigma0(sal,temp,lon,lat)
+                times.append(data.time)
+                latitudes.append(lat)
+                longitudes.append(lon)
+                salinities.append(sal)
+                temperatures.append(temp)
+                sigmas.append(sigma)
+
+    # Calc salt grad
+    if latitudes:
+        seg_distance = np.zeros(len(latitudes)-1)
+        for i in range(seg_distance.size):
+            seg_distance[i] = distance((latitudes[i+1],longitudes[i+1]),(latitudes[i],longitudes[i])).km
+        distances = np.zeros(len(latitudes))
+        distances[1:] = np.cumsum(seg_distance)
+        salt_grad = np.abs(np.gradient(np.asarray(salinities),distances))
+    else:
+        salt_grad = []
+
+    return {"longitudes": longitudes,
+        "latitudes": latitudes,
+        "times": times,
+        "salinities": salinities,
+        "temperatures": temperatures,
+        "sigmas": sigmas,
+        "sal_grad": salt_grad}
+
+def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,density_kmz=True,salg_kmz=True,sal_png=True,temp_png=True,density_png=True,salg_png=True,sal_lims=DEFAULT_LIMS,temp_lims=DEFAULT_LIMS,density_lims=DEFAULT_LIMS):
     """Get throughflow data from Pelican, WS, and ASVs (ASV not yet implemented) and create kmz/pngs"""
     # ******************************* PELICAN ********************************* #
 
@@ -441,23 +504,30 @@ def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,dens
     # *************************** CREATE KMZ/PNG *************************** #
 
     if sal_kmz or sal_png:
-        if sal_lims is None:
+        if not sal_lims["lower"]:
             try:
-                sal_max_P = np.nanmax(Pelican_salinities)
                 sal_min_P = np.nanmin(Pelican_salinities)
             except ValueError: # empty list
-                sal_max_P = 0
                 sal_min_P = 100
             try:
-                sal_max_WS = np.nanmax(WS_salinities)
                 sal_min_WS = np.nanmin(WS_salinities)
             except ValueError: # empty list
-                sal_max_WS = 0
                 sal_min_WS = 100
-            sal_max = max(sal_max_P, sal_min_P)
             sal_min = min(sal_min_P, sal_min_WS)
         else:
-            sal_min, sal_max = sal_lims
+            sal_min = float(sal_lims["lowerLim"])
+        if not sal_lims["upper"]:
+            try:
+                sal_max_P = np.nanmax(Pelican_salinities)
+            except ValueError: # empty list
+                sal_max_P = 0
+            try:
+                sal_max_WS = np.nanmax(WS_salinities)
+            except ValueError: # empty list
+                sal_max_WS = 0
+            sal_max = max(sal_max_P, sal_max_WS)
+        else:
+            sal_max = float(sal_lims["upperLim"])
 
     if sal_kmz:
         kml.kml_coloured_line(directory,
@@ -506,23 +576,30 @@ def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,dens
         fig.savefig(os.path.join(directory,"Salinity.png"))
 
     if temp_kmz or temp_png:
-        if temp_lims is None:
+        if not temp_lims["lower"]:
             try:
-                temp_max_P = np.nanmax(Pelican_temperatures)
                 temp_min_P = np.nanmin(Pelican_temperatures)
             except ValueError: # empty list
-                temp_max_P = 0
                 temp_min_P = 100
             try:
-                temp_max_WS = np.nanmax(WS_temperatures)
                 temp_min_WS = np.nanmin(WS_temperatures)
             except ValueError: # empty list
-                temp_max_WS = 0
                 temp_min_WS = 100
-            temp_max = max(temp_max_P, temp_min_P)
             temp_min = min(temp_min_P, temp_min_WS)
         else:
-            temp_min, temp_max = temp_lims
+            temp_min = float(temp_lims["lowerLim"])
+        if not temp_lims["upper"]:
+            try:
+                temp_max_P = np.nanmax(Pelican_temperatures)
+            except ValueError: # empty list
+                temp_max_P = 0
+            try:
+                temp_max_WS = np.nanmax(WS_temperatures)
+            except ValueError: # empty list
+                temp_max_WS = 0
+            temp_max = max(temp_max_P, temp_max_WS)
+        else:
+            temp_max = float(temp_lims["upperLim"])
 
     if temp_kmz:
         kml.kml_coloured_line(directory,
@@ -571,23 +648,30 @@ def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,dens
         fig.savefig(os.path.join(directory,"Temperature.png"))
 
     if density_kmz or density_png:
-        if density_lims is None:
+        if not density_lims["lower"]:
             try:
-                sigma_max_P = np.nanmax(Pelican_sigmas)
                 sigma_min_P = np.nanmin(Pelican_sigmas)
             except ValueError: # empty list
-                sigma_max_P = -100
                 sigma_min_P = 100
             try:
-                sigma_max_WS = np.nanmax(WS_sigmas)
                 sigma_min_WS = np.nanmin(WS_sigmas)
             except ValueError: # empty list
-                sigma_max_WS = -100
                 sigma_min_WS = 100
-            sigma_max = max(sigma_max_P, sigma_min_P)
             sigma_min = min(sigma_min_P, sigma_min_WS)
         else:
-            sigma_min, sigma_max = density_lims
+            sigma_min = float(density_lims["lowerLim"])
+        if not density_lims["upper"]:
+            try:
+                sigma_max_P = np.nanmax(Pelican_sigmas)
+            except ValueError: # empty list
+                sigma_max_P = 0
+            try:
+                sigma_max_WS = np.nanmax(WS_sigmas)
+            except ValueError: # empty list
+                sigma_max_WS = 0
+            sigma_max = max(sigma_max_P, sigma_max_WS)
+        else:
+            sigma_max = float(density_lims["upperLim"])
 
     if density_kmz:
         kml.kml_coloured_line(directory,
@@ -777,76 +861,101 @@ def PMV_png(start,end,directory,*args,dmin_PMV=-1, dmax_PMV=1):
     end.strftime("%d-%b %H:%M"))
     fig.savefig(os.path.join(directory,"Poor_Mans_Vorticity.png"))
 
-def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,plot_WS=True,sal_lims=None,temp_lims=None,density_lims=None,PM_lims=(-1,1)):
+def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,plot_WS=True,sal_lims=DEFAULT_LIMS,temp_lims=DEFAULT_LIMS,density_lims=DEFAULT_LIMS,PM_lims=(-1,1)):
     # Set temp limits
-    if temp_lims is None:
+    if not temp_lims["lower"]:
         try:
-            temp_max_PL = np.nanmax(P_FT['temperatures'][:])
-            temp_min_PL = np.nanmin(P_FT['temperatures'][:])
+            temp_min_P = np.nanmin(P_FT["temperatures"])
         except ValueError: # empty list
-            temp_max_PL = 0
-            temp_min_PL = 100
+            temp_min_P = 100
         try:
-            temp_max_WS = np.nanmax(WS_FT['temperatures'][:])
-            temp_min_WS = np.nanmin(WS_FT['temperatures'][:])
+            temp_min_WS = np.nanmin(WS_FT["temperatures"])
         except ValueError: # empty list
-            temp_max_WS = 0
             temp_min_WS = 100
     else:
-        temp_min_PL, temp_max_PL = temp_lims
-        temp_min_WS, temp_max_WS = temp_lims
-    # Set salt limits
-    if sal_lims is None:
+        temp_min_P = float(temp_lims["lowerLim"])
+        temp_min_WS = float(temp_lims["lowerLim"])
+    if not temp_lims["upper"]:
         try:
-            salt_max_PL = np.nanmax(P_FT['salinities'][:])
-            salt_min_PL = np.nanmin(P_FT['salinities'][:])
+            temp_max_P = np.nanmax(P_FT["temperatures"])
         except ValueError: # empty list
-            salt_max_PL = 0
-            salt_min_PL = 100
+            temp_max_P = 0
         try:
-            salt_max_WS = np.nanmax(WS_FT['salinities'][:])
-            salt_min_WS = np.nanmin(WS_FT['salinities'][:])
+            temp_max_WS = np.nanmax(WS_FT["temperatures"])
         except ValueError: # empty list
-            salt_max_WS = 0
-            salt_min_WS = 100
+            temp_max_WS = 0
     else:
-        salt_min_PL, salt_max_PL = sal_lims
-        salt_min_WS, salt_max_WS = sal_lims
-    if density_lims is None:
+        temp_max_P = float(temp_lims["upperLim"])
+        temp_max_WS = float(temp_lims["upperLim"])
+    # Set salt limits
+    if not sal_lims["lower"]:
         try:
-            sigma_max_PL = np.nanmax(P_FT['sigmas'])
-            sigma_min_PL = np.nanmin(P_FT['sigmas'])
+            sal_min_P = np.nanmin(P_FT["salinities"])
         except ValueError: # empty list
-            sigma_max_PL = -100
-            sigma_min_PL = 100
+            sal_min_P = 100
         try:
-            sigma_max_WS = np.nanmax(WS_FT['sigmas'])
-            sigma_min_WS = np.nanmin(WS_FT['sigmas'])
+            sal_min_WS = np.nanmin(WS_FT["salinities"])
         except ValueError: # empty list
-            sigma_max_WS = -100
+            sal_min_WS = 100
+    else:
+        sal_min_P = float(sal_lims["lowerLim"])
+        sal_min_WS = float(sal_lims["lowerLim"])
+    if not sal_lims["upper"]:
+        try:
+            sal_max_P = np.nanmax(P_FT["salinities"])
+        except ValueError: # empty list
+            sal_max_P = 0
+        try:
+            sal_max_WS = np.nanmax(WS_FT["salinities"])
+        except ValueError: # empty list
+            sal_max_WS = 0
+    else:
+        sal_max_P = float(sal_lims["upperLim"])
+        sal_max_WS = float(sal_lims["upperLim"])
+
+    if not density_lims["lower"]:
+        try:
+            sigma_min_P = np.nanmin(P_FT["sigmas"])
+        except ValueError: # empty list
+            sigma_min_P = 100
+        try:
+            sigma_min_WS = np.nanmin(WS_FT["sigmas"])
+        except ValueError: # empty list
             sigma_min_WS = 100
     else:
-        sigma_min_PL, sigma_max_PL = density_lims
-        sigma_min_WS, sigma_max_WS = density_lims
+        sigma_min_P = float(density_lims["lowerLim"])
+        sigma_min_WS = float(density_lims["lowerLim"])
+    if not density_lims["upper"]:
+        try:
+            sigma_max_P = np.nanmax(P_FT["sigmas"])
+        except ValueError: # empty list
+            sigma_max_P = 0
+        try:
+            sigma_max_WS = np.nanmax(WS_FT["sigmas"])
+        except ValueError: # empty list
+            sigma_max_WS = 0
+    else:
+        sigma_max_P = float(density_lims["upperLim"])
+        sigma_max_WS = float(density_lims["upperLim"])
     # Pelican
     if plot_P:
         fig, axs = plt.subplots(2, 2, figsize=(12, 9))
         fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94)
         pms = axs[0,0].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
                   c=P_FT['salinities'], \
-                   vmax=salt_max_PL, vmin=salt_min_PL, cmap=cmo.haline)
+                   vmax=sal_max_P, vmin=sal_min_P, cmap=cmo.haline)
         axs[0,0].set_xlabel("Longitude [$^\circ$E]")
         axs[0,0].set_ylabel("Latitude [$^\circ$N]")
         axs[0,0].set_title("Salinity")
         pmt = axs[0,1].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
                   c=P_FT['temperatures'], \
-                   vmax=temp_max_PL, vmin=temp_min_PL, cmap=cmo.thermal)
+                   vmax=temp_max_P, vmin=temp_min_P, cmap=cmo.thermal)
         axs[0,1].set_xlabel("Longitude [$^\circ$E]")
         axs[0,1].set_ylabel("Latitude [$^\circ$N]")
         axs[0,1].set_title("Temperature")
         pmd = axs[1,0].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
                   c=P_FT['sigmas'], \
-                  vmax=sigma_max_PL, vmin=sigma_min_PL,cmap=cmo.dense)
+                  vmax=sigma_max_P, vmin=sigma_min_P,cmap=cmo.dense)
         axs[1,0].set_xlabel("Longitude [$^\circ$E]")
         axs[1,0].set_ylabel("Latitude [$^\circ$N]")
         axs[1,0].set_title("Potential Density")
@@ -870,7 +979,7 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94)
         pms = axs[0,0].scatter(WS_FT['longitudes'][:], WS_FT['latitudes'][:],\
                   c=WS_FT['salinities'], \
-                   vmax=salt_max_WS, vmin=salt_min_WS, cmap=cmo.haline)
+                   vmax=sal_max_WS, vmin=sal_min_WS, cmap=cmo.haline)
         axs[0,0].set_xlabel("Longitude [$^\circ$E]")
         axs[0,0].set_ylabel("Latitude [$^\circ$N]")
         axs[0,0].set_title("Salinity")
@@ -899,6 +1008,87 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         fig.suptitle("Walton Smith Surface Data" + ": " + start.strftime("%d-%b %H:%M") + " - " + end.strftime("%d-%b %H:%M"))
         fig.tight_layout()
         fig.savefig(os.path.join(directory,"WS_Surface_panels.png"),dpi=100)
+        plt.close(fig)
+
+def ASVSurface_png(ASVdata,start,end,directory,sal_lims=DEFAULT_LIMS,temp_lims=DEFAULT_LIMS,density_lims=DEFAULT_LIMS):
+    """ASVdata is a dictionary of {"ASVname": data}"""
+    for name, ASV in ASVdata.items():
+        if not temp_lims["lower"]:
+            try:
+                temp_min = np.nanmin(ASV["temperatures"])
+            except ValueError: # empty list
+                temp_min = -5
+        else:
+            temp_min = float(temp_lims["lowerLim"])
+        if not temp_lims["upper"]:
+            try:
+                temp_max = np.nanmax(ASV["temperatures"])
+            except ValueError: # empty list
+                temp_max = 35
+        else:
+            temp_max = float(temp_lims["upperLim"])
+        if not sal_lims["lower"]:
+            try:
+                sal_min = np.nanmin(ASV["salinities"])
+            except ValueError: # empty list
+                sal_min = -5
+        else:
+            sal_min = float(sal_lims["lowerLim"])
+        if not sal_lims["upper"]:
+            try:
+                sal_max = np.nanmax(ASV["salinities"])
+            except ValueError: # empty list
+                sal_max = 35
+        else:
+            sal_max = float(sal_lims["upperLim"])
+        if not density_lims["lower"]:
+            try:
+                sigma_min = np.nanmin(ASV["densities"])
+            except ValueError: # empty list
+                sigma_min = -5
+        else:
+            sigma_min = float(density_lims["lowerLim"])
+        if not density_lims["upper"]:
+            try:
+                sigma_max = np.nanmax(ASV["densities"])
+            except ValueError: # empty list
+                sigma_max = 35
+        else:
+            sigma_max = float(density_lims["upperLim"])
+
+        fig, axs = plt.subplots(2, 2, figsize=(12, 9))
+        fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94)
+        pms = axs[0,0].scatter(ASV['longitudes'][:], ASV['latitudes'][:],\
+                  c=ASV['salinities'], \
+                   vmax=sal_max, vmin=sal_min, cmap=cmo.haline)
+        axs[0,0].set_xlabel("Longitude [$^\circ$E]")
+        axs[0,0].set_ylabel("Latitude [$^\circ$N]")
+        axs[0,0].set_title("Salinity")
+        pmt = axs[0,1].scatter(ASV['longitudes'][:], ASV['latitudes'][:],\
+                  c=ASV['temperatures'], \
+                   vmax=temp_max, vmin=temp_min, cmap=cmo.thermal)
+        axs[0,1].set_xlabel("Longitude [$^\circ$E]")
+        axs[0,1].set_ylabel("Latitude [$^\circ$N]")
+        axs[0,1].set_title("Temperature")
+        pmd = axs[1,0].scatter(ASV['longitudes'][:], ASV['latitudes'][:],\
+                  c=ASV['sigmas'], \
+                  vmax=density_max, vmin=density_min,cmap=cmo.dense)
+        axs[1,0].set_xlabel("Longitude [$^\circ$E]")
+        axs[1,0].set_ylabel("Latitude [$^\circ$N]")
+        axs[1,0].set_title("Potential Density")
+        # pmp = axs[1,1].scatter(ADCP_WS['longitudes'][:], ADCP_WS['latitudes'][:],\
+        #           c=ADCP_WS['pm_vorticity'], \
+        #           vmax=PM_lims[-1],vmin=PM_lims[0],cmap=cmo.curl)
+        # axs[1,1].set_xlabel("Longitude [$^\circ$E]")
+        # axs[1,1].set_ylabel("Latitude [$^\circ$N]")
+        # axs[1,1].set_title("Poor Man's Vorticity [f]")
+        fig.colorbar(pms, ax=axs[0,0])
+        fig.colorbar(pmt, ax=axs[0,1])
+        fig.colorbar(pmd, ax=axs[1,0])
+        # fig.colorbar(pmp, ax=axs[1,1])
+        fig.suptitle("ASV " + name + ": " + start.strftime("%d-%b %H:%M") + " - " + end.strftime("%d-%b %H:%M"))
+        fig.tight_layout()
+        fig.savefig(os.path.join(directory,"ASV_" + name + ".png"),dpi=100)
         plt.close(fig)
 
 def ADCP_vector(filepath,start,end,directory,name,MAX_SPEED=1,VECTOR_LENGTH=1./20.,DEPTH_LEVELS=-1, CMAP=cmo.thermal):

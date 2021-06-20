@@ -19,7 +19,8 @@ WorkingDirectory=/home/pat/Dropbox
 #
 ExecStart=/home/pat/SUNRISE/syncPush.py \
         --logfile=/home/pat/logs/syncPush.log \
-	--bwlimit=20 \
+	--bwlimit=40 \
+	--delay=60 \
 	--prefix=Dropbox/ \
 	Pelican
         
