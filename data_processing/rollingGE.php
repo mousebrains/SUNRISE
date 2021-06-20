@@ -34,7 +34,7 @@ $r->writeElement("name", "SUNRISE (" . $hostname .")");
 
 
 $r->startElement("Folder");
-writeElement("name", "2 Day Rolling")
+writeElement("name", "2 Day Rolling");
 mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_1200kHz_vector.kmz", "Pelican 1200kHz Vector");
 mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_600kHz_vector.kmz", "Pelican 600kHz Vector");
 mkLink($r, $prefix . "/Processed/Rolling-2Days/WS_1200kHz_vector.kmz", "Walton Smith 1200kHz Vector");
