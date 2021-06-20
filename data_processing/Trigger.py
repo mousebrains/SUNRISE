@@ -13,6 +13,7 @@ import argparse
 import os.path
 import queue
 import time
+import subprocess
 
 class Trigger(MyThread.MyThread):
     def __init__(self, queue:queue.Queue,
@@ -33,11 +34,12 @@ class Trigger(MyThread.MyThread):
             q.task_done()
             logger.info("action %s t %s names %s", action, t, names)
             # Lixin insert trigger code here for subprocess
-            process = subprocess.run(["python3",\
-                    "/home/pat/SUNRISE/data_processing/realtime.py",\
-                    names],\
-                    check=True, stdout=subprocess.PIPE, universal_newlines=True)
-            logger.info(process.stdout)
+            cmd = ["/usr/bin/python3", "/home/pat/SUNRISE/data_processing/realtime.py"]
+            cmd.extend(names)
+            process = subprocess.run(cmd, shell=False, check=False,
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                    universal_newlines=True)
+            logger.info(process)
 
 parser = argparse.ArgumentParser()
 MyLogger.addArgs(parser)
