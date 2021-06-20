@@ -90,9 +90,9 @@ try:
         # print(WS_FT)
 
 
-    # Make throughflow plots
-    sunrise.throughflow(P_FT,WS_FT,start,end,directory,
-        sal_kmz=plots["salinity_kmz"],temp_kmz=plots["temperature_kmz"],density_kmz=plots["density_kmz"],
+        # Make throughflow plots
+        sunrise.throughflow(P_FT,WS_FT,start,end,directory,
+            sal_kmz=plots["salinity_kmz"],temp_kmz=plots["temperature_kmz"],density_kmz=plots["density_kmz"],
         sal_png=plots["salinity_png"],temp_png=plots["temperature_png"],density_png=plots["density_png"],
         salg_kmz=plots["sal_grad_kmz"], salg_png=plots["sal_grad_png"],
         sal_lims=sal_lims,temp_lims=temp_lims,density_lims=density_lims)
