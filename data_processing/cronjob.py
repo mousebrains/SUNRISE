@@ -4,10 +4,10 @@ from datetime import datetime, timezone, timedelta
 import os
 
 # Job file template
-template_file = "cronjob_template.yml"
+template_file = "/home/pat/SUNRISE/data_processing/cronjob_template.yml"
 
 # Plot file
-plot_file = 'realtime.py'
+plot_file = '/home/pat/SUNRISE/data_processing/realtime.py'
 
 # OUTPUT directory
 OUTPUT_DIR = "/home/pat/Processed/Rolling-2Days"
@@ -34,6 +34,7 @@ START_TIME = END_TIME - timedelta(days=12)
 job_file = OUTPUT_DIR + "/crobjob-%s.yml" % datetime.now().strftime("%Y-%m-%dT%H-%M")
 os.system("sed -e 's/#START_TIME#/%s/g' -e 's/#END_TIME#/%s/g' %s > %s" \
                 % (START_TIME.isoformat(), END_TIME.isoformat(), template_file, job_file))
+
 
 # Plot
 try:
