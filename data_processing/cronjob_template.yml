@@ -41,5 +41,5 @@ limits:
     upper: false
     upperLim: "20"
 description: "48 hour rolling file"
-comment: "This folder contains plots for the last 48 hours of data.\nThe data is up to date to with in 30 minutes.\n"
+comment: "This folder contains plots for the last 48 hours of data.\nThe plots are updated 30 minutes.\n"
 ...
