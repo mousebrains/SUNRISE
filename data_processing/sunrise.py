@@ -404,11 +404,11 @@ def parse_ASV(filename, start, end):
                     if data_split[4] == "Temp":
                         datapoints[timestring].temps.append(float(data_split[5]))
                     else:
-                        print("Unexpected Order")
+                        print("Unexpected Order - Temp")
                     if data_split[6] == "Sal":
                         datapoints[timestring].sals.append(float(data_split[7]))
                     else:
-                        print("Unexpected Order")
+                        print("Unexpected Order - Sal")
                 if identifier_strip == "adcp":
                     timestring = time.isoformat()
                     if timestring not in datapoints:
@@ -417,15 +417,15 @@ def parse_ASV(filename, start, end):
                     if data_split[4] == "u":
                         datapoints[timestring].u.append(data_split[5])
                     else:
-                        print("Unexpected Order")
+                        print("Unexpected ADCP Order - u")
                     if data_split[6] == "v":
                         datapoints[timestring].v.append(data_split[7])
                     else:
-                        print("Unexpected Order")
+                        print("Unexpected ADCP Order - v")
                     if data_split[8] == "w":
                         datapoints[timestring].w.append(data_split[9])
                     else:
-                        print("Unexpected Order")
+                        print("Unexpected ADCP Order - w")
             except:
                 print("Something went wrong")
 
