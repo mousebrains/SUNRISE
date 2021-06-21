@@ -11,7 +11,7 @@ function mkLink(XMLWriter $r, string $url, string $name=NULL, string $descrip=NU
 	$r->writeElement("href", $url); // Where the information is
 	if (!is_null($dt)) {
 		$r->writeElement("refreshMode", "onInterval");
-		$r->writeElement("refreshInterval", $dt)
+		$r->writeElement("refreshInterval", $dt);
 	}
 	$r->endElement(); // end the Link
 	$r->endElement(); // end the NetworkLink
