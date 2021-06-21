@@ -14,6 +14,7 @@ PELICAN_600_DATA = "/home/pat/Dropbox/Pelican/ADCP/wh600.nc"
 PELICAN_1200_DATA = "/home/pat/Dropbox/Pelican/ADCP/wh1200.nc"
 WS_600_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh600.nc"
 WS_1200_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh1200.nc"
+ASV_FILENAMES = ["/home/pat/Dropbox/WaltonSmith/ASV/kayak_status_GS2_UBOX01.txt"]
 
 
 parser = argparse.ArgumentParser()
@@ -144,5 +145,15 @@ try:
         sunrise.ADCP_vector(WS_600_DATA,start,end,directory,"WS 600kHz",DEPTH_LEVELS=5)
     if plots["WS_1200kHz_vector"]:
         sunrise.ADCP_vector(WS_1200_DATA,start,end,directory,"WS 1200kHz",DEPTH_LEVELS=5)
+except:
+    raise
+
+# ASV surface plots
+try:
+    if plots["ASV_surface"]:
+        ASV = {}
+        for filename in ASV_FILENAMES:
+            ASV[filename[-10:-4]] = sunrise.parse_ASV(filename,start,end)
+            sunrise.ASVSurface_png(ASV,start,end,directory,sal_lims=sal_lims, temp_lims=temp_lims, density_lims=density_lims)
 except:
     raise

@@ -1,18 +1,14 @@
 <?php
-// Rolling Google Earth items
+// Pat's base Google Earth items
 
 header("Content-Type: application/xml");
 
-function mkLink(XMLWriter $r, string $url, string $name=NULL, string $descrip=NULL, int $dt=NULL) {
+function mkLink(XMLWriter $r, string $url, string $name=NULL, string $descrip=NULL) {
 	$r->startElement("NetworkLink"); // Start the NetworkLink element
 	if (!is_null($name)) $r->writeElement("name", $name);
 	if (!is_null($descrip)) $r->writeElement("description", $descrip);
 	$r->startElement("Link"); // The link information
 	$r->writeElement("href", $url); // Where the information is
-	if (!is_null($dt)) {
-		$r->writeElement("refreshMode", "onInterval");
-		$r->writeElement("refreshInterval", $dt);
-	}
 	$r->endElement(); // end the Link
 	$r->endElement(); // end the NetworkLink
 }

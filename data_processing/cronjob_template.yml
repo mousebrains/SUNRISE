@@ -24,6 +24,7 @@ plots:
 - sal_grad_png: true
 - Pelican_surface: true
 - WS_surface: true
+- ASV_surface: true
 limits:
 - sal_lims:
     lower: true
