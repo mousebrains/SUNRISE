@@ -13,7 +13,7 @@ WS_FT_DATAPATH = "/home/pat/Dropbox/WaltonSmith/FTMET/WS21163_Hetland-Full Vdl.d
 PELICAN_600_DATA = "/home/pat/Dropbox/Pelican/ADCP/wh600.nc"
 PELICAN_1200_DATA = "/home/pat/Dropbox/Pelican/ADCP/wh1200.nc"
 WS_600_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh600.nc"
-WS_1200_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh600.nc"
+WS_1200_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh1200.nc"
 
 
 parser = argparse.ArgumentParser()
