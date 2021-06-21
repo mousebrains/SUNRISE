@@ -408,7 +408,7 @@ def parse_ASV(filename, start, end):
                     if data_split[6] == "Sal":
                         datapoints[timestring].sals.append(float(data_split[7]))
                     else:
-                        print("Unexpected Order - Sal")
+                        print("Unexpected Order - Sal" + timestring)
                 if identifier_strip == "adcp":
                     timestring = time.isoformat()
                     if timestring not in datapoints:
