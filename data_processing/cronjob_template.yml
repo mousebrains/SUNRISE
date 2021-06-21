@@ -26,10 +26,10 @@ plots:
 - WS_surface: true
 limits:
 - sal_lims:
-    lower: false
-    lowerLim: "31"
+    lower: true
+    lowerLim: "32"
     upper: false
-    upperLim: "37"
+    upperLim: "36"
 - temp_lims:
     lower: false
     lowerLim: "26"
