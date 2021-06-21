@@ -506,11 +506,11 @@ def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,dens
     if sal_kmz or sal_png:
         if not sal_lims["lower"]:
             try:
-                sal_min_P = np.nanmin(Pelican_salinities)
+                sal_min_P = 32
             except ValueError: # empty list
                 sal_min_P = 100
             try:
-                sal_min_WS = np.nanmin(WS_salinities)
+                sal_min_WS = 32
             except ValueError: # empty list
                 sal_min_WS = 100
             sal_min = min(sal_min_P, sal_min_WS)
@@ -518,11 +518,11 @@ def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,dens
             sal_min = float(sal_lims["lowerLim"])
         if not sal_lims["upper"]:
             try:
-                sal_max_P = np.nanmax(Pelican_salinities)
+                sal_max_P = 36 
             except ValueError: # empty list
                 sal_max_P = 0
             try:
-                sal_max_WS = np.nanmax(WS_salinities)
+                sal_max_WS = 36
             except ValueError: # empty list
                 sal_max_WS = 0
             sal_max = max(sal_max_P, sal_max_WS)

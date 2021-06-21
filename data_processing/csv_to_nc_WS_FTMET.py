@@ -88,6 +88,6 @@ def append_to_nc(csv_name, nc_name, timestart = datetime.datetime(2021,1,1,tzinf
 
 
 if __name__ == "__main__":
-    csv_name = '../../../WaltonSmith_test/FT/WS21111_Baringer-Full Vdl.dat'
-    nc_name = '../../WS_FTMET.nc'
+    csv_name = "/mnt/GOM/VIDS/Lister/WS21163_Hetland-Full Vdl.dat" 
+    nc_name = '/home/pat/Dropbox/WaltonSmith/FTMET/WS_FTMET.nc'
     append_to_nc(csv_name, nc_name)
