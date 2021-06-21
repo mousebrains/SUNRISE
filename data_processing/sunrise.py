@@ -851,8 +851,9 @@ def ADCP_PMV(DATAPATH,start,end,directory,AvgDepth=5,dmax_PMV=1,dmin_PMV=-1,pmv_
 def PMV_png(start,end,directory,*args,dmin_PMV=-1, dmax_PMV=1):
     fig, ax = plt.subplots(figsize=(12,9))
     for pmv in args:
-        sc =ax.scatter(pmv["longitudes"],pmv["latitudes"],c=pmv["pm_vorticity"],cmap=cmo.curl,vmin=dmin_PMV,vmax=dmax_PMV)
-        ax.plot(pmv["longitudes"][-1],pmv["latitudes"][-1],marker="p",linestyle="None",label=pmv["label"])
+        if pmv is not None:
+            sc =ax.scatter(pmv["longitudes"],pmv["latitudes"],c=pmv["pm_vorticity"],cmap=cmo.curl,vmin=dmin_PMV,vmax=dmax_PMV)
+            ax.plot(pmv["longitudes"][-1],pmv["latitudes"][-1],marker="p",linestyle="None",label=pmv["label"])
     ax.set_xlabel("Longitude [$^\circ$E]")
     ax.set_ylabel("Latitude [$^\circ$N]")
     ax.legend()
@@ -938,7 +939,7 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         sigma_max_P = float(density_lims["upperLim"])
         sigma_max_WS = float(density_lims["upperLim"])
     # Pelican
-    if plot_P:
+    if plot_P & (P_FT is not None) & (ADCP_PL is not None): 
         fig, axs = plt.subplots(2, 2, figsize=(12, 9))
         fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94)
         pms = axs[0,0].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
@@ -974,7 +975,7 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         fig.savefig(os.path.join(directory,"Pelican_Surface_panels.png"),dpi=100)
         plt.close(fig)
     # WS
-    if plot_WS:
+    if plot_WS & (WS_FT is not None) & (ADCP_WS is not None):
         fig, axs = plt.subplots(2, 2, figsize=(12, 9))
         fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94)
         pms = axs[0,0].scatter(WS_FT['longitudes'][:], WS_FT['latitudes'][:],\
@@ -1114,6 +1115,13 @@ def ADCP_vector(filepath,start,end,directory,name,MAX_SPEED=1,VECTOR_LENGTH=1./2
     for i in range(len(times)):
         idx[i] = (times[i] >= start) and (times[i] <= end)
 
+    # Check empty time window
+    times_filtered = [time for time, id in zip(times,idx) if id]
+
+    if not times_filtered:
+        # No data in time range
+        return None
+
     # Get data
     lon = rootgrp["lon"][idx]
     lat = rootgrp["lat"][idx]
@@ -1124,11 +1132,6 @@ def ADCP_vector(filepath,start,end,directory,name,MAX_SPEED=1,VECTOR_LENGTH=1./2
     v[missing] = 0
     depths = rootgrp["depth"][0,:DEPTH_LEVELS]
     depth_scaled = (depths - depths[0])/(depths[-1] - depths[0])
-    times_filtered = [time for time, id in zip(times,idx) if id]
-
-    if not times_filtered:
-        # No data in time range
-        return None
 
     folders = [f"{d:02.1f}m" for d in depths]
 
