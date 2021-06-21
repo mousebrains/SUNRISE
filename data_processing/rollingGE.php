@@ -36,9 +36,6 @@ $r->writeAttribute("xmlns", "http://www.opengis.net/kml/2.2");
 $r->startElement("Document");
 $r->writeElement("name", "SUNRISE (" . $hostname .")");
 
-
-$r->startElement("Folder");
-$r->writeElement("name", "2 Day Rolling");
 mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican 1200kHz_vector.kmz", "Pelican 1200kHz Vector", NULL, 600);
 mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican 600kHz_vector.kmz", "Pelican 600kHz Vector", NULL, 600);
 mkLink($r, $prefix . "/Processed/Rolling-2Days/WS 1200kHz_vector.kmz", "Walton Smith 1200kHz Vector", NULL, 600);
@@ -54,7 +51,6 @@ mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Temperature.kmz", "W
 mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Density.kmz", "Walton Smith Density", NULL, 600);
 mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Salinity_Gradient.kmz", "Walton Smith Salinity Gradient", NULL, 600);
 
-$r->endElement(); // Folder
 $r->endElement(); // Document
 $r->endElement(); // kml
 $r->endDocument(); // XML
