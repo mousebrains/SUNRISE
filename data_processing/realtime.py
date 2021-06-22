@@ -14,7 +14,7 @@ PELICAN_600_DATA = "/home/pat/Dropbox/Pelican/ADCP/wh600.nc"
 PELICAN_1200_DATA = "/home/pat/Dropbox/Pelican/ADCP/wh1200.nc"
 WS_600_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh600.nc"
 WS_1200_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh1200.nc"
-ASV_FILENAMES = ["/home/pat/Dropbox/WaltonSmith/ASV/kayak_status_GS2_UBOX01.txt"]
+ASV_FILENAMES = ["/home/pat/Dropbox/WaltonSmith/ASV/RHIB_status_GS1_UBOX01.txt"]
 
 
 parser = argparse.ArgumentParser()
