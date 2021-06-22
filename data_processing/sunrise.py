@@ -431,7 +431,6 @@ def parse_ASV(filename, start, end):
 
         timestrings = datapoints.keys()
         sorted_keys = sorted(timestrings)
-        print(sorted_keys)
         for key in sorted_keys:
             data = datapoints[key]
             lon = data.get_lon()
