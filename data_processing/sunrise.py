@@ -427,7 +427,7 @@ def parse_ASV(filename, start, end):
                     else:
                         print("Unexpected ADCP Order - w")
             except:
-                raise
+                print("ERROR: " + line)
 
         timestrings = datapoints.keys()
         sorted_keys = sorted(timestrings)
