@@ -386,7 +386,7 @@ def parse_ASV(filename, start, end):
             try:
                 received, identifier, timestring, data = line.split('-- ')
                 time = datetime.datetime.strptime(timestring[:19],"%Y/%m/%d %H:%M:%S")
-                time = time.replace(tzinfo=datetime.timezone.utc)
+                time = time.replace(second=0,tzinfo=datetime.timezone.utc)
                 identifier_strip = identifier.strip()
                 if identifier_strip == "navinfo":
                     timestring = time.isoformat()
@@ -404,11 +404,11 @@ def parse_ASV(filename, start, end):
                     if data_split[4] == "Temp":
                         datapoints[timestring].temps.append(float(data_split[5]))
                     else:
-                        print("Unexpected Order")
+                        print("Unexpected Order - Temp")
                     if data_split[6] == "Sal":
                         datapoints[timestring].sals.append(float(data_split[7]))
                     else:
-                        print("Unexpected Order")
+                        print("Unexpected Order - Sal" + timestring)
                 if identifier_strip == "adcp":
                     timestring = time.isoformat()
                     if timestring not in datapoints:
@@ -417,15 +417,15 @@ def parse_ASV(filename, start, end):
                     if data_split[4] == "u":
                         datapoints[timestring].u.append(data_split[5])
                     else:
-                        print("Unexpected Order")
+                        print("Unexpected ADCP Order - u")
                     if data_split[6] == "v":
                         datapoints[timestring].v.append(data_split[7])
                     else:
-                        print("Unexpected Order")
+                        print("Unexpected ADCP Order - v")
                     if data_split[8] == "w":
                         datapoints[timestring].w.append(data_split[9])
                     else:
-                        print("Unexpected Order")
+                        print("Unexpected ADCP Order - w")
             except:
                 print("Something went wrong")
 
@@ -518,7 +518,7 @@ def throughflow(P_FT, WS_FT, start,end,directory,sal_kmz=True,temp_kmz=True,dens
             sal_min = float(sal_lims["lowerLim"])
         if not sal_lims["upper"]:
             try:
-                sal_max_P = 36 
+                sal_max_P = 36
             except ValueError: # empty list
                 sal_max_P = 0
             try:
@@ -939,7 +939,7 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
         sigma_max_P = float(density_lims["upperLim"])
         sigma_max_WS = float(density_lims["upperLim"])
     # Pelican
-    if plot_P & (P_FT is not None) & (ADCP_PL is not None): 
+    if plot_P & (P_FT is not None) & (ADCP_PL is not None):
         fig, axs = plt.subplots(2, 2, figsize=(12, 9))
         fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94)
         pms = axs[0,0].scatter(P_FT['longitudes'][:], P_FT['latitudes'][:],\
@@ -1044,14 +1044,14 @@ def ASVSurface_png(ASVdata,start,end,directory,sal_lims=DEFAULT_LIMS,temp_lims=D
             sal_max = float(sal_lims["upperLim"])
         if not density_lims["lower"]:
             try:
-                sigma_min = np.nanmin(ASV["densities"])
+                sigma_min = np.nanmin(ASV["sigmas"])
             except ValueError: # empty list
                 sigma_min = -5
         else:
             sigma_min = float(density_lims["lowerLim"])
         if not density_lims["upper"]:
             try:
-                sigma_max = np.nanmax(ASV["densities"])
+                sigma_max = np.nanmax(ASV["sigmas"])
             except ValueError: # empty list
                 sigma_max = 35
         else:
@@ -1073,7 +1073,7 @@ def ASVSurface_png(ASVdata,start,end,directory,sal_lims=DEFAULT_LIMS,temp_lims=D
         axs[0,1].set_title("Temperature")
         pmd = axs[1,0].scatter(ASV['longitudes'][:], ASV['latitudes'][:],\
                   c=ASV['sigmas'], \
-                  vmax=density_max, vmin=density_min,cmap=cmo.dense)
+                  vmax=sigma_max, vmin=sigma_min,cmap=cmo.dense)
         axs[1,0].set_xlabel("Longitude [$^\circ$E]")
         axs[1,0].set_ylabel("Latitude [$^\circ$N]")
         axs[1,0].set_title("Potential Density")
