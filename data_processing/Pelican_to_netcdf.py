@@ -2,46 +2,70 @@ import netCDF4
 import numpy as np
 import csv
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
-DIRECTORY = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\underway_data" #"/home/pat/Dropbox/Pelican/MIDAS"
-WRITE_FILE = "./Pelican_FTMET.nc"
+NETCDF_FILE = "/home/pat/Dropbox/Pelican/MIDAS/Pelican_FTMET.nc"
+MIDAS_DIRECTORY = "/mnt/GOM/DATALOG40/EventData/MIDAS/"
 
+variables = ["Heading", "Depth", "Temperature", "Salinity", "Conductivity", "AirTemp", "BaroPressure",
+    "RelHumidity", "WindDirection", "WindSpeed"]
+midas = {"Heading": "Sperry-MK1-Gyro-Hdg-deg",
+    "Depth": "Knudsen-True-Depth-DRV-VALUE",
+    "Temperature": "Thermosalinograph-Data-Temp",
+    "Salinity": "Thermosalinograph-Data-Salinity",
+    "Conductivity": "Thermosalinograph-Data-Conductivity",
+    "AirTemp": "Air-Temp-1",
+    "BaroPressure": "BaromPress-1",
+    "RelHumidity": "Rel-Humidity-1",
+    "WindDirection": "TrueWindDirection-1-DRV-DIRECTION",
+    "WindSpeed": "TrueWindDirection-1-DRV-SPEED"}
+data = {"Time": [],
+    "Lon": [],
+    "Lat": []}
+for var in variables:
+    data[var] = []
 files = os.listdir(DIRECTORY)
 files = [file for file in files if file[:6] == "MIDAS_" and file[-4:] == ".elg"]
 files = sorted(files)
-print(files)
 
 try:
-    rootgrp = netCDF4.Dataset(WRITE_FILE, "a", format="NETCDF4")
-    print(rootgrp.dimensions)
-except FileNotFoundError:
-    rootgrp = netCDF4.Dataset(WRITE_FILE, "w", format="NETCDF4")
-    timeDim = rootgrp.createDimension("time", None)
-    time = rootgrp.createVariable("time","S1",("time",))
-    time.units = "Isoformat String"
-    lat = rootgrp.createVariable("Lat","f8",("time",))
-    lat.units = "deg N"
-    lon = rootgrp.createVariable("Lon","f8",("time",))
-    lon.units = "deg E"
-    heading = rootgrp.createVariable("Heading","f8",("time",))
-    heading.units = "deg"
-    depth = rootgrp.createVariable("Depth","f8",("time",))
-    depth.units = "m"
-    temperature = rootgrp.createVariable("Temperature","f8",("time",))
-    temperature = "ITS-90, deg C"
-    salinity = rootgrp.createVariable("Salinity","f8",("time",))
-    salinity.units = "PSU"
-    conductivity = rootgrp.createVariable("Conductivity","f8",("time",))
-    conductivity.units = "mS/cm"
-    airtemp = rootgrp.createVariable("AirTemp","f8",("time",))
-    airtemp.units = "deg C"
-    baropressure = rootgrp.createVariable("BaroPressure", "f8", ("time",))
-    baropressure.units = "mBar"
-    relhumidity = rootgrp.createVariable("RelHumidity", "f8", ("time",))
-    relhumidity.units = "percentage"
-    winddirection = rootgrp.createVariable("WindDirection","f8", ("time",))
-    winddirection.units = "deg"
-    windspeed = rootgrp.createVariable("WindSpeed","f8",("time",))
-    windspeed.units = "m/s"
-    
+    rootgrp = netCDF4.Dataset(WRITE_FILE, "r+", format="NETCDF4")
+    skip_old = nc.dimensions["time"].size
+    if skip_old = 0:
+        last_time = 0
+    else:
+        last_time = nc.dimensions["time"][-1]
+    start_time = datetime(year=2021,month=1,day=1,tzinfo=timezone.utc) + timedelta(seconds=last_time)
+
+
+    for filename in filenames:
+        with open(filename, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                time = row["Time"]
+                date = row["Date"]
+                date = datetime.datetime.strptime(date,"%m/%d/%Y")
+                time = datetime.time.fromisoformat(time)
+                time = datetime.datetime.combine(date, time, tzinfo=datetime.timezone.utc)
+                if time <= start_time:
+                    continue
+                lat = row["ADU800-GGA-Lat"]
+                data["Lat"].append(float(lat[0:2]) + float(lat[2:-1])/60)
+                lon = row["ADU800-GGA-Lon"]
+                data["Lon"].append(-1*float(lon[0:3]) - float(lon[3:-1])/60)
+                data["Time"].append(time - datetime(year=2021,month=1,day=1,tzinfo=timezone.utc).total_seconds())
+                for var in variables:
+                    value = row[midas[var]]
+                    if not value:
+                        value = "nan"
+                    try:
+                        data[var].append(float(value))
+                    except:
+                        print("Error converting " + var + "to float")
+                        data[var].append(float("nan"))
+        for key in data:
+            data[key] = np.array(data[key])
+        tidx = data["Time"].size
+        data["WindSpeed"] = data["WindSpeed"]*0.514444 # Convert from KNOTS to m/s
+        for key in data:
+            rootgrp[key][skip_old:skip_old+tidx] = data[key]

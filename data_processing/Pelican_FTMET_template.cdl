@@ -58,5 +58,5 @@ variables:
     WindSpeed:units = "m/s" ;
 
 // global attributes:
-		:title = "Walton Smith Flowthrough Data" ;
+		:title = "Pelican Flowthrough Data" ;
 }
