@@ -160,6 +160,6 @@ try:
         ASV = {}
         for filename in ASV_FILENAMES:
             ASV[filename[-10:-4]] = sunrise.parse_ASV(filename,start,end)
-            sunrise.ASVSurface_png(ASV,start,end,directory,sal_lims=sal_lims, temp_lims=temp_lims, density_lims=density_lims)
+        sunrise.ASVSurface_png(ASV,start,end,directory,sal_lims=sal_lims, temp_lims=temp_lims, density_lims=density_lims)
 except:
     raise
