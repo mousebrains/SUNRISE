@@ -21,6 +21,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("fn", nargs="+", help="Input yaml files")
 args = parser.parse_args()
 
+# all possible plots initialised to false
+plots = {}
+with open("realtime.yml", 'r') as f:
+    possible = yaml.safe_load(f)
+    for dict in possible["plots"]:
+        plots[dict["name"]] = False
+
 for fn in args.fn:
     with open(fn, "r") as fp:
         input = yaml.safe_load(fp)
@@ -76,7 +83,6 @@ temp_lims = input["limits"][1]["temp_lims"]
 density_lims = input["limits"][2]["density_lims"]
 
 plots_list = input["plots"]
-plots = {}
 for dict in plots_list:
     for key, value in dict.items():
         plots[key] = value
