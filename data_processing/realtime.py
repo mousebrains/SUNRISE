@@ -23,7 +23,7 @@ args = parser.parse_args()
 
 # all possible plots initialised to false
 plots = {}
-with open("realtime.yml", 'r') as f:
+with open("/home/pat/Dropbox/SUNRISE/data_processing/realtime.yml", 'r') as f:
     possible = yaml.safe_load(f)
     for dict in possible["plots"]:
         plots[dict["name"]] = False
