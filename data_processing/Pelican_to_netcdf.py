@@ -2,7 +2,7 @@ import netCDF4
 import numpy as np
 import csv
 import os
-from datetime import datetime, timedelta, timezone
+import datetime
 
 NETCDF_FILE = "/home/pat/Dropbox/Pelican/MIDAS/Pelican_FTMET.nc"
 MIDAS_DIRECTORY = "/mnt/GOM/DATALOG40/EventData/MIDAS/"
@@ -19,27 +19,27 @@ midas = {"Heading": "Sperry-MK1-Gyro-Hdg-deg",
     "RelHumidity": "Rel-Humidity-1",
     "WindDirection": "TrueWindDirection-1-DRV-DIRECTION",
     "WindSpeed": "TrueWindDirection-1-DRV-SPEED"}
-data = {"Time": [],
+data = {"time": [],
     "Lon": [],
     "Lat": []}
 for var in variables:
     data[var] = []
-files = os.listdir(DIRECTORY)
+files = os.listdir(MIDAS_DIRECTORY)
 files = [file for file in files if file[:6] == "MIDAS_" and file[-4:] == ".elg"]
 files = sorted(files)
 
 try:
-    rootgrp = netCDF4.Dataset(WRITE_FILE, "r+", format="NETCDF4")
-    skip_old = nc.dimensions["time"].size
-    if skip_old = 0:
+    rootgrp = netCDF4.Dataset(NETCDF_FILE, "r+", format="NETCDF4")
+    skip_old = rootgrp.dimensions["time"].size
+    if skip_old == 0:
         last_time = 0
     else:
         last_time = nc.dimensions["time"][-1]
-    start_time = datetime(year=2021,month=1,day=1,tzinfo=timezone.utc) + timedelta(seconds=last_time)
+    start_time = datetime.datetime(year=2019,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(seconds=last_time)
 
 
-    for filename in filenames:
-        with open(filename, newline='') as csvfile:
+    for filename in files:
+        with open(os.path.join(MIDAS_DIRECTORY,filename), newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 time = row["Time"]
@@ -53,7 +53,7 @@ try:
                 data["Lat"].append(float(lat[0:2]) + float(lat[2:-1])/60)
                 lon = row["ADU800-GGA-Lon"]
                 data["Lon"].append(-1*float(lon[0:3]) - float(lon[3:-1])/60)
-                data["Time"].append(time - datetime(year=2021,month=1,day=1,tzinfo=timezone.utc).total_seconds())
+                data["time"].append((time - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds())
                 for var in variables:
                     value = row[midas[var]]
                     if not value:
@@ -63,9 +63,11 @@ try:
                     except:
                         print("Error converting " + var + "to float")
                         data[var].append(float("nan"))
-        for key in data:
-            data[key] = np.array(data[key])
-        tidx = data["Time"].size
-        data["WindSpeed"] = data["WindSpeed"]*0.514444 # Convert from KNOTS to m/s
-        for key in data:
-            rootgrp[key][skip_old:skip_old+tidx] = data[key]
+    for key in data:
+        data[key] = np.array(data[key])
+    tidx = data["time"].size
+    data["WindSpeed"] = data["WindSpeed"]*0.514444 # Convert from KNOTS to m/s
+    for key in data:
+        rootgrp[key][skip_old:skip_old+tidx] = data[key]
+except:
+    raise

@@ -5,9 +5,9 @@ dimensions:
 
 variables:
 
-  double Date(time) ;
-    Date:long_name = "Date,Time" ;
-    Date:units = "seconds since 2021-01-01 00:00:00 GMT" ;
+  double time(time) ;
+    time:long_name = "Date,Time" ;
+    time:units = "seconds since 2021-01-01 00:00:00 GMT" ;
 
   double Lon(time) ;
     Lon:long_name = "ADU800-GGA-Lat" ;
