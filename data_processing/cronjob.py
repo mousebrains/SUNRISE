@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 import time
 import yaml
 from datetime import datetime, timezone, timedelta
@@ -41,7 +43,7 @@ os.system("sed -e 's/#START_TIME#/%s/g' -e 's/#END_TIME#/%s/g' %s > %s" \
 try:
     # print time
     msg = "Time window: %s -> %s\n" % (START_TIME.isoformat(), END_TIME.isoformat())
-    print(msg)
+    # print(msg) # Take out since this will be sent to the root mail account
     _ = clog_f.write(msg)
 
     # make plots

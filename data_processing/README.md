@@ -19,7 +19,7 @@ The realtime data will be processed in three ways:
 * [ ] Write Lixin's scheduler for the cronjobs
 
 # Packages installed
-  - sudo apt install python3-netcdf4
-  - sudo apt install python3-gsw
-  - sudo apt install python3-geopy
-  - python3 -m pip install cmocean
+  - `sudo apt install python3-netcdf4`
+  - `sudo apt install python3-gsw`
+  - `sudo apt install python3-geopy`
+  - `python3 -m pip install cmocean`
