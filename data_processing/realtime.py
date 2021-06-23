@@ -83,11 +83,11 @@ temp_lims = input["limits"][1]["temp_lims"]
 density_lims = input["limits"][2]["density_lims"]
 try:
     vel_lims = input["limits"][3]["velocity_lims"]
-except KeyError:
+except IndexError:
     vel_lims = {"lower": False, "upper": False, "lowerlim": -0.5, "upperLim": 0.5}
 try:
     shear_lims = input["limits"][4]["shear_lims"]
-except KeyError:
+except IndexError:
     shear_lims = {"lower": False, "upper": False, "lowerlim": -0.2, "upperLim": 0.2}
 
 plots_list = input["plots"]
