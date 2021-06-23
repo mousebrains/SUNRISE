@@ -11,7 +11,7 @@
 # Apr-2021, Pat Welch, pat@mousebrains.com
 
 [Unit]
-Description=Rsync from the WaltonSmith to the backup Pelican server
+Description=Extract GPS fixes and save them as a growing CSV file
 
 [Service]
 # Type=simple # Default

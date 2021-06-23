@@ -18,7 +18,7 @@ import sqlite3
 import inotify_simple as ins
 import re
 import glob
-import os.path
+import os
 
 def fillQueue(q:queue.Queue, root:str, logger:logging.Logger) -> None:
     files = []
@@ -80,6 +80,10 @@ class Writer(MyThread.MyThread):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger) -> None:
         MyThread.MyThread.__init__(self, "Writer", args, logger)
         self.__queue = queue.Queue()
+        logger.info("makeing directory %s", os.path.dirname(args.db))
+        os.makedirs(os.path.dirname(args.db), mode=0o775, exist_ok=True)
+        logger.info("makeing directory %s", os.path.dirname(args.csv))
+        os.makedirs(os.path.dirname(args.csv), mode=0o775, exist_ok=True)
         self.__mkTable()
 
     @staticmethod
@@ -129,6 +133,7 @@ class Writer(MyThread.MyThread):
         args = self.args
         q = self.__queue
         logger.info("Starting db %s csv %s", args.db, args.csv)
+
         sqlFiles = "INSERT OR IGNORE INTO fixes VALUES(?,?,?,?,0);"
 
         columns = ",".join(("t", "name", "latitude", "longitude"))

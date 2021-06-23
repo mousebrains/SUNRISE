@@ -126,6 +126,7 @@ def shipInstall(name:str, qPrimary:bool) -> None:
     services = ["syncPush", "syncPull"] # Named services
     services.append("syncLocal") # Sync to my local backup server
     services.append("Trigger") # Trigger plot generation on section files being created
+    services.append("positionHarvester") # Harvest GPS fixes and store them in Processed
 
     for service in services:
         src = f"{service}.{name}.service"
