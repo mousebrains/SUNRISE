@@ -111,9 +111,9 @@ def ADCP_section(filepath,start,end,directory,name,maxdepth=60,vmin=None,vmax=No
     vel_max = max(np.nanmax(u),np.nanmax(v),np.nanmax(-u),np.nanmax(-v))
     shear_max = max(np.nanmax(ushear), np.nanmax(vshear), np.nanmax(-ushear), np.nanmax(-vshear))
     if vmin is None:
-        vmin = -vel_max
+        vmin = max(-1,-vel_max)
     if vmax is None:
-        vmax = vel_max
+        vmax = min(1,vel_max)
     if vmin > 0:
         vmin = 0
     if vmax < 0:
@@ -411,7 +411,7 @@ def parse_ASV(filename, start, end):
     reADCP = re.compile(r"ADATE\s*(\d+)\s*ATIME\s*(\d+)\s+" \
             r"u\s*(" + fltRE + r")\s*" \
             r"v\s*(" + fltRE + r")\s*" \
-            r"w\s*(" + fltRE + r")\s*") 
+            r"w\s*(" + fltRE + r")\s*")
     reNAVINFO = re.compile(r"LAT\s*(" + fltRE + ")\s*LON\s*(" + fltRE + ")")
     reKeel = re.compile(r"KDATE\s*\d+-\d+-\d+\s*KTIME\s*\d+:\d+:\d+[.]\d*\s*" \
             + r"Temp\s*(" + fltRE + r")\s*" \
@@ -1218,4 +1218,3 @@ if __name__ == "__main__":
     except Exception as e:
         print("Exception for", args)
         print(e)
-
