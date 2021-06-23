@@ -139,19 +139,19 @@ except:
 # ADCP sections
 try:
     if vel_lims["lower"]:
-        vmin = vel_lims["lowerLim"]
+        vmin = float(vel_lims["lowerLim"])
     else:
         vmin = None
     if vel_lims["upper"]:
-        vmax = vel_lims["upperLim"]
+        vmax = float(vel_lims["upperLim"])
     else:
         vmax = None
     if shear_lims["lower"]:
-        smin = shear_lims["lowerLim"]
+        smin = float(shear_lims["lowerLim"])
     else:
         smin = None
     if shear_lims["upper"]:
-        smax = shear_lims["upperLim"]
+        smax = float(shear_lims["upperLim"])
     else:
         smax = None
 
