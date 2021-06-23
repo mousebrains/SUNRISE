@@ -407,7 +407,7 @@ def parse_ASV(filename, start, end):
     ADCP_w = []
 
     fltRE = r"[+-]?\d+[.]?\d*"
-    regexp = re.compile(r"\s*(\d+-\w+-\d+\s+\d+:\d+:\d+)\s*(\w+)\s*--\s*(\w+)\s*--\s*(\d+/\d+/\d+ \d+:\d+:\d+)\s*UTC\s*--\s*(.*)\s*")
+    regexp = re.compile(r"\s*(\d{2}-\w+-\d{4}\s+\d{2}:\d{2}:\d{2})\s*(\w+)\s*--\s*(\w+)\s*--\s*(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2})\s*UTC\s*--\s*(.*)\s*")
     reADCP = re.compile(r"ADATE\s*(\d+)\s*ATIME\s*(\d+)\s+" \
             r"u\s*(" + fltRE + r")\s*" \
             r"v\s*(" + fltRE + r")\s*" \
@@ -424,7 +424,7 @@ def parse_ASV(filename, start, end):
             line = line.strip()
             matches = regexp.match(line)
             if not matches:
-                print("Malformed line:", line if len(line) < 100 else line[:100])
+                # print("Malformed line:", line if len(line) < 100 else line[:100])
                 continue
             received = matches[1]
             unitName = matches[2]
@@ -444,20 +444,21 @@ def parse_ASV(filename, start, end):
                     if not matches:
                         # print("Malformed NAVINFO line:", line)
                         continue
-                    lat = matches[1]
-                    lon = matches[2]
-                    if lat != 0 and lon != 0:
-                        datapoints[timestring].lats.append(float(lat))
-                        datapoints[timestring].lons.append(float(lon))
+                    lat = float(matches[1])
+                    lon = float(matches[2])
+                    if (lat != 0) and (abs(lat) <= 90) and (lon != 0) and (abs(lon) < 180):
+                        datapoints[timestring].lats.append(lat)
+                        datapoints[timestring].lons.append(lon)
                 elif identifier == "keelctd":
                     matches = reKeel.match(data)
                     if not matches:
                         # print("Malformed KEELCTD line:", line)
                         continue
-                    temp = matches[1]
-                    salt = matches[2]
-                    datapoints[timestring].temps.append(float(temp))
-                    datapoints[timestring].sals.append(float(salt))
+                    temp = float(matches[1])
+                    salt = float(matches[2])
+                    if (temp > 0) and (temp < 40) and (salt > 10) and (salt < 40):
+                        datapoints[timestring].temps.append(temp)
+                        datapoints[timestring].sals.append(salt)
                 elif identifier == "adcp":
                     matches = reADCP.match(data)
                     if not matches:
@@ -505,6 +506,7 @@ def parse_ASV(filename, start, end):
     else:
         salt_grad = []
 
+    logging.warn("before return")
     return {"longitudes": longitudes,
         "latitudes": latitudes,
         "times": times,
@@ -1064,7 +1066,7 @@ def ASVSurface_png(ASVdata,start,end,directory,sal_lims=DEFAULT_LIMS,temp_lims=D
     print("Beginning ASV Surface Plot")
     for name, ASV in ASVdata.items():
         print("Name: " + name)
-        print(ASV)
+        # print(ASV)
         if not temp_lims["lower"]:
             try:
                 temp_min = np.nanmin(ASV["temperatures"])
@@ -1216,5 +1218,4 @@ if __name__ == "__main__":
     try:
         parse_ASV(args.fn, args.start, args.end)
     except Exception as e:
-        print("Exception for", args)
-        print(e)
+        logging.exception("Exception for %s", args)
