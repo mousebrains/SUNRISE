@@ -66,20 +66,25 @@ limits:
   - {name: sal_lims,
     display_name: Salinity Limits,
     default_min: 31, # I'm envisioning that we have a auto/manual toggle and this would be the default fill value if manual
-    default_max: 37}
+    default_max: 37,
+    step: 0.1}
   - {name: temp_lims,
     display_name: Temperature Limits,
     default_min: 26,
-    default_max: 33}
+    default_max: 33,
+    step: 0.1}
   - {name: density_lims,
     display_name: Density Limits,
     default_min: -5,
-    default_max: 20}
+    default_max: 20,
+    step: 0.1}
   - {name: velocity_lims,
     display_name: ADCP Velocity Limits,
     default_min: -0.5,
-    default_max: 0.5}
+    default_max: 0.5,
+    step: 0.01}
   - {name: shear_lims,
     display_name: ADCP Shear Limits,
     default_min: -0.2,
-    default_max: 0.2}
+    default_max: 0.2,
+    step: 0.01}
