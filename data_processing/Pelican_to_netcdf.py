@@ -34,8 +34,9 @@ try:
     if skip_old == 0:
         last_time = 0
     else:
-        last_time = nc.dimensions["time"][-1]
-    start_time = datetime.datetime(year=2019,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(seconds=last_time)
+        last_time = rootgrp["time"][-1]
+        print(last_time)
+    start_time = datetime.datetime(year=2019,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(seconds=last_time[:])
 
 
     for filename in files:

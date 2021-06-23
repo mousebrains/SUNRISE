@@ -1205,6 +1205,42 @@ def ADCP_vector(filepath,start,end,directory,name,MAX_SPEED=1,VECTOR_LENGTH=1./2
     compress=True
     )
 
+def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes",sal_lims=DEFAULT_LIMS):
+    markers = ["o", "s" , "p", "h", "^"]
+
+    if not sal_lims["lower"]:
+        sal_min = min(np.nanmin(P_FT["salinities"]),np.nanmin(WS_FT["salinities"]))
+        for ASV in ASV_data:
+            sal_min = min(sal_min,np.nanmin(ASV_data[ASV]["salinities"]))
+    else:
+        sal_min = sal_lims["lowerLim"]
+    if not sal_lims["upper"]:
+        sal_max = max(np.nanmax(P_FT["salinities"]),np.nanmax(WS_FT["salinities"]))
+        for ASV in ASV_data:
+            sal_min = max(sal_max,np.nanmax(ASV_data[ASV]["salinities"]))
+    else:
+        sal_max = sal_lims["upperLim"]
+
+    fig, ax = plt.subplots(figsize=(12,9))
+
+    sc = ax.scatter(P_FT[xaxis],P_FT["times"],c=P_FT["salinities"],
+        vmax=sal_max,vmin=sal_min,marker=next(markers),cmap=cmo.haline)
+    ax.annotate("P",(P_FT[xaxis][-1], P_FT["times"][-1]),
+        textcoords="offset pixels", xytext=(5, 0), size=20)
+    ax.scatter(P_FT[xaxis],P_FT["times"],c=WS_FT["salinities"],
+        vmax=sal_max,vmin=sal_min,marker=next(markers),cmap=cmo.haline)
+    ax.annotate("WS",(WS_FT[xaxis][-1], WS_FT["times"][-1]),
+        textcoords="offset pixels", xytext=(5, 0), size=20)
+
+    for ASV in ASV_data:
+        ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],c=ASV_data[ASV]["salinities"],
+            vmax=sal_max,vmin=sal_min,marker=next(markers),cmap=cmo.haline)
+        ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
+            textcoords="offset pixels", xytext=(5, 0), size=12)
+    cb = plt.colorbar(sc)
+
+    fig.savefig(os.path.join(directory,"Hovmoller_Salinity.png"))
+
 if __name__ == "__main__":
     import argparse
 

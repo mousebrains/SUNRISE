@@ -32,20 +32,25 @@ $r->writeAttribute("xmlns", "http://www.opengis.net/kml/2.2");
 $r->startElement("Document");
 $r->writeElement("name", "SUNRISE (" . $hostname .")");
 
-mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican 1200kHz_vector.kmz", "Pelican 1200kHz Vector", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican 600kHz_vector.kmz", "Pelican 600kHz Vector", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/WS 1200kHz_vector.kmz", "Walton Smith 1200kHz Vector", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/WS 600kHz_vector.kmz", "Walton Smith 600kHz Vector", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_PMV.kmz", "Pelican Poor Man's Vorticity", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/WS_PMV.kmz", "Walton Smith Poor Man's Vorticity", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Salinity.kmz", "Pelican Salinity", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Temperature.kmz", "Pelican Temperature", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Density.kmz", "Pelican Density", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Salinity_Gradient.kmz", "Pelican Salinity Gradient", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Salinity.kmz", "Walton Smith Salinity", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Temperature.kmz", "Walton Smith Temperature", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Density.kmz", "Walton Smith Density", NULL, 600);
-mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Salinity_Gradient.kmz", "Walton Smith Salinity Gradient", NULL, 600);
+
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican 1200kHz_vector.kmz", "Pelican 1200kHz vector");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican 600kHz_vector.kmz", "Pelican 600kHz vector");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Density.kmz", "Pelican Density");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_PMV.kmz", "Pelican PMV");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Salinity.kmz", "Pelican Salinity");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Salinity_Gradient.kmz", "Pelican Salinity Gradient");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Pelican_Temperature.kmz", "Pelican Temperature");
+
+mkLink($r, $prefix . "/Processed/Rolling-2Days/WS 1200kHz_vector.kmz", "Walton Smith 1200kHz vector");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/WS 600kHz_vector.kmz", "Walton Smith 600kHz vector");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Density.kmz", "Walton Smith Density");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/WS_PMV.kmz", "Walton Smith PMV");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Salinity.kmz", "Walton Smith Salinity");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Salinity_Gradient.kmz", "Walton Smith Salinity Gradient");
+mkLink($r, $prefix . "/Processed/Rolling-2Days/Walton_Smith_Temperature.kmz", "Walton Smith Temperature");
+
+
+
 
 $r->endElement(); // Document
 $r->endElement(); // kml
