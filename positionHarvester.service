@@ -20,7 +20,8 @@ WorkingDirectory=/home/pat
 #
 ExecStart=/home/pat/SUNRISE/positionHarvester.py \
         --logfile=/home/pat/logs/positionHarvester.log \
-	--csv=/home/pat/Dropbox/Shore/Positions/positions.csv
+	--db=/home/pat/Processed/Positions/positions.db \
+	--csv=/home/pat/Processed/Positions/positions.csv
         
 RestartSec=300
 Restart=always
