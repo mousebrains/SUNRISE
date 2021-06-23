@@ -442,7 +442,7 @@ def parse_ASV(filename, start, end):
                 if identifier == "navinfo":
                     matches = reNAVINFO.match(data)
                     if not matches:
-                        print("Malformed NAVINFO line:", line)
+                        # print("Malformed NAVINFO line:", line)
                         continue
                     lat = matches[1]
                     lon = matches[2]
@@ -452,7 +452,7 @@ def parse_ASV(filename, start, end):
                 elif identifier == "keelctd":
                     matches = reKeel.match(data)
                     if not matches:
-                        print("Malformed KEELCTD line:", line)
+                        # print("Malformed KEELCTD line:", line)
                         continue
                     temp = matches[1]
                     salt = matches[2]
@@ -461,7 +461,7 @@ def parse_ASV(filename, start, end):
                 elif identifier == "adcp":
                     matches = reADCP.match(data)
                     if not matches:
-                        print("Malformed ADCP line:", line)
+                        # print("Malformed ADCP line:", line)
                         continue
                     adate = matches[1]
                     atime = matches[2]
@@ -471,8 +471,8 @@ def parse_ASV(filename, start, end):
                     datapoints[timestring].u.append(u)
                     datapoints[timestring].v.append(v)
                     datapoints[timestring].w.append(w)
-                else:
-                    print(f"Unsupport type '{identifier}' in {line}")
+                # else:
+                    # print(f"Unsupport type '{identifier}' in {line}")
             except Exception as e:
                 logging.exception("ERROR processing line %s", line)
 
