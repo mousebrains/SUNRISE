@@ -14,6 +14,8 @@ import matplotlib.dates as mdates
 from matplotlib.ticker import AutoMinorLocator, MaxNLocator
 from geopy.distance import distance
 import kml_tools as kml
+import re
+import logging
 
 CORIOLIS = 7*10**-5
 PRESSURE = 0 # pressure [dbar] at throughflow
@@ -404,54 +406,76 @@ def parse_ASV(filename, start, end):
     ADCP_v = []
     ADCP_w = []
 
+    fltRE = r"[+-]?\d+[.]?\d*"
+    regexp = re.compile(r"\s*(\d+-\w+-\d+\s+\d+:\d+:\d+)\s*(\w+)\s*--\s*(\w+)\s*--\s*(\d+/\d+/\d+ \d+:\d+:\d+)\s*UTC\s*--\s*(.*)\s*")
+    reADCP = re.compile(r"ADATE\s*(\d+)\s*ATIME\s*(\d+)\s+" \
+            r"u\s*(" + fltRE + r")\s*" \
+            r"v\s*(" + fltRE + r")\s*" \
+            r"w\s*(" + fltRE + r")\s*") 
+    reNAVINFO = re.compile(r"LAT\s*(" + fltRE + ")\s*LON\s*(" + fltRE + ")")
+    reKeel = re.compile(r"KDATE\s*\d+-\d+-\d+\s*KTIME\s*\d+:\d+:\d+[.]\d*\s*" \
+            + r"Temp\s*(" + fltRE + r")\s*" \
+            + r"Sal\s*(" + fltRE + r")\s*")
+
+
     datapoints = {}
     with open(filename, 'r') as f:
         for line in f:
+            line = line.strip()
+            matches = regexp.match(line)
+            if not matches:
+                print("Malformed line:", line if len(line) < 100 else line[:100])
+                continue
+            received = matches[1]
+            unitName = matches[2]
+            identifier = matches[3]
+            timestring = matches[4]
+            data = matches[5]
             try:
-                received, identifier, timestring, data = line.split('-- ')
-                time = datetime.datetime.strptime(timestring[:19],"%Y/%m/%d %H:%M:%S")
-                time = time.replace(second=0,tzinfo=datetime.timezone.utc)
-                identifier_strip = identifier.strip()
-                if identifier_strip == "navinfo":
-                    timestring = time.isoformat()
-                    if timestring not in datapoints:
-                        datapoints[timestring] = ASV_DATAPOINT(time)
-                    data_split = data.split()
-                    if all([data_split[0] == "LAT",data_split[2] == "LON",data_split[1] != "0",data_split[3] != "0"]):
-                        datapoints[timestring].lats.append(float(data_split[1]))
-                        datapoints[timestring].lons.append(float(data_split[3]))
-                if identifier_strip == "keelctd":
-                    timestring = time.isoformat()
-                    if timestring not in datapoints:
-                        datapoints[timestring] = ASV_DATAPOINT(time)
-                    data_split = data.split()
-                    if data_split[4] == "Temp":
-                        datapoints[timestring].temps.append(float(data_split[5]))
-                    else:
-                        print("Unexpected Order - Temp")
-                    if data_split[6] == "Sal":
-                        datapoints[timestring].sals.append(float(data_split[7]))
-                    else:
-                        print("Unexpected Order - Sal" + timestring)
-                if identifier_strip == "adcp":
-                    timestring = time.isoformat()
-                    if timestring not in datapoints:
-                        datapoints[timestring] = ASV_DATAPOINT(time)
-                    data_split = data.split()
-                    if data_split[4] == "u":
-                        datapoints[timestring].u.append(data_split[5])
-                    else:
-                        print("Unexpected ADCP Order - u")
-                    if data_split[6] == "v":
-                        datapoints[timestring].v.append(data_split[7])
-                    else:
-                        print("Unexpected ADCP Order - v")
-                    if data_split[8] == "w":
-                        datapoints[timestring].w.append(data_split[9])
-                    else:
-                        print("Unexpected ADCP Order - w")
-            except:
-                print("ERROR: " + line)
+                time = datetime.datetime.strptime(timestring, "%Y/%m/%d %H:%M:%S") \
+                        .replace(second=0, tzinfo=datetime.timezone.utc)
+
+                timestring = time.isoformat()
+                if timestring not in datapoints:
+                    datapoints[timestring] = ASV_DATAPOINT(time)
+
+                if identifier == "navinfo":
+                    matches = reNAVINFO.match(data)
+                    if not matches:
+                        print("Malformed NAVINFO line:", line)
+                        continue
+                    lat = matches[1]
+                    lon = matches[2]
+                    if lat != 0 and lon != 0:
+                        datapoints[timestring].lats.append(float(lat))
+                        datapoints[timestring].lons.append(float(lon))
+                elif identifier == "keelctd":
+                    matches = reKeel.match(data)
+                    if not matches:
+                        print("Malformed KEELCTD line:", line)
+                        continue
+                    temp = matches[1]
+                    salt = matches[2]
+                    datapoints[timestring].temps.append(float(temp))
+                    datapoints[timestring].sals.append(float(salt))
+                elif identifier == "adcp":
+                    matches = reADCP.match(data)
+                    if not matches:
+                        print("Malformed ADCP line:", line)
+                        continue
+                    adate = matches[1]
+                    atime = matches[2]
+                    u = matches[3]
+                    v = matches[4]
+                    w = matches[5]
+                    datapoints[timestring].u.append(u)
+                    datapoints[timestring].v.append(v)
+                    datapoints[timestring].w.append(w)
+                else:
+                    print(f"Unsupport type '{identifier}' in {line}")
+            except Exception as e:
+                logging.exception("ERROR processing line %s", line)
+
         print("Read all lines")
         timestrings = datapoints.keys()
         sorted_keys = sorted(timestrings)
@@ -1179,3 +1203,19 @@ def ADCP_vector(filepath,start,end,directory,name,MAX_SPEED=1,VECTOR_LENGTH=1./2
     vmax=VECTOR_LENGTH,
     compress=True
     )
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("fn", type=str, help="ASV file to process")
+    parser.add_argument("start", type=str, help="Starting timestamp")
+    parser.add_argument("end", type=str, help="Ending timestamp")
+    args = parser.parse_args()
+
+    try:
+        parse_ASV(args.fn, args.start, args.end)
+    except Exception as e:
+        print("Exception for", args)
+        print(e)
+
