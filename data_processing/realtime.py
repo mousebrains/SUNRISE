@@ -81,8 +81,14 @@ except:
 sal_lims = input["limits"][0]["sal_lims"]
 temp_lims = input["limits"][1]["temp_lims"]
 density_lims = input["limits"][2]["density_lims"]
-vel_lims = input["limits"][3]["velocity_lims"]
-shear_lims = input["limits"][4]["shear_lims"]
+try:
+    vel_lims = input["limits"][3]["velocity_lims"]
+except KeyError:
+    vel_lims = {"lower": False, "upper": False, "lowerlim": -0.5, "upperLim": 0.5}
+try:
+    shear_lims = input["limits"][4]["shear_lims"]
+except KeyError:
+    shear_lims = {"lower": False, "upper": False, "lowerlim": -0.2, "upperLim": 0.2}
 
 plots_list = input["plots"]
 for dict in plots_list:
