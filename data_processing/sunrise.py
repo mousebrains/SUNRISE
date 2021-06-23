@@ -121,7 +121,7 @@ def ADCP_section(filepath,start,end,directory,name,maxdepth=60,vmin=None,vmax=No
     if vmin == - vmax:
         vel_map = cmo.balance
     else:
-        vel_map = cmocean.tools.crop(cm0.balance, vmin, vmax, 0)
+        vel_map = cmocean.tools.crop(cmo.balance, vmin, vmax, 0)
     if smin is None:
         smin = -shear_max
     if smax is None:
@@ -133,7 +133,7 @@ def ADCP_section(filepath,start,end,directory,name,maxdepth=60,vmin=None,vmax=No
     if smin == - smax:
         shear_map = cmo.balance
     else:
-        shear_map = cmocean.tools.crop(cm0.balance, smin, smax, 0)
+        shear_map = cmocean.tools.crop(cmo.balance, smin, smax, 0)
     # ******************* Make Plots ************************************ #
 
     converter = mdates.ConciseDateConverter()
