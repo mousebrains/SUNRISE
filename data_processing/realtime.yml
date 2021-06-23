@@ -75,3 +75,11 @@ limits:
     display_name: Density Limits,
     default_min: -5,
     default_max: 20}
+  - {name: velocity_lims,
+    display_name: ADCP Velocity Limits,
+    default_min: -0.5,
+    default_max: 0.5}
+  - {name: shear_lims,
+    display_name: ADCP Shear Limits,
+    default_min: -0.2,
+    default_max: 0.2}

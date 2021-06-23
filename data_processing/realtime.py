@@ -81,6 +81,8 @@ except:
 sal_lims = input["limits"][0]["sal_lims"]
 temp_lims = input["limits"][1]["temp_lims"]
 density_lims = input["limits"][2]["density_lims"]
+vel_lims = input["limits"][3]["velocity_lims"]
+shear_lims = input["limits"][4]["shear_lims"]
 
 plots_list = input["plots"]
 for dict in plots_list:
@@ -130,14 +132,31 @@ except:
 
 # ADCP sections
 try:
+    if vel_lims["lower"]:
+        vmin = vel_lims["lowerLim"]
+    else:
+        vmin = None
+    if vel_lims["upper"]:
+        vmax = vel_lims["upperLim"]
+    else:
+        vmax = None
+    if shear_lims["lower"]:
+        smin = shear_lims["lowerLim"]
+    else:
+        smin = None
+    if shear_lims["upper"]:
+        smax = shear_lims["upperLim"]
+    else:
+        smax = None
+
     if plots["Pelican_600kHz_section"]:
-        sunrise.ADCP_section(PELICAN_600_DATA,start,end,directory,"Pelican 600kHz",maxdepth=60)
+        sunrise.ADCP_section(PELICAN_600_DATA,start,end,directory,"Pelican 600kHz",maxdepth=60,vmin=vmin,vmax=vmax,smin=smin,smax=smax)
     if plots["Pelican_1200kHz_section"]:
-        sunrise.ADCP_section(PELICAN_1200_DATA,start,end,directory,"Pelican 1200kHz",maxdepth=15)
+        sunrise.ADCP_section(PELICAN_1200_DATA,start,end,directory,"Pelican 1200kHz",maxdepth=15,vmin=vmin,vmax=vmax,smin=smin,smax=smax)
     if plots["WS_600kHz_section"]:
-        sunrise.ADCP_section(WS_600_DATA,start,end,directory,"WS 600kHz",maxdepth=60)
+        sunrise.ADCP_section(WS_600_DATA,start,end,directory,"WS 600kHz",maxdepth=60,vmin=vmin,vmax=vmax,smin=smin,smax=smax)
     if plots["WS_1200kHz_section"]:
-        sunrise.ADCP_section(WS_1200_DATA,start,end,directory,"WS 1200kHz",maxdepth=15)
+        sunrise.ADCP_section(WS_1200_DATA,start,end,directory,"WS 1200kHz",maxdepth=15,vmin=vmin,vmax=vmax,smin=smin,smax=smax)
 except:
     raise
 
