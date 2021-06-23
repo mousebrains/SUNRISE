@@ -506,7 +506,6 @@ def parse_ASV(filename, start, end):
     else:
         salt_grad = []
 
-    logging.warn("before return")
     return {"longitudes": longitudes,
         "latitudes": latitudes,
         "times": times,
