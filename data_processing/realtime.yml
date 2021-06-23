@@ -58,7 +58,7 @@ plots:
     description: Create a png displaying salinity, temperature, potential density, and poor man's vorticity from the Pelican}
   - {name: WS_surface,
     display_name: Walton Smith Surface Summary,
-    description: Create a png displaying salinity, temperature, potential density, and poor man;s vorticity from the Walton Smith}
+    description: Create a png displaying salinity, temperature, potential density, and poor man's vorticity from the Walton Smith}
   - {name: ASV_surface,
     display_name: ASV Surface Summary,
     description: Create pngs showing the ASV salinity, temperature and potential density}
