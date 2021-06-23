@@ -6,6 +6,7 @@ import os
 import numpy as np
 import pandas as pd
 import cmocean.cm as cmo
+import cmocean
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 import matplotlib.units as munits
@@ -54,7 +55,7 @@ class ASV_DATAPOINT():
         else:
             return np.nan
 
-def ADCP_section(filepath,start,end,directory,name,maxdepth=60):
+def ADCP_section(filepath,start,end,directory,name,maxdepth=60,vmin=None,vmax=None,smin=None,smax=None):
     """Create ADCP section"""
 
     rootgrp = netCDF4.Dataset(filepath, "r")
@@ -107,7 +108,30 @@ def ADCP_section(filepath,start,end,directory,name,maxdepth=60):
     # ******************** Get Limits *********************************** #
     vel_max = max(np.nanmax(u),np.nanmax(v),np.nanmax(-u),np.nanmax(-v))
     shear_max = max(np.nanmax(ushear), np.nanmax(vshear), np.nanmax(-ushear), np.nanmax(-vshear))
-    # pmv_max = max(pmv_95, -pmv_5)
+    if vmin is None:
+        vmin = -vel_max
+    if vmax is None:
+        vmax = vel_max
+    if vmin > 0:
+        vmin = 0
+    if vmax < 0:
+        vmax = 0
+    if vmin == - vmax:
+        vel_map = cmo.balance
+    else:
+        vel_map = cmocean.tools.crop(cm0.balance, vmin, vmax, 0)
+    if smin is None:
+        smin = -shear_max
+    if smax is None:
+        smax = shear_max
+    if smin > 0:
+        smin = 0
+    if smax < 0:
+        smax = 0
+    if smin == - smax:
+        shear_map = cmo.balance
+    else:
+        shear_map = cmocean.tools.crop(cm0.balance, smin, smax, 0)
     # ******************* Make Plots ************************************ #
 
     converter = mdates.ConciseDateConverter()
@@ -117,7 +141,7 @@ def ADCP_section(filepath,start,end,directory,name,maxdepth=60):
     gs1 = gs.GridSpec(2, 2, figure=fig1, width_ratios=[1,1])
 
     axu=fig1.add_subplot(gs1[0,0])
-    pu = axu.pcolor(times_use,depths_use,u.T,cmap=cmo.balance,shading='nearest',vmin=-vel_max, vmax=vel_max)
+    pu = axu.pcolor(times_use,depths_use,u.T,cmap=vel_map,shading='nearest',vmin=vmin, vmax=vmax)
     axu.xaxis_date()
     axu.invert_yaxis()
     axu.set_ylabel("Depth [m]")
@@ -125,7 +149,7 @@ def ADCP_section(filepath,start,end,directory,name,maxdepth=60):
     axu.set_title("$u$ [m/s]")
 
     axv=fig1.add_subplot(gs1[1,0])
-    pv = axv.pcolor(times_use,depths_use,v.T,cmap=cmo.balance,shading='nearest',vmin=-vel_max, vmax=vel_max)
+    pv = axv.pcolor(times_use,depths_use,v.T,cmap=vel_map,shading='nearest',vmin=vmin, vmax=vmax)
     axv.xaxis_date()
     axv.invert_yaxis()
     axv.set_ylabel("Depth [m]")
@@ -166,7 +190,7 @@ def ADCP_section(filepath,start,end,directory,name,maxdepth=60):
     gs2 = gs.GridSpec(2, 2, figure=fig2, width_ratios=[1,1])
 
     axuz = fig2.add_subplot(gs2[0,:])
-    puz = axuz.pcolor(times_use,depths_use,ushear.T,cmap=cmo.balance,shading="nearest",vmin=-shear_max,vmax=shear_max)
+    puz = axuz.pcolor(times_use,depths_use,ushear.T,cmap=shear_map,shading="nearest",vmin=smin,vmax=smax)
     axuz.xaxis_date()
     axuz.invert_yaxis()
     axuz.set_ylabel("Depth [m]")
@@ -174,7 +198,7 @@ def ADCP_section(filepath,start,end,directory,name,maxdepth=60):
     axuz.set_title("$u_z$ [1/s]")
 
     axvz = fig2.add_subplot(gs2[1,:])
-    pvz = axvz.pcolor(times_use,depths_use,vshear.T,cmap=cmo.balance,shading="nearest",vmin=-shear_max,vmax=shear_max)
+    pvz = axvz.pcolor(times_use,depths_use,vshear.T,cmap=shear_map,shading="nearest",vmin=smin,vmax=smax)
     axvz.xaxis_date()
     axvz.invert_yaxis()
     axvz.set_ylabel("Depth [m]")
