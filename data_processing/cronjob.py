@@ -15,12 +15,13 @@ plot_file = '/home/pat/SUNRISE/data_processing/realtime.py'
 # OUTPUT directory
 OUTPUT_DIR = "/home/pat/Processed/Rolling-2Days"
 
-# log job_file
-clog = OUTPUT_DIR + "/clog.txt"
-clog_f = open(clog, 'a')
-
 # Print current time
 CURRENT_TIME = datetime.now().replace(tzinfo=timezone.utc)
+
+# log job_file
+clog = OUTPUT_DIR + "/clog_" + CURRENT_TIME.strftime("%m-%d") + ".txt"
+clog_f = open(clog, 'a+')
+
 timestamp = '------------------------Current Time: %s------------------------\n' \
       % (CURRENT_TIME.isoformat())
 print(timestamp)
