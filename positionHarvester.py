@@ -435,7 +435,7 @@ class WireWalker(MyThread.MyThread):
                     name = matches[7]
                     lat = float(matches[8])
                     lon = float(matches[9])
-                    records.append(("Drifters", name, t, lat, lon))
+                    records.append(("WireWalker", name, t, lat, lon))
                 self.__queue.setPos(fn, fp.tell())
                 if records:
                     logger.info("Put %s records", len(records))
