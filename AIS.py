@@ -17,6 +17,7 @@ import logging
 import argparse
 import os
 import csv
+from datetime import date
 import pandas as pd
 from MyThread import MyThread,waitForException
 class Reader(MyThread):
@@ -79,38 +80,38 @@ class Writer(MyThread):
         '''Called on thread start '''
         required = ['mmsi', 'sog', 'cog', 'name', 'x', 'y', 'utc_hour', 'utc_min', 'timestamp']
         known = {}
-        with open("../Dropbox/Shore/AIS_numbers.csv") as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                known[row['MMSI']] = row['Name']
+        #with open("../Dropbox/Shore/AIS_numbers.csv") as csvfile:
+         #   reader = csv.DictReader(csvfile)
+         #   for row in reader:
+         #       known[row['MMSI']] = row['Name']
             #print(known)
-            qIn = self.qIn
-            logger = self.logger
-            logger.info("Starting")
-            while True: # Loop forever
-                (t, addr, msg) = qIn.get()
-                (ipAddr, port) = addr
-                logger.info("t %s addr %s %s\n%s", t, ipAddr, port, msg)
-                # Decrypt the msg
-                fields = self.__decrypt(msg)
-                rf = []
-                #dont save the fields we don't need
-                for f in fields:
-                    toRemove = []
-                    for entry in f.keys():
-                        if entry not in required:
-                           toRemove.append(entry)
-                    for entry in toRemove:
-                        f.pop(entry)
-                    today = date.today()
-                    f["date"] = str(today)
-                    rf.append(f)
-                #RF now contains only necessary fields
-                #set the name for known mmsi id's
-                if str(rf[0]['mmsi']) in known:
-                    rf[0]['name'] = known[str(rf[0]['mmsi'])]
-                self.__writeJSON(rf)
-                qIn.task_done()
+        qIn = self.qIn
+        logger = self.logger
+        logger.info("Starting")
+        while True: # Loop forever
+            (t, addr, msg) = qIn.get()
+            (ipAddr, port) = addr
+            logger.info("t %s addr %s %s\n%s", t, ipAddr, port, msg)
+            # Decrypt the msg
+            fields = self.__decrypt(msg)
+            rf = []
+            #dont save the fields we don't need
+            for f in fields:
+                toRemove = []
+                for entry in f.keys():
+                    if entry not in required:
+                       toRemove.append(entry)
+                for entry in toRemove:
+                    f.pop(entry)
+                today = date.today()
+                f["date"] = str(today)
+                rf.append(f)
+            #RF now contains only necessary fields
+            #set the name for known mmsi id's
+            #if str(rf[0]['mmsi']) in known:
+            #    rf[0]['name'] = known[str(rf[0]['mmsi'])]
+            self.__writeJSON(rf)
+            qIn.task_done()
 
 parser = argparse.ArgumentParser(description="Listen for a LiveGPS message")
 MyLogger.addArgs(parser)
