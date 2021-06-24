@@ -1223,17 +1223,17 @@ def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes"
 
     fig, ax = plt.subplots(figsize=(12,9))
 
-    sc = ax.scatter(P_FT[xaxis],P_FT["times"],s=1,c=P_FT["salinities"],
+    sc = ax.scatter(P_FT[xaxis],P_FT["times"],s=2,c=P_FT["salinities"],
         vmax=sal_max,vmin=sal_min,marker=next(markers),cmap=cmo.haline)
     ax.annotate("P",(P_FT[xaxis][-1], P_FT["times"][-1]),
         textcoords="offset pixels", xytext=(5, 0), size=20)
-    ax.scatter(WS_FT[xaxis],WS_FT["times"],s=1,c=WS_FT["salinities"],
+    ax.scatter(WS_FT[xaxis],WS_FT["times"],s=2,c=WS_FT["salinities"],
         vmax=sal_max,vmin=sal_min,marker=next(markers),cmap=cmo.haline)
     ax.annotate("WS",(WS_FT[xaxis][-1], WS_FT["times"][-1]),
         textcoords="offset pixels", xytext=(5, 0), size=20)
 
     for ASV in ASV_data:
-        ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=1,c=ASV_data[ASV]["salinities"],
+        ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["salinities"],
             vmax=sal_max,vmin=sal_min,marker=next(markers),cmap=cmo.haline)
         ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
             textcoords="offset pixels", xytext=(5, 0), size=12)
