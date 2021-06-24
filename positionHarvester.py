@@ -362,7 +362,7 @@ class Drifter(MyThread.MyThread):
         logger = self.logger
         qWatch = queue.Queue()
         self.__iNotify.addWatch(self.args.drifter, qWatch)
-        logger.info("Starting")
+        logger.info("Starting %s", self.args.drifter)
         fillQueue(qWatch, self.args.drifter, logger)
         while True:
             (t, files) = qWatch.get()
@@ -375,12 +375,87 @@ class Drifter(MyThread.MyThread):
                 logger.info("fn %s", filename)
                 self.__processFile(filename)
 
+class ASV(MyThread.MyThread):
+    def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
+            q:Writer, inotify:iNotify) -> None:
+        MyThread.MyThread.__init__(self, "ASV", args, logger)
+        self.__queue = q
+        self.__iNotify = inotify
+        self.__position = {}
+        self.__regexp = re.compile(r"^\d{2}-\w+-\d{4} \d{2}:\d{2}:\d{2} " \
+                + r"UBOX\d{2} -- navinfo -- " \
+                + r"(\d{4})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2}) UTC -- " \
+                + r"LAT ([+-]?\d+[.]\d*) " \
+                + r"LON ([+-]?\d+[.]\d*) " \
+                + r"HD1")
+        self.__reName = re.compile(r"RHIB_status_(GS\d_UBOX\d{2}).txt")
+
+    @staticmethod
+    def addArgs(parser:argparse.ArgumentParser) -> None:
+        grp = parser.add_argument_group()
+        grp.add_argument("--asv", type=str, default="/home/pat/Dropbox/WaltonSmith/ASV",
+                help="Where the ASV files are")
+        grp.add_argument("--asvdt", type=float, default=60,
+                help="Time spacing between samples to record")
+
+    def __processFile(self, fn:str, name:str) -> None:
+        if fn not in self.__position:
+            self.__position[fn] = 0
+        pos = max(0, self.__position[fn] - 200) # Position to start reading from
+        regexp = self.__regexp
+        dtMin = self.args.asvdt
+        try:
+            with open(fn, "r") as fp:
+                fp.seek(pos) # Start reading from this position
+                records = []
+                tPrev = None
+                for line in fp:
+                    matches = regexp.match(line)
+                    if not matches: continue
+                    t = datetime.datetime(
+                            int(matches[1]), int(matches[2]), int(matches[3]),
+                            int(matches[4]), int(matches[5]), int(matches[6]))
+                    lat = float(matches[7])
+                    lon = float(matches[8])
+                    if tPrev is not None:
+                        dt = (t - tPrev).seconds
+                        if dt < dtMin: continue # Skip adding since the same time
+                    tPrev = t if tPrev is None else max(tPrev, t) # Don't let it go backwards
+                    logger.info("name %s t %s lat %s lon %s", name, t, lat, lon)
+                    records.append((name, t, lat, lon))
+                self.__position[fn] = fp.tell()
+                if records:
+                    logger.info("Put %s records", len(records))
+                    self.__queue.put(records)
+        except:
+            self.logger.exception("Error processing %s", fn)
+
+    def runIt(self) -> None:
+        logger = self.logger
+        qWatch = queue.Queue()
+        self.__iNotify.addWatch(self.args.asv, qWatch)
+        logger.info("Starting %s", self.args.asv)
+        fillQueue(qWatch, self.args.asv, logger)
+        reName = self.__reName
+        while True:
+            (t, files) = qWatch.get()
+            qWatch.task_done()
+            for filename in files:
+                fn = os.path.basename(filename)
+                matches = reName.match(fn)
+                if not matches:
+                    logger.info("skipping %s", filename)
+                    continue
+                logger.info("fn %s", filename, matches[1])
+                self.__processFile(filename, matches[1])
+
 parser = argparse.ArgumentParser()
 MyLogger.addArgs(parser)
 Writer.addArgs(parser)
 Pelican.addArgs(parser)
 WaltonSmith.addArgs(parser)
 Drifter.addArgs(parser)
+ASV.addArgs(parser)
 args = parser.parse_args()
 
 logger = MyLogger.mkLogger(args)
@@ -392,6 +467,7 @@ try:
     threads.append(Pelican(args, logger, threads[0], threads[1]))
     threads.append(WaltonSmith(args, logger, threads[0], threads[1]))
     threads.append(Drifter(args, logger, threads[0], threads[1]))
+    threads.append(ASV(args, logger, threads[0], threads[1]))
 
     for thrd in threads:
         thrd.start()
