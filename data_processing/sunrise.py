@@ -1365,14 +1365,14 @@ def MET_Summary(Pelican_nc,WS_nc,start,end,directory):
     p_WindDirection = pelican["WindDirection"][p_idx]
     p_WindSpeed = pelican["WindSpeed"][p_idx]
 
-    WS_idx = (walton_smith["times"][:] >= start_sec) & (walton_smith["times"][:] <= end_sec)
-    WS_times = walton_smith["times"][p_idx]
+    WS_idx = (walton_smith["Date"][:] >= start_sec) & (walton_smith["times"][:] <= end_sec)
+    WS_times = walton_smith["Date"][WS_idx]
     WS_times = [datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(second=t) for t in WS_times]
-    WS_AirTemp = walton_smith["AirTemp"][p_idx]
-    WS_BaroPressure = walton_smith["BarpPressure"][p_idx]
-    WS_RelHumidity = walton_smith["RelHumidity"][p_idx]
-    WS_WindDirection = walton_smith["WindDirection"][p_idx]
-    WS_WindSpeed = walton_smith["WindSpeed"][p_idx]
+    WS_AirTemp = walton_smith["AirTemp"][WS_idx]
+    WS_BaroPressure = walton_smith["BarpPressure"][WS_idx]
+    WS_RelHumidity = walton_smith["RelHumidity"][WS_idx]
+    WS_WindDirection = walton_smith["WindDirection"][WS_idx]
+    WS_WindSpeed = walton_smith["WindSpeed"][WS_idx]
 
     fig, axs = plt.subplots(5,1,sharex=True,figsize=(12,9),constrained_layout=True)
 
