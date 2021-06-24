@@ -1354,7 +1354,7 @@ def MET_Summary(Pelican_nc,WS_nc,start,end,directory):
     pelican = netCDF4.Dataset(Pelican_nc)
     walton_smith = netCDF4.Dataset(WS_nc)
     start_sec = (start - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
-    end_sec = (start - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
+    end_sec = (end - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
 
     p_idx = (pelican["time"][:] >= start_sec) & (pelican["time"][:] <= end_sec)
     p_times = pelican["time"][p_idx]
@@ -1378,23 +1378,23 @@ def MET_Summary(Pelican_nc,WS_nc,start,end,directory):
 
     axs[0].plot(p_times,p_WindSpeed,'b')
     axs[0].plot(WS_times,WS_WindSpeed,'g')
-    axs[0].set_ylabel("Wind Speed [m/s]")
+    axs[0].set_ylabel("Wind Speed\n[m/s]")
 
     axs[1].plot(p_times,p_WindDirection,'b')
     axs[1].plot(WS_times,WS_WindDirection,'g')
-    axs[1].set_ylabel("Wind Direction [$^\circ]")
+    axs[1].set_ylabel("Wind Direction\n[$^\circ$]")
 
     axs[2].plot(p_times,p_AirTemp,'b')
     axs[2].plot(WS_times,WS_AirTemp,'g')
-    axs[2].set_ylabel("Air Temp. [$^\circ$C]")
+    axs[2].set_ylabel("Air Temp.\n[$^\circ$C]")
 
     axs[3].plot(p_times,p_BaroPressure,'b')
     axs[3].plot(WS_times,WS_BaroPressure,'g')
-    axs[3].set_ylabel("Barometric Pressure [mbar]")
+    axs[3].set_ylabel("Barometric Pressure\n[mbar]")
 
     axs[4].plot(p_times,p_RelHumidity,'b')
     axs[4].plot(WS_times,WS_RelHumidity,'g')
-    axs[4].set_ylabel(r"Relative Humidity [%]")
+    axs[4].set_ylabel("Relative Humidity\n[%]")
 
     axs[4].set_xlabel("Time")
 
