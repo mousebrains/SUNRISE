@@ -17,10 +17,10 @@ Description=Collect AIS datagrams on the Pelican
 User=pat
 WorkingDirectory=/home/pat/
 #
-ExecStart=/SUNRISE/AIS.py \
-    --json=/Dropbox/Pelican/AIS/ais.json
+ExecStart=/home/pat/SUNRISE/AIS.py \
+    --json=/home/pat/Dropbox/Pelican/AIS/ais.json
 	
-RestartSec=60
+RestartSec=300
 Restart=always
 
 [Install]

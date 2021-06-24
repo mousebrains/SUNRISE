@@ -1,0 +1,31 @@
+#
+# Fetch XEOS GPS fixes for the wirewalker from GMAIL
+#
+# sudo cp wirewalker.service /etc/systemd/system/
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable wirewalker.service
+# sudo systemctl start wirewalker.service
+#
+# May-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Monitor my status
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat/logs
+#
+ExecStart=/home/pat/SUNRISE/wirewalkerHarvest.py \
+	--mailFrom=pat.welch@oregonstate.edu \
+	--mailTo=pat@mousebrains.com \
+	--mailSubject=WireWalker \
+	--smtpHost=mail.ceoas.oregonstate.edu \
+	--logfile=wirewalkerHarvest.log
+	
+RestartSec=180
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

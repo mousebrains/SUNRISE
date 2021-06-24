@@ -17,10 +17,10 @@ Description=Collect AIS datagrams on the Walton Smith
 User=pat
 WorkingDirectory=/home/pat/
 #
-ExecStart=/SUNRISE/AIS.py \
-    --json=/Dropbox/WaltonSmith/AIS/ais.json
+ExecStart=/home/pat/SUNRISE/AIS.py \
+    --json=/home/pat/Dropbox/WaltonSmith/AIS/ais.json
 	
-RestartSec=60
+RestartSec=300
 Restart=always
 
 [Install]
