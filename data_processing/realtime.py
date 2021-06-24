@@ -219,3 +219,5 @@ except:
 try:
     if plots["met_summary"]:
         sunrise.MET_Summary(PELICAN_FTMET_NC,WS_FTMET_NC,start,end,directory)
+except:
+    raise
