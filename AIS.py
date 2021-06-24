@@ -108,8 +108,8 @@ class Writer(MyThread):
                 rf.append(f)
             #RF now contains only necessary fields
             #set the name for known mmsi id's
-            if str(rf[0]['mmsi']) in known:
-                rf[0]['name'] = known[str(rf[0]['mmsi'])]
+            #if str(rf[0]['mmsi']) in known:
+            #    rf[0]['name'] = known[str(rf[0]['mmsi'])]
             self.__writeJSON(rf)
             qIn.task_done()
 
