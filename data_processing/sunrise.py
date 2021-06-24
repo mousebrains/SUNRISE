@@ -478,7 +478,6 @@ def parse_ASV(filename, start, end):
             except Exception as e:
                 logging.exception("ERROR processing line %s", line)
 
-        print("Read all lines")
         timestrings = datapoints.keys()
         sorted_keys = sorted(timestrings)
         for key in sorted_keys:
@@ -1063,9 +1062,7 @@ def ShipSurface_png(P_FT, WS_FT,ADCP_PL,ADCP_WS,start,end,directory,plot_P=True,
 def ASVSurface_png(ASVdata,start,end,directory,sal_lims=DEFAULT_LIMS,temp_lims=DEFAULT_LIMS,density_lims=DEFAULT_LIMS):
     """ASVdata is a dictionary of {"ASVname": data}"""
 
-    print("Beginning ASV Surface Plot")
     for name, ASV in ASVdata.items():
-        print("Name: " + name)
         # print(ASV)
         if not temp_lims["lower"]:
             try:
