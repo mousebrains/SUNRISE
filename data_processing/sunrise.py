@@ -1358,7 +1358,7 @@ def MET_Summary(Pelican_nc,WS_nc,start,end,directory):
 
     p_idx = (pelican["time"][:] >= start_sec) & (pelican["time"][:] <= end_sec)
     p_times = pelican["time"][p_idx]
-    p_times = [datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(second=t) for t in p_times]
+    p_times = [datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(seconds=t) for t in p_times]
     p_AirTemp = pelican["AirTemp"][p_idx]
     p_BaroPressure = pelican["BaroPressure"][p_idx]
     p_RelHumidity = pelican["RelHumidity"][p_idx]
@@ -1367,7 +1367,7 @@ def MET_Summary(Pelican_nc,WS_nc,start,end,directory):
 
     WS_idx = (walton_smith["Date"][:] >= start_sec) & (walton_smith["Date"][:] <= end_sec)
     WS_times = walton_smith["Date"][WS_idx]
-    WS_times = [datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(second=t) for t in WS_times]
+    WS_times = [datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(seconds=t) for t in WS_times]
     WS_AirTemp = walton_smith["AirTemp"][WS_idx]
     WS_BaroPressure = walton_smith["BaroPressure"][WS_idx]
     WS_RelHumidity = walton_smith["RelHumidity"][WS_idx]
