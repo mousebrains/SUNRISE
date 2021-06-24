@@ -94,8 +94,8 @@ class Writer(MyThread.MyThread):
         grp.add_argument("--csv", type=str, default="/home/pat/positions.csv",
                 help="CSV filename")
 
-    def put(self, msg) -> None:
-        self.__queue.put(msg)
+    def put(self, records) -> None:
+        self.__queue.put(records)
 
     def __mkTable(self) -> None:
         sql = "CREATE TABLE IF NOT EXISTS fixes (\n"
@@ -155,7 +155,11 @@ class Writer(MyThread.MyThread):
                 cur = db.cursor()
                 cur.execute("BEGIN;")
                 # To avoid concurrency issues
-                for row in rows: cur.execute(sqlFiles, row)
+                for row in rows: 
+                    items = [row[0], row[1]] # name and time
+                    items.append(round(row[2], 6)) # Truncate latitude to 6 digits
+                    items.append(round(row[3], 6)) # Truncate longitude to 6 digits
+                    cur.execute(sqlFiles, items)
                 cur.execute("COMMIT;")
                 self.__writeRecords(db, sqlCSV1, sqlCSV2)
 
