@@ -1,0 +1,31 @@
+#
+# Go through various sources of GPS information and pull them out
+# and put them into a database and then into a growing CSV file.
+#
+# sudo cp positionHarvester.pi4.service /etc/systemd/system/positionHarvester.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable positionHarvester.service
+# sudo systemctl start positionHarvester.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Extract GPS positions and put them into a growing CSV file
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+ExecStart=/home/pat/SUNRISE/positionHarvester.py \
+        --logfile=/home/pat/logs/positionHarvester.log \
+	--db=/home/pat/Processed/Positions/positions.db \
+	--csv=/home/pat/Processed/Positions/positions.csv
+        
+RestartSec=300
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

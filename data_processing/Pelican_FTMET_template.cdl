@@ -1,0 +1,62 @@
+netcdf flowthrough {
+
+dimensions:
+	time = UNLIMITED ; // (0 currently)
+
+variables:
+
+  double time(time) ;
+    time:long_name = "Date,Time" ;
+    time:units = "seconds since 2021-01-01 00:00:00 GMT" ;
+
+  double Lon(time) ;
+    Lon:long_name = "ADU800-GGA-Lat" ;
+    Lon:units = "deg E" ;
+
+  double Lat(time) ;
+    Lat:long_name = "ADU800-GGA-Lon" ;
+    Lat:units = "deg N" ;
+
+  double Heading(time) ;
+    Heading:long_name = "Sperry-MK1-Gyro-Hdg-deg" ;
+    Heading:units = "deg" ;
+
+  double Depth(time) ;
+    Depth:long_name = "Knudsen-True-Depth-DRV-VALUE" ;
+    Depth:units = "m" ;
+
+  double Temperature(time) ;
+    Temperature:long_name = "Thermosalinograph-Data-Temp" ;
+    Temperature:units = "ITS-90, deg C" ;
+
+  double Salinity(time) ;
+    Salinity:long_name = "Thermosalinograph-Data-Salinity" ;
+    Salinity:units = "PSU" ;
+
+  double Conductivity(time) ;
+    Conductivity:long_name = "Thermosalinograph-Data-Conductivity" ;
+    Conductivity:units = "mS/cm" ;
+
+  double AirTemp(time) ;
+    AirTemp:long_name = "Air-Temp-1" ;
+    AirTemp:units = "deg C" ;
+
+  double BaroPressure(time) ;
+    BaroPressure:long_name = "BaromPress-1" ;
+    BaroPressure:units = "mBar" ;
+
+  double RelHumidity(time) ;
+    RelHumidity:long_name = "Rel-Humidity-1" ;
+    RelHumidity:units = "%" ;
+
+  double WindDirection(time) ;
+    WindDirection:long_name = "TrueWindDirection-1-DRV-DIRECTION" ;
+    WindDirection:units = "deg" ;
+
+  double WindSpeed(time) ;
+    WindSpeed:long_name = "TrueWindDirection-1-DRV-SPEED" ;
+    WindSpeed:units = "m/s" ;
+
+// global attributes:
+		:title = "Pelican Flowthrough Data" ;
+}

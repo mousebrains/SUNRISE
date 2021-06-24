@@ -1,0 +1,62 @@
+netcdf flowthrough {
+
+dimensions:
+	time = UNLIMITED ; // (0 currently)
+
+variables:
+
+  double Date(time) ;
+    Date:long_name = "Time" ;
+    Date:units = "seconds since 2021-01-01 00:00:00 GMT" ;
+
+  double Lon(time) ;
+    Lon:long_name = "POSMV Longitude" ;
+    Lon:units = "degree_east" ;
+
+  double Lat(time) ;
+    Lat:long_name = "POSMV Latitude" ;
+    Lat:units = "degree_north" ;
+
+  double Heading(time) ;
+    Heading:long_name = "POSMV Heading" ;
+    Heading:units = "degree" ;
+
+  double Depth(time) ;
+    Depth:long_name = "Depth" ;
+    Depth:units = "m" ;
+
+  double Temperature(time) ;
+    Temperature:long_name = "MicroTSG Temperature" ;
+    Temperature:units = "ITS-90, deg C" ;
+
+  double Salinity(time) ;
+    Salinity:long_name = "MicroTSG Salinity" ;
+    Salinity:units = "PSU" ;
+
+  double Conductivity(time) ;
+    Conductivity:long_name = "MicroTSG Conductivity" ;
+    Conductivity:units = "mS/cm" ;
+
+  double AirTemp(time) ;
+    AirTemp:long_name = "Port RM Young Met Air Temperature" ;
+    AirTemp:units = "deg C" ;
+
+  double BaroPressure(time) ;
+    BaroPressure:long_name = "Barometer Pressure" ;
+    BaroPressure:units = "mBar" ;
+
+  double RelHumidity(time) ;
+    RelHumidity:long_name = "Relative Humidity" ;
+    RelHumidity:units = "%" ;
+
+  double WindDirection(time) ;
+    WindDirection:long_name = "True Wind Direction" ;
+    WindDirection:units = "degree" ;
+
+  double WindSpeed(time) ;
+    WindSpeed:long_name = "True Wind Speed" ;
+    WindSpeed:units = "m/s" ;
+
+// global attributes:
+		:title = "Walton Smith Flowthrough Data" ;
+}

@@ -1,0 +1,43 @@
+---
+rolling: true
+name: Test
+start: 2021-06-19T14:55
+stop: 2021-06-20T20:55
+plots:
+- Pelican_600kHz_section: true
+- Pelican_1200kHz_section: false
+- WS_600kHz_section: false
+- WS_1200kHz_section: false
+- Pelican_600kHz_vector: false
+- Pelican_1200kHz_vector: false
+- WS_600kHz_vector: false
+- WS_1200kHz_vector: false
+- salinity_kmz: false
+- temperature_kmz: false
+- density_kmz: false
+- PMV_kmz: false
+- sal_grad_kmz: true
+- salinity_png: true
+- temperature_png: true
+- density_png: true
+- pmv_png: false
+- sal_grad_png: false
+- Pelican_surface: true
+- WS_surface: false
+limits:
+- sal_lims:
+    lower: true
+    lowerLim: "31"
+    upper: true
+    upperLim: "37"
+- temp_lims:
+    lower: false
+    lowerLim: "26"
+    upper: true
+    upperLim: "33"
+- density_lims:
+    lower: false
+    lowerLim: "-5"
+    upper: false
+    upperLim: "20"
+comment: ""

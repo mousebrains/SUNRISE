@@ -1,34 +1,47 @@
 ---
-short_name: Rolling        # My directory naming convention is Processing/%m%d-%H%M_{short_name} where %m%d-%H%M uses the submission time/date
-description: "This is a description that we write to a txt file in the output directory"
-start: #START_TIME# # I'm a fan of using isoformat as much as possible and parsing
-end: #END_TIME#   # end
-Pelican_600kHz_section: true   # create shear and velocity sections from Pelican 600kHz (png)
-Pelican_1200kHz_section: true  # create shear and velocity sections from Pelican 1200kHz (png)
-WS_600kHz_section: true        # create shear and velocity sections from WS 600kHz (png)
-WS_1200kHz_section: true       # create shear and velocity sections from WS 1200kHz (png)
-Pelican_600kHz_vector: true    # create kmz file with ADCP vectors from top 5 bins of Pelican 600kHz
-Pelican_1200kHz_vector: true   # create kmz file with ADCP vectors from top 5 bins of Pelican 1200kHz
-WS_600kHz_vector: true         # create kmz file with ADCP vectors from top 5 bins of WS 600kHz
-WS_1200kHz_vector: true        # create kmz file with ADCP vectors from top 5 bins of WS 1200kHz
-salinity_kmz: true             # create kmz files with salinity flowthrough from all assets (each asset is in seperate file - at the moment ASVs not implemented)
-temperature_kmz: true          # create kmz files with temperature flowthrough from all assets (each asset is in seperate file - at the moment ASVs not implemented)
-density_kmz: true              # create kmz files with density flowthrough from all assets (each asset is in seperate file - at the moment ASVs not implemented)
-PMV_kmz: true                  # create kmz files with poor man's vorticity (1200kHz) from all assets (each asset is in seperate file - at the moment ASVs not implemented)
-sal_grad_kmz: true             # create kmz files with salinity gradients from flowthrough from all assets (each asset is in seperate file - at the moment ASVs not implemented)
-salinity_png: true             # create png with salinity flowthrough from all assets (one png)
-temperature_png: true          # create png with temperature flowthrough from all assets (one png)
-density_png: true              # create png with density flowthrough from all assets (one png)
-PMV_png: true                  # create png with poor man's vorticity (1200kHz) from all assets (one png)
-sal_grad_png: true             # create png with salinity gradients from flowthrough from all assets (one png)
-Pelican_surface: true          # create png with pelican surface data (4 panels - salinity, temperature, density, poor mans vorticity)
-WS_surface: true               # create png with WS surface data (4 panels - salinity, temperature, density, poor mans vorticity)
-sal_lims:                      # limits are optional - if given sets the limits on all plots
-  - 31                         # limits can be specified for salinity, temperature, density
-  - 34
-# temp_lims:
-#   - 27
-#   - 35
-# density_lims:
-#   - 27
-#   - 35
+rolling: true
+name: Rolling
+start: #START_TIME#
+stop: #END_TIME#
+plots:
+- Pelican_600kHz_section: true
+- Pelican_1200kHz_section: true
+- WS_600kHz_section: true
+- WS_1200kHz_section: true
+- Pelican_600kHz_vector: true
+- Pelican_1200kHz_vector: true
+- WS_600kHz_vector: true
+- WS_1200kHz_vector: true
+- salinity_kmz: true
+- temperature_kmz: true
+- density_kmz: true
+- PMV_kmz: true
+- sal_grad_kmz: true
+- salinity_png: true
+- temperature_png: true
+- density_png: true
+- pmv_png: true
+- sal_grad_png: true
+- Pelican_surface: true
+- WS_surface: true
+- ASV_surface: true
+- Hov_salinity: true
+limits:
+- sal_lims:
+    lower: true
+    lowerLim: "32"
+    upper: false
+    upperLim: "36"
+- temp_lims:
+    lower: false
+    lowerLim: "26"
+    upper: false
+    upperLim: "33"
+- density_lims:
+    lower: false
+    lowerLim: "-5"
+    upper: false
+    upperLim: "20"
+description: "48 hour rolling file"
+comment: "This folder contains plots for the last 48 hours of data.\nThe plots are updated 30 minutes.\n"
+...

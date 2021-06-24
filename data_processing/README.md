@@ -17,3 +17,9 @@ The realtime data will be processed in three ways:
 * *realtime.py* Reads in a YAML file requesting realtime data plots and then calls the relevant functions from sunrise.py
   - [ ] Pat will most likely need to improve
 * [ ] Write Lixin's scheduler for the cronjobs
+
+# Packages installed
+  - `sudo apt install python3-netcdf4`
+  - `sudo apt install python3-gsw`
+  - `sudo apt install python3-geopy`
+  - `python3 -m pip install cmocean`
