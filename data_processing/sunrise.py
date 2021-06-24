@@ -434,7 +434,8 @@ def parse_ASV(filename, start, end):
             try:
                 time = datetime.datetime.strptime(timestring, "%Y/%m/%d %H:%M:%S") \
                         .replace(second=0, tzinfo=datetime.timezone.utc)
-
+                if time < start or time > end:
+                    continue
                 timestring = time.isoformat()
                 if timestring not in datapoints:
                     datapoints[timestring] = ASV_DATAPOINT(time)
