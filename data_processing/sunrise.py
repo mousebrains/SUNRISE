@@ -1356,8 +1356,8 @@ def MET_Summary(Pelican_nc,WS_nc,start,end,directory):
     start_sec = (start - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
     end_sec = (start - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
 
-    p_idx = (pelican["times"][:] >= start_sec) & (pelican["times"][:] <= end_sec)
-    p_times = pelican["times"][p_idx]
+    p_idx = (pelican["time"][:] >= start_sec) & (pelican["time"][:] <= end_sec)
+    p_times = pelican["time"][p_idx]
     p_times = [datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(second=t) for t in p_times]
     p_AirTemp = pelican["AirTemp"][p_idx]
     p_BaroPressure = pelican["BarpPressure"][p_idx]
@@ -1365,7 +1365,7 @@ def MET_Summary(Pelican_nc,WS_nc,start,end,directory):
     p_WindDirection = pelican["WindDirection"][p_idx]
     p_WindSpeed = pelican["WindSpeed"][p_idx]
 
-    WS_idx = (walton_smith["Date"][:] >= start_sec) & (walton_smith["times"][:] <= end_sec)
+    WS_idx = (walton_smith["Date"][:] >= start_sec) & (walton_smith["Date"][:] <= end_sec)
     WS_times = walton_smith["Date"][WS_idx]
     WS_times = [datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(second=t) for t in WS_times]
     WS_AirTemp = walton_smith["AirTemp"][WS_idx]
