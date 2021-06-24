@@ -62,6 +62,9 @@ plots:
   - {name: ASV_surface,
     display_name: ASV Surface Summary,
     description: Create pngs showing the ASV salinity, temperature and potential density}
+  - {name: Hov_salinity,
+    display_name: Hovmoller Salinity,
+    description: Create a Hovmoller diagram of salinity using all assets}
 limits:
   - {name: sal_lims,
     display_name: Salinity Limits,

@@ -179,12 +179,23 @@ try:
 except:
     raise
 
+# Get ASV data
+ASV = {}
+try:
+    for filename in ASV_FILENAMES:
+        ASV[filename[-10:-4]] = sunrise.parse_ASV(filename,start,end)
+except:
+    raise
 # ASV surface plots
 try:
     if plots["ASV_surface"]:
-        ASV = {}
-        for filename in ASV_FILENAMES:
-            ASV[filename[-10:-4]] = sunrise.parse_ASV(filename,start,end)
         sunrise.ASVSurface_png(ASV,start,end,directory,sal_lims=sal_lims, temp_lims=temp_lims, density_lims=density_lims)
+except:
+    raise
+
+# Make Hovmoller of Salinity
+try:
+    if plots["Hov_salinity"]:
+        sunrise.Hovmoller_Salinity(P_FT,WS_FT,ASV,start,end,directory,sal_lims=sal_lims)
 except:
     raise

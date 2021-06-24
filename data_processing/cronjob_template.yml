@@ -25,6 +25,7 @@ plots:
 - Pelican_surface: true
 - WS_surface: true
 - ASV_surface: true
+- Hov_salinity: true
 limits:
 - sal_lims:
     lower: true
