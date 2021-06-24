@@ -1398,7 +1398,7 @@ def MET_Summary(Pelican_nc,WS_nc,start,end,directory):
 
     axs[4].set_xlabel("Time")
 
-    fig.suptitle("Met Summary: " + + start.strftime("%Y-%m-%d %H:%M:%S") + " - " + end.strftime("%Y-%m-%d %H:%M:%S"))
+    fig.suptitle("Met Summary: " + start.strftime("%Y-%m-%d %H:%M:%S") + " - " + end.strftime("%Y-%m-%d %H:%M:%S"))
     fig.savefig(os.path.join(directory,"met_summary.png"))
 
 
