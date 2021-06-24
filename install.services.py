@@ -115,6 +115,7 @@ def shoreInstall() -> None:
             "shipMonitor", 
             "Trigger",
             "positionHarvester",
+            "wirewalker",
             )
     for service in services: copyService(f"{service}.service", service)
 
