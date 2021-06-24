@@ -1399,7 +1399,7 @@ def MET_Summary(Pelican_nc,WS_nc,start,end,directory):
     axs[4].set_xlabel("Time")
 
     fig.suptitle("Met Summary - Pelican (blue), Walton Smith (Green): " + start.strftime("%Y-%m-%d %H:%M:%S") + " - " + end.strftime("%Y-%m-%d %H:%M:%S"))
-    fig.savefig(os.path.join(directory,"met_summary.png"))
+    fig.savefig(os.path.join(directory,"Met_summary.png"))
 
 
 if __name__ == "__main__":
