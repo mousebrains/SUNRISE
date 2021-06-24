@@ -199,3 +199,10 @@ try:
         sunrise.Hovmoller_Salinity(P_FT,WS_FT,ASV,start,end,directory,sal_lims=sal_lims)
 except:
     raise
+
+# Make Hovmoller of Temperature
+try:
+    if plots["Hov_temperature"]:
+        sunrise.Hovmoller_Temperature(P_FT,WS_FT,ASV,start,end,directory,temp_lims=temp_lims)
+except:
+    raise

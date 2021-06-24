@@ -65,6 +65,9 @@ plots:
   - {name: Hov_salinity,
     display_name: Hovmoller Salinity,
     description: Create a Hovmoller diagram of salinity using all assets}
+  - {name: Hov_temperature,
+    display_name: Hovmoller Temperature,
+    description: Create a Hovmoller diagram of temperature using all assets}
 limits:
   - {name: sal_lims,
     display_name: Salinity Limits,

@@ -1252,6 +1252,55 @@ def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes"
     fig.tight_layout()
     fig.savefig(os.path.join(directory,"Hovmoller_Salinity.png"))
 
+def Hovmoller_Temperature(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes",temp_lims=DEFAULT_LIMS):
+    markers = iter(["p", "h", "^"])
+    xlabels = {"latitudes": "Latitude [$^\circ$N]", "longitudes": "Longitude [$^\circ$E]"}
+
+    if not temp_lims["lower"]:
+        temp_min = min(np.nanmin(P_FT["temperatures"]),np.nanmin(WS_FT["temperatures"]))
+        for ASV in ASV_data:
+            temp_min = min(temp_min,np.nanmin(ASV_data[ASV]["temperatures"]))
+    else:
+        temp_min = temp_lims["lowerLim"]
+    if not temp_lims["upper"]:
+        temp_max = max(np.nanmax(P_FT["temperatures"]),np.nanmax(WS_FT["temperatures"]))
+        for ASV in ASV_data:
+            temp_max = max(temp_max,np.nanmax(ASV_data[ASV]["temperatures"]))
+    else:
+        temp_max = temp_lims["upperLim"]
+
+    fig, ax = plt.subplots(figsize=(12,9))
+
+    sc = ax.scatter(P_FT[xaxis],P_FT["times"],s=2,c=P_FT["temperatures"],
+        vmax=temp_max,vmin=temp_min,marker="o",cmap=cmo.thermal)
+    ax.annotate("P",(P_FT[xaxis][-1], P_FT["times"][-1]),
+        textcoords="offset pixels", xytext=(5, 0), size=20)
+    ax.scatter(WS_FT[xaxis],WS_FT["times"],s=2,c=WS_FT["temperatures"],
+        vmax=temp_max,vmin=temp_min,marker="s",cmap=cmo.thermal)
+    ax.annotate("WS",(WS_FT[xaxis][-1], WS_FT["times"][-1]),
+        textcoords="offset pixels", xytext=(5, 0), size=20)
+
+    for ASV in ASV_data:
+        ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["temperatures"],
+            vmax=temp_max,vmin=temp_min,marker=next(markers),cmap=cmo.thermal)
+        ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
+            textcoords="offset pixels", xytext=(5, 0), size=12)
+    cb = plt.colorbar(sc)
+
+    ax.set_title("Hovmoller Temperature " + start.strftime("%Y-%m-%d %H:%M:%S") + " - " + end.strftime("%Y-%m-%d %H:%M:%S"))
+    ax.set_ylabel("Time")
+    ax.set_xlabel(xlabels[xaxis])
+
+    xlims = ax.get_xlim()
+    x_min = min(np.nanmin(WS_FT[xaxis]),np.nanmin(P_FT[xaxis]))
+    x_max = max(np.nanmax(WS_FT[xaxis]),np.nanmax(P_FT[xaxis]))
+    x_min = max(xlims[0], 0.8*x_min)
+    x_max = min(xlims[1], 1.2*x_max)
+    ax.set_xlim([x_min,x_max])
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(directory,"Hovmoller_Temperature.png"))
+
 if __name__ == "__main__":
     import argparse
 
