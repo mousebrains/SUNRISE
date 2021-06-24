@@ -49,7 +49,7 @@ try:
                 date = datetime.datetime.strptime(date,"%m/%d/%Y")
                 time = datetime.time.fromisoformat(time)
                 time = datetime.datetime.combine(date, time, tzinfo=datetime.timezone.utc)
-                time_seconds = time - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
+                time_seconds = (time - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
                 if time_seconds > last_time:
                     lat = row["ADU800-GGA-Lat"]
                     data["Lat"].append(float(lat[0:2]) + float(lat[2:-1])/60)
