@@ -21,6 +21,7 @@ directory = r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\Processed"
 #
 # print(input)
 
-P_FT = sunrise.parse_PFT(r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\Pelican\MIDAS_001.elg",start,end)
-WS_FT = sunrise.parse_WFT(r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\WS\WS21163_Hetland-Full Vdl",start,end)
+
+WS_FT = sunrise.parse_WSFT(r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\WS\WS21163_Hetland-Full Vdl.dat",start,end)
+P_FT = sunrise.parse_PFT([r"C:\Users\hildi\Documents\Stanford\Research\Sunrise\Pelican\MIDAS_001.elg"],start,end)
 sunrise.Hovmoller_Salinity(P_FT,WS_FT,{},start,end,directory)

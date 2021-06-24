@@ -1206,7 +1206,7 @@ def ADCP_vector(filepath,start,end,directory,name,MAX_SPEED=1,VECTOR_LENGTH=1./2
     )
 
 def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes",sal_lims=DEFAULT_LIMS):
-    markers = ["o", "s" , "p", "h", "^"]
+    markers = iter(["o", "s" , "p", "h", "^"])
 
     if not sal_lims["lower"]:
         sal_min = min(np.nanmin(P_FT["salinities"]),np.nanmin(WS_FT["salinities"]))
@@ -1227,7 +1227,7 @@ def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes"
         vmax=sal_max,vmin=sal_min,marker=next(markers),cmap=cmo.haline)
     ax.annotate("P",(P_FT[xaxis][-1], P_FT["times"][-1]),
         textcoords="offset pixels", xytext=(5, 0), size=20)
-    ax.scatter(P_FT[xaxis],P_FT["times"],c=WS_FT["salinities"],
+    ax.scatter(WS_FT[xaxis],WS_FT["times"],c=WS_FT["salinities"],
         vmax=sal_max,vmin=sal_min,marker=next(markers),cmap=cmo.haline)
     ax.annotate("WS",(WS_FT[xaxis][-1], WS_FT["times"][-1]),
         textcoords="offset pixels", xytext=(5, 0), size=20)
@@ -1238,6 +1238,17 @@ def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes"
         ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
             textcoords="offset pixels", xytext=(5, 0), size=12)
     cb = plt.colorbar(sc)
+
+    ax.set_title("Hovmoller Salinity " + str(start) + " - " + str(end))
+    ax.set_ylabel("Time")
+    ax.set_xlabel(xaxis)
+
+    xlims = ax.get_xlim()
+    x_min = min(np.nanmin(WS_FT[xaxis]),np.nanmin(P_FT[xaxis]))
+    x_max = max(np.nanmax(WS_FT[xaxis]),np.nanmax(P_FT[xaxis]))
+    x_min = max(xlims[0], 0.8*x_min)
+    x_max = min(xlims[1], 1.2*x_max)
+    ax.set_xlim([x_min,x_max])
 
     fig.savefig(os.path.join(directory,"Hovmoller_Salinity.png"))
 
