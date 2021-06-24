@@ -28,6 +28,7 @@ plots:
 - Hov_salinity: true
 - Hov_temperature: true
 - Hov_density: true
+- met_summary: true
 limits:
 - sal_lims:
     lower: false

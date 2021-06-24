@@ -15,7 +15,8 @@ PELICAN_1200_DATA = "/home/pat/Dropbox/Pelican/ADCP/wh1200_part3.nc"
 WS_600_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh600.nc"
 WS_1200_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh1200.nc"
 ASV_FILENAMES = [] #["/home/pat/Dropbox/WaltonSmith/ASV/RHIB_status_GS1_UBOX01.txt"]
-
+PELICAN_FTMET_NC = "/home/pat/Dropbox/Pelican/MIDAS/Pelican_FTMET.nc"
+WS_FTMET_NC = "/home/pat/Dropbox/WaltonSmith/FTMET/WS_FTMET.nc"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("fn", nargs="+", help="Input yaml files")
@@ -213,3 +214,8 @@ try:
         sunrise.Hovmoller_Density(P_FT,WS_FT,ASV,start,end,directory,density_lims=density_lims)
 except:
     raise
+
+# MET summary
+try:
+    if plots["met_summary"]:
+        sunrise.MET_Summary(PELICAN_FTMET_NC,WS_FTMET_NC,start,end,directory)

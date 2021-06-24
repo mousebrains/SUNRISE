@@ -71,6 +71,9 @@ plots:
   - {name: Hov_density,
     display_name: Hovmoller Potential Density,
     description: Create a Hovmoller diagram of potential density using all assets}
+  - {name: met_summary,
+    display_name: Met Summary,
+    description: Timeseries of wind speed, wind direction, air temperature, barometric pressure, and relative humidity}
 limits:
   - {name: sal_lims,
     display_name: Salinity Limits,

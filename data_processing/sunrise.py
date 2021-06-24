@@ -1350,6 +1350,58 @@ def Hovmoller_Density(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes",
     fig.tight_layout()
     fig.savefig(os.path.join(directory,"Hovmoller_Density.png"))
 
+def MET_Summary(Pelican_nc,WS_nc,start,end,directory):
+    pelican = netCDF4.Dataset(Pelican_nc)
+    walton_smith = netCDF4.Dataset(WS_nc)
+    start_sec = (start - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
+    end_sec = (start - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
+
+    p_idx = (pelican["times"][:] >= start_sec) & (pelican["times"][:] <= end_sec)
+    p_times = pelican["times"][p_idx]
+    p_times = [datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(second=t) for t in p_times]
+    p_AirTemp = pelican["AirTemp"][p_idx]
+    p_BaroPressure = pelican["BarpPressure"][p_idx]
+    p_RelHumidity = pelican["RelHumidity"][p_idx]
+    p_WindDirection = pelican["WindDirection"][p_idx]
+    p_WindSpeed = pelican["WindSpeed"][p_idx]
+
+    WS_idx = (walton_smith["times"][:] >= start_sec) & (walton_smith["times"][:] <= end_sec)
+    WS_times = walton_smith["times"][p_idx]
+    WS_times = [datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(second=t) for t in WS_times]
+    WS_AirTemp = walton_smith["AirTemp"][p_idx]
+    WS_BaroPressure = walton_smith["BarpPressure"][p_idx]
+    WS_RelHumidity = walton_smith["RelHumidity"][p_idx]
+    WS_WindDirection = walton_smith["WindDirection"][p_idx]
+    WS_WindSpeed = walton_smith["WindSpeed"][p_idx]
+
+    fig, axs = plt.subplots(5,1,sharex=True,figsize=(12,9),constrained_layout=True)
+
+    axs[0].plot(p_times,p_WindSpeed,'b')
+    axs[0].plot(WS_times,WS_WindSpeed,'g')
+    axs[0].set_ylabel("Wind Speed [m/s]")
+
+    axs[1].plot(p_times,p_WindDirection,'b')
+    axs[1].plot(WS_times,WS_WindDirection,'g')
+    axs[1].set_ylabel("Wind Direction [$^\circ]")
+
+    axs[2].plot(p_times,p_AirTemp,'b')
+    axs[2].plot(WS_times,WS_AirTemp,'g')
+    axs[2].set_ylabel("Air Temp. [$^\circ$C]")
+
+    axs[3].plot(p_times,p_BaroPressure,'b')
+    axs[3].plot(WS_times,WS_BaroPressure,'g')
+    axs[3].set_ylabel("Barometric Pressure [mbar]")
+
+    axs[4].plot(p_times,p_RelHumidity,'b')
+    axs[4].plot(WS_times,WS_RelHumidity,'g')
+    axs[4].set_ylabel(r"Relative Humidity [%]")
+
+    axs[4].set_xlabel("Time")
+
+    fig.suptitle("Met Summary: " + + start.strftime("%Y-%m-%d %H:%M:%S") + " - " + end.strftime("%Y-%m-%d %H:%M:%S"))
+    fig.savefig(os.path.join(directory,"met_summary.png"))
+
+
 if __name__ == "__main__":
     import argparse
 
