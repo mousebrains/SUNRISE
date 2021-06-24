@@ -1217,7 +1217,7 @@ def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes"
     if not sal_lims["upper"]:
         sal_max = max(np.nanmax(P_FT["salinities"]),np.nanmax(WS_FT["salinities"]))
         for ASV in ASV_data:
-            sal_min = max(sal_max,np.nanmax(ASV_data[ASV]["salinities"]))
+            sal_max = max(sal_max,np.nanmax(ASV_data[ASV]["salinities"]))
     else:
         sal_max = sal_lims["upperLim"]
 
