@@ -68,6 +68,9 @@ plots:
   - {name: Hov_temperature,
     display_name: Hovmoller Temperature,
     description: Create a Hovmoller diagram of temperature using all assets}
+  - {name: Hov_density,
+    display_name: Hovmoller Potential Density,
+    description: Create a Hovmoller diagram of potential density using all assets}
 limits:
   - {name: sal_lims,
     display_name: Salinity Limits,

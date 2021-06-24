@@ -1301,6 +1301,55 @@ def Hovmoller_Temperature(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitud
     fig.tight_layout()
     fig.savefig(os.path.join(directory,"Hovmoller_Temperature.png"))
 
+def Hovmoller_Density(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes",density_lims=DEFAULT_LIMS):
+    markers = iter(["p", "h", "^"])
+    xlabels = {"latitudes": "Latitude [$^\circ$N]", "longitudes": "Longitude [$^\circ$E]"}
+
+    if not density_lims["lower"]:
+        sigma_min = min(np.nanmin(P_FT["sigmas"]),np.nanmin(WS_FT["sigmas"]))
+        for ASV in ASV_data:
+            sigma_min = min(sigma_min,np.nanmin(ASV_data[ASV]["sigmas"]))
+    else:
+        sigma_min = density_lims["lowerLim"]
+    if not density_lims["upper"]:
+        sigma_max = max(np.nanmax(P_FT["sigmas"]),np.nanmax(WS_FT["sigmas"]))
+        for ASV in ASV_data:
+            sigma_max = max(sigma_max,np.nanmax(ASV_data[ASV]["sigmas"]))
+    else:
+        sigma_max = density_lims["upperLim"]
+
+    fig, ax = plt.subplots(figsize=(12,9))
+
+    sc = ax.scatter(P_FT[xaxis],P_FT["times"],s=2,c=P_FT["sigmas"],
+        vmax=sigma_max,vmin=sigma_min,marker="o",cmap=cmo.dense)
+    ax.annotate("P",(P_FT[xaxis][-1], P_FT["times"][-1]),
+        textcoords="offset pixels", xytext=(5, 0), size=20)
+    ax.scatter(WS_FT[xaxis],WS_FT["times"],s=2,c=WS_FT["sigmas"],
+        vmax=sigma_max,vmin=sigma_min,marker="s",cmap=cmo.dense)
+    ax.annotate("WS",(WS_FT[xaxis][-1], WS_FT["times"][-1]),
+        textcoords="offset pixels", xytext=(5, 0), size=20)
+
+    for ASV in ASV_data:
+        ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["sigmas"],
+            vmax=sigma_max,vmin=sigma_min,marker=next(markers),cmap=cmo.dense)
+        ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
+            textcoords="offset pixels", xytext=(5, 0), size=12)
+    cb = plt.colorbar(sc)
+
+    ax.set_title("Hovmoller Potential Density " + start.strftime("%Y-%m-%d %H:%M:%S") + " - " + end.strftime("%Y-%m-%d %H:%M:%S"))
+    ax.set_ylabel("Time")
+    ax.set_xlabel(xlabels[xaxis])
+
+    xlims = ax.get_xlim()
+    x_min = min(np.nanmin(WS_FT[xaxis]),np.nanmin(P_FT[xaxis]))
+    x_max = max(np.nanmax(WS_FT[xaxis]),np.nanmax(P_FT[xaxis]))
+    x_min = max(xlims[0], 0.8*x_min)
+    x_max = min(xlims[1], 1.2*x_max)
+    ax.set_xlim([x_min,x_max])
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(directory,"Hovmoller_Density.png"))
+
 if __name__ == "__main__":
     import argparse
 

@@ -27,6 +27,7 @@ plots:
 - ASV_surface: true
 - Hov_salinity: true
 - Hov_temperature: true
+- Hov_density: true
 limits:
 - sal_lims:
     lower: false
