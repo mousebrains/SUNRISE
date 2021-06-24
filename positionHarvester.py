@@ -99,17 +99,21 @@ class Writer(MyThread.MyThread):
 
     def __mkTable(self) -> None:
         sql = "CREATE TABLE IF NOT EXISTS fixes (\n"
+        sql+= "  ship TEXT,\n"
         sql+= "  name TEXT,\n"
         sql+= "  t TEXT,\n"
         sql+= "  latitude REAL,\n"
         sql+= "  longitude REAL,\n"
         sql+= "  qCSV BOOL DEFAULT 0,\n"
-        sql+= "  PRIMARY KEY(t,name)\n"
+        sql+= "  PRIMARY KEY(ship,name,t)\n"
         sql+= ");"
         logger.info("Creating table in %s\n%s", self.args.db, sql)
         with sqlite3.connect(self.args.db) as db:
             cur = db.cursor()
+            cur.execute("BEGIN;")
             cur.execute(sql)
+            cur.execute("CREATE INDEX IF NOT EXISTS fixes_t ON fixes (t,name);")
+            cur.execute("COMMIT;")
 
     def __writeRecords(self, db:sqlite3.Connection, sqlSelect:str, sqlq:str):
         fn = self.args.csv
@@ -123,7 +127,7 @@ class Writer(MyThread.MyThread):
                 cur1 = db.cursor()
                 cur1.execute("BEGIN;")
             fp.write(",".join(map(str, row)) + "\n")
-            cur1.execute(sqlq, row[0:2])
+            cur1.execute(sqlq, row[0:3])
         if fp is not None:
             cur0.execute("COMMIT;")
             fp.close()
@@ -134,12 +138,12 @@ class Writer(MyThread.MyThread):
         q = self.__queue
         logger.info("Starting db %s csv %s", args.db, args.csv)
 
-        sqlFiles = "INSERT OR IGNORE INTO fixes VALUES(?,?,?,?,0);"
+        sqlFiles = "INSERT OR IGNORE INTO fixes VALUES(?,?,?,?,?,0);"
 
         columns = ",".join(("t", "name", "latitude", "longitude"))
         sqlCSV0 = "SELECT " + columns + " FROM fixes ORDER BY t,name;"
         sqlCSV1 = "SELECT " + columns + " FROM fixes WHERE qCSV=0 ORDER BY t,name;"
-        sqlCSV2 = "UPDATE fixes SET qCSV=1 WHERE t=? AND name=?;"
+        sqlCSV2 = "UPDATE fixes SET qCSV=1 WHERE ship=? AND t=? AND name=?;"
 
         if not os.path.isfile(args.csv): # File doesn't exist, so create and populate
             with open(args.csv, "w") as fp:
@@ -156,9 +160,9 @@ class Writer(MyThread.MyThread):
                 cur.execute("BEGIN;")
                 # To avoid concurrency issues
                 for row in rows: 
-                    items = [row[0], row[1]] # name and time
-                    items.append(round(row[2], 6)) # Truncate latitude to 6 digits
-                    items.append(round(row[3], 6)) # Truncate longitude to 6 digits
+                    items = [row[0], row[1], row[2]] # ship, name, and time
+                    items.append(round(row[3], 6)) # Truncate latitude to 6 digits
+                    items.append(round(row[4], 6)) # Truncate longitude to 6 digits
                     cur.execute(sqlFiles, items)
                 cur.execute("COMMIT;")
                 self.__writeRecords(db, sqlCSV1, sqlCSV2)
@@ -210,7 +214,7 @@ class Pelican(MyThread.MyThread):
                     lat = self.__mkDeg(matches[7], matches[8])
                     lon = self.__mkDeg(matches[9], matches[10])
                     logger.info("ts %s lat %s lon %s", t, lat, lon)
-                    records.append((self.name, t, lat, lon))
+                    records.append(("Ships", self.name, t, lat, lon))
                 self.__position[fn] = fp.tell()
                 if records: 
                     logger.info("Put %s records", len(records))
@@ -292,7 +296,7 @@ class WaltonSmith(MyThread.MyThread):
                     lat = self.__mkDeg(info["latDeg"], info["latMin"], info["latDir"])
                     lon = self.__mkDeg(info["lonDeg"], info["lonMin"], info["lonDir"])
                     logger.info("t %s lat %s lon %s", t, lat, lon)
-                    records.append((self.name, t, lat, lon))
+                    records.append(("Ships", self.name, t, lat, lon))
                 self.__position[fn] = fp.tell()
                 if records:
                     logger.info("Put %s records", len(records))
@@ -354,7 +358,7 @@ class Drifter(MyThread.MyThread):
                     lat = float(matches[8])
                     lon = float(matches[9])
                     logger.info("name %s t %s lat %s lon %s", name, t, lat, lon)
-                    records.append((name, t, lat, lon))
+                    records.append(("Drifters", name, t, lat, lon))
                 self.__position[fn] = fp.tell()
                 if records:
                     logger.info("Put %s records", len(records))
@@ -426,7 +430,7 @@ class ASV(MyThread.MyThread):
                         if dt < dtMin: continue # Skip adding since the same time
                     tPrev = t if tPrev is None else max(tPrev, t) # Don't let it go backwards
                     logger.info("name %s t %s lat %s lon %s", name, t, lat, lon)
-                    records.append((name, t, lat, lon))
+                    records.append(("ASVs", name, t, lat, lon))
                 self.__position[fn] = fp.tell()
                 if records:
                     logger.info("Put %s records", len(records))
