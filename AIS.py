@@ -17,7 +17,7 @@ import logging
 import argparse
 import os
 import csv
-import date
+from datetime import date
 import pandas as pd
 from MyThread import MyThread,waitForException
 class Reader(MyThread):
