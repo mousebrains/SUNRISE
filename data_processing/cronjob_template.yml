@@ -28,7 +28,7 @@ plots:
 - Hov_salinity: true
 limits:
 - sal_lims:
-    lower: true
+    lower: false
     lowerLim: "32"
     upper: false
     upperLim: "36"
