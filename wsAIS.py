@@ -71,8 +71,6 @@ class Writer(MyThread):
                 json.dump(d, fp)
                 fp.write("\n")
 
-            
-
     def runIt(self) -> None:
         '''Called on thread start '''
         qIn = self.qIn
