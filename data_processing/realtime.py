@@ -196,6 +196,6 @@ except:
 # Make Hovmoller of Salinity
 try:
     if plots["Hov_salinity"]:
-        sunrise.Hovmoller_Salinity(P_FT,WS_FT,ASV,start,end,directory,sal_lims)
+        sunrise.Hovmoller_Salinity(P_FT,WS_FT,ASV,start,end,directory,sal_lims=sal_lims)
 except:
     raise
