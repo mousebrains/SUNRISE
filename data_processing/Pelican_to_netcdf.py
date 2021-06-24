@@ -37,7 +37,7 @@ try:
     else:
         last_time = rootgrp["time"][-1]
         print(last_time)
-    start_time = datetime.datetime(year=2019,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(seconds=last_time)
+    # start_time = datetime.datetime(year=2019,month=1,day=1,tzinfo=datetime.timezone.utc) + datetime.timedelta(seconds=last_time)
 
 
     for filename in files:
@@ -49,22 +49,22 @@ try:
                 date = datetime.datetime.strptime(date,"%m/%d/%Y")
                 time = datetime.time.fromisoformat(time)
                 time = datetime.datetime.combine(date, time, tzinfo=datetime.timezone.utc)
-                if time <= start_time:
-                    continue
-                lat = row["ADU800-GGA-Lat"]
-                data["Lat"].append(float(lat[0:2]) + float(lat[2:-1])/60)
-                lon = row["ADU800-GGA-Lon"]
-                data["Lon"].append(-1*float(lon[0:3]) - float(lon[3:-1])/60)
-                data["time"].append((time - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds())
-                for var in variables:
-                    value = row[midas[var]]
-                    if not value:
-                        value = "nan"
-                    try:
-                        data[var].append(float(value))
-                    except:
-                        print("Error converting " + var + "to float")
-                        data[var].append(float("nan"))
+                time_seconds = time - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
+                if time_seconds > last_time:
+                    lat = row["ADU800-GGA-Lat"]
+                    data["Lat"].append(float(lat[0:2]) + float(lat[2:-1])/60)
+                    lon = row["ADU800-GGA-Lon"]
+                    data["Lon"].append(-1*float(lon[0:3]) - float(lon[3:-1])/60)
+                    data["time"].append(time_seconds)
+                    for var in variables:
+                        value = row[midas[var]]
+                        if not value:
+                            value = "nan"
+                        try:
+                            data[var].append(float(value))
+                        except:
+                            print("Error converting " + var + "to float")
+                            data[var].append(float("nan"))
     for key in data:
         data[key] = np.array(data[key])
     tidx = data["time"].size
