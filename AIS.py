@@ -7,7 +7,7 @@
 import ais.stream
 import queue
 import json
-import datetime
+from datetime import datetime, date, time, timezone
 import socket
 import argparse
 import threading
@@ -16,8 +16,8 @@ import MyLogger
 import logging
 import argparse
 import os
+import pandas as pd
 from MyThread import MyThread,waitForException
-
 class Reader(MyThread):
     ''' Read datagrams from a socket and forward them to a socket so we catch all the datagrams '''
     def __init__(self, queue:queue.Queue,
@@ -52,7 +52,6 @@ class Writer(MyThread):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger) -> None:
         MyThread.__init__(self, "Writer", args, logger)
         self.qIn = queue.Queue()
-        self.headers = set()
         
     @staticmethod
     def addArgs(parser:argparse.ArgumentParser) -> None:
@@ -60,19 +59,24 @@ class Writer(MyThread):
         
     def __decrypt(self, msg:bytes) -> list:
         plaintext = msg.decode("utf-8")
-        gramlist = plaintext.split("!")
+        gramlist = plaintext.split("!");
         return ais.stream.decode(gramlist)
+            
 
     def __writeJSON(self, fields:list) -> None:
-        if fields is None: return
+        if fields is None: 
+            logger.info("\n Write failed \n")
+            return
         with open(self.args.json, "a") as fp:
             for d in fields:
                 logger.info("Datagram: %s\n Writing to %s\n", d, self.args.json)
                 json.dump(d, fp)
                 fp.write("\n")
+            
 
     def runIt(self) -> None:
         '''Called on thread start '''
+        required = ['mmsi', 'sog', 'cog', 'name', 'x', 'y', 'utc_hour', 'utc_min', 'timestamp']
         qIn = self.qIn
         logger = self.logger
         logger.info("Starting")
@@ -82,8 +86,19 @@ class Writer(MyThread):
             logger.info("t %s addr %s %s\n%s", t, ipAddr, port, msg)
             # Decrypt the msg
             fields = self.__decrypt(msg)
-            # write CSV records
-            self.__writeJSON(fields)
+            rf = []
+            for f in fields:
+                toRemove = []
+                for entry in f.keys():
+                    if entry not in required:
+                       toRemove.append(entry)
+                for entry in toRemove:
+                    f.pop(entry)
+                today = date.today()
+                f["date"] = str(today)
+                rf.append(f)
+            #RF now contains only necessary fields
+            self.__writeJSON(rf)
             qIn.task_done()
 
 parser = argparse.ArgumentParser(description="Listen for a LiveGPS message")
@@ -101,7 +116,6 @@ try:
 
     writer.start() # Start the writer thread
     reader.start() # Start the reader thread
-
     waitForException() # This will only raise an exception from a thread
 except:
     logger.exception("Unexpected exception while listening")

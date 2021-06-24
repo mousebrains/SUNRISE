@@ -1,0 +1,31 @@
+#
+# Listen for datagrams with ship computer status information
+#
+# sudo cp AIS.service /etc/systemd/system/
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable AIS.service
+# sudo systemctl start AIS.service
+#
+# May-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Collect AIS datagrams on the Pelican
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat/
+#
+ExecStart=/SUNRISE/AIS.py \
+    --json=/Dropbox/Pelican/AIS/ais.json
+	
+RestartSec=60
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+
