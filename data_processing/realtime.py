@@ -132,7 +132,7 @@ except:
 try:
     if plots["Pelican_surface"] or plots["WS_surface"]:
         if not os.path.isdir(os.path.join(directory,"ASV_surface")):
-            os.mkdir(os.join(directory,"ASV_surface"))
+            os.mkdir(os.path.join(directory,"ASV_surface"))
         sunrise.ShipSurface_png(P_FT,WS_FT,P_PMV,WS_PMV,start,end,directory,
             plot_P=plots["Pelican_surface"], plot_WS=plots["WS_surface"],
             sal_lims=sal_lims, temp_lims=temp_lims, density_lims=density_lims)
