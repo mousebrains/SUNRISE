@@ -58,6 +58,7 @@ Host vm3 glidervm3 glidervm3.ceoas.oregonstate.edu
 37. Install the required python packages, 
   - `sudo apt install python3-pip python3-pandas`
   - `python3 -m pip install inotify-simple`
+  - `python3 -m pip install libais`
 38. Set up git
   - `cd ~`
   - `git config --global user.name "Pat Welch"`
