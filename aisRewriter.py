@@ -13,6 +13,8 @@ parser.add_argument("json", type=str, help="Input AIS json filename")
 parser.add_argument("csv", type=str, help="Output AIS csv filename")
 args = parser.parse_args()
 
+qSeen = set()
+
 with open(args.json, "r") as ifp, open(args.csv, "w") as ofp:
     ofp.write("t,mmsi,lat,lon,sog,cog\n");
     prevHour = None
@@ -32,6 +34,12 @@ with open(args.json, "r") as ifp, open(args.csv, "w") as ofp:
 
         if "utc_min" in info: prevMin = info["utc_min"]
         if "utc_hour" in info: prevHour = info["utc_hour"]
+
+        ident = []
+        for key in sorted(info): ident.append(str(info[key]))
+        ident = ":".join(ident)
+        if ident in qSeen: continue
+        qSeen.add(ident)
 
         if prevHour is None or prevMin is None: continue # Don't know the hour or minute yet
 
