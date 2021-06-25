@@ -14,7 +14,8 @@ PELICAN_600_DATA = "/home/pat/Dropbox/Pelican/ADCP/wh600_part3.nc"
 PELICAN_1200_DATA = "/home/pat/Dropbox/Pelican/ADCP/wh1200_part3.nc"
 WS_600_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh600.nc"
 WS_1200_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh1200.nc"
-ASV_FILENAMES = [file for file in os.listdir("/home/pat/Dropbox/WaltonSmith/ASV") if file[:4] == "RHIB"] #["/home/pat/Dropbox/WaltonSmith/ASV/RHIB_status_GS1_UBOX01.txt"]
+ASV_DIRECTORY = "/home/pat/Dropbox/WaltonSmith/ASV"
+ASV_FILENAMES = [file for file in os.listdir(ASV_DIRECTORY) if file[:4] == "RHIB"] #["/home/pat/Dropbox/WaltonSmith/ASV/RHIB_status_GS1_UBOX01.txt"]
 PELICAN_FTMET_NC = "/home/pat/Dropbox/Pelican/MIDAS/Pelican_FTMET.nc"
 WS_FTMET_NC = "/home/pat/Dropbox/WaltonSmith/FTMET/WS_FTMET.nc"
 
@@ -186,7 +187,7 @@ except:
 ASV = {}
 try:
     for filename in ASV_FILENAMES:
-        ASV[filename[-25:-4]] = sunrise.parse_ASV(filename,start,end)
+        ASV[filename[-25:-4]] = sunrise.parse_ASV(os.path.join(ASV_DIRECTORY,filename),start,end)
 except:
     raise
 # ASV surface plots
