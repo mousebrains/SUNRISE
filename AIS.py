@@ -82,14 +82,15 @@ class Writer(MyThread):
         '''Called on thread start '''
         required = ['mmsi', 'sog', 'cog', 'name', 'x', 'y', 'utc_hour', 'utc_min', 'timestamp']
         known = {}
-        #with open("../Dropbox/Shore/AIS_numbers.csv") as csvfile:
-         #   reader = csv.DictReader(csvfile)
-         #   for row in reader:
-         #       known[row['MMSI']] = row['Name']
-            #print(known)
         qIn = self.qIn
         logger = self.logger
-        logger.info("Starting")
+        logger.info("Starting %s", self.args.json)
+
+        jsonDir = os.path.dirname(self.args.json)
+        if jsonDir and not os.path.isdir(jsonDir):
+            logger.info("Making %s", jsonDir)
+            os.makedirs(jsonDir, mode=0o7775)
+
         while True: # Loop forever
             (t, addr, msg) = qIn.get()
             (ipAddr, port) = addr
