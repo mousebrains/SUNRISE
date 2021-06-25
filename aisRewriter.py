@@ -11,11 +11,12 @@ import datetime
 parser = argparse.ArgumentParser()
 parser.add_argument("json", type=str, help="Input AIS json filename")
 parser.add_argument("csv", type=str, help="Output AIS csv filename")
+parser.add_argument("output", type=str, help="Output AIS compact json filename")
 args = parser.parse_args()
 
 qSeen = set()
 
-with open(args.json, "r") as ifp, open(args.csv, "w") as ofp:
+with open(args.json, "r") as ifp, open(args.csv, "w") as ofp, open(args.output, "w") as jfp:
     ofp.write("t,mmsi,lat,lon,sog,cog\n");
     prevHour = None
     prevMin = None
@@ -50,7 +51,23 @@ with open(args.json, "r") as ifp, open(args.csv, "w") as ofp:
         if t > now: t -= datetime.timedelta(days=1) # Clock wrap
 
         row = [int(round(t.timestamp(),0)), info["mmsi"],
-                round(info["x"], 6), round(info["y"], 6)]
-        row.append(round(info["sog"],1) if "sog" in info else "")
-        row.append(int(round(info["cog"],0)) if "cog" in info else "")
+                round(info["y"], 6), round(info["x"], 6)]
+        item = {"t":row[0], 
+                "mmsi": row[1],
+                "y": row[2],
+                "x": row[3],
+                }
+        if "sog" in info:
+            row.append(round(info["sog"],1))
+            item["sog"] = row[-1]
+        else:
+            row.append("")
+
+        if "cog" in info:
+            row.append(int(round(info["cog"],0)))
+            item["cog"] = row[-1]
+        else:
+            row.append("")
+
         ofp.write(",".join(map(str, row)) + "\n")
+        jfp.write(json.dumps(item, separators=(',', ':')) + "\n")
