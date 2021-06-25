@@ -1205,7 +1205,7 @@ def ADCP_vector(filepath,start,end,directory,name,MAX_SPEED=1,VECTOR_LENGTH=1./2
     )
 
 def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes",sal_lims=DEFAULT_LIMS):
-    markers = iter(["p", "h", "^"])
+
     xlabels = {"latitudes": "Latitude [$^\circ$N]", "longitudes": "Longitude [$^\circ$E]"}
 
     if not sal_lims["lower"]:
@@ -1234,7 +1234,7 @@ def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes"
 
     for ASV in ASV_data:
         ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["salinities"],
-            vmax=sal_max,vmin=sal_min,marker=next(markers),cmap=cmo.haline)
+            vmax=sal_max,vmin=sal_min,marker="^",cmap=cmo.haline)
         ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
             textcoords="offset pixels", xytext=(5, 0), size=12)
     cb = plt.colorbar(sc)
@@ -1254,7 +1254,7 @@ def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes"
     fig.savefig(os.path.join(directory,"Hovmoller_Salinity.png"))
 
 def Hovmoller_Temperature(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes",temp_lims=DEFAULT_LIMS):
-    markers = iter(["p", "h", "^"])
+
     xlabels = {"latitudes": "Latitude [$^\circ$N]", "longitudes": "Longitude [$^\circ$E]"}
 
     if not temp_lims["lower"]:
@@ -1283,7 +1283,7 @@ def Hovmoller_Temperature(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitud
 
     for ASV in ASV_data:
         ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["temperatures"],
-            vmax=temp_max,vmin=temp_min,marker=next(markers),cmap=cmo.thermal)
+            vmax=temp_max,vmin=temp_min,marker="^",cmap=cmo.thermal)
         ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
             textcoords="offset pixels", xytext=(5, 0), size=12)
     cb = plt.colorbar(sc)
@@ -1303,7 +1303,6 @@ def Hovmoller_Temperature(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitud
     fig.savefig(os.path.join(directory,"Hovmoller_Temperature.png"))
 
 def Hovmoller_Density(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes",density_lims=DEFAULT_LIMS):
-    markers = iter(["p", "h", "^"])
     xlabels = {"latitudes": "Latitude [$^\circ$N]", "longitudes": "Longitude [$^\circ$E]"}
 
     if not density_lims["lower"]:
@@ -1332,7 +1331,7 @@ def Hovmoller_Density(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes",
 
     for ASV in ASV_data:
         ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["sigmas"],
-            vmax=sigma_max,vmin=sigma_min,marker=next(markers),cmap=cmo.dense)
+            vmax=sigma_max,vmin=sigma_min,marker="^",cmap=cmo.dense)
         ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
             textcoords="offset pixels", xytext=(5, 0), size=12)
     cb = plt.colorbar(sc)
