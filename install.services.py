@@ -116,6 +116,7 @@ def shoreInstall() -> None:
             "Trigger",
             "positionHarvester",
             "wirewalker",
+            "wirewalker",
             )
     for service in services: copyService(f"{service}.service", service)
 
@@ -124,10 +125,15 @@ def shoreInstall() -> None:
     statusServices(services)
 
 def shipInstall(name:str, qPrimary:bool) -> None:
+    special = {} # Ship specific services
+    special["waltonsmith0"] = ["asvDigest"]
+    special["waltonsmith1"] = special["waltonsmith0"]
+
     services = ["syncPush", "syncPull"] # Named services
     services.append("syncLocal") # Sync to my local backup server
     services.append("Trigger") # Trigger plot generation on section files being created
     services.append("positionHarvester") # Harvest GPS fixes and store them in Processed
+    services.append("AIS") # Harvest GPS fixes and store them in Processed
 
     for service in services:
         src = f"{service}.{name}.service"
