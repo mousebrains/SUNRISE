@@ -14,7 +14,7 @@ PELICAN_600_DATA = "/home/pat/Dropbox/Pelican/ADCP/wh600_part3.nc"
 PELICAN_1200_DATA = "/home/pat/Dropbox/Pelican/ADCP/wh1200_part3.nc"
 WS_600_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh600.nc"
 WS_1200_DATA = "/home/pat/Dropbox/WaltonSmith/ADCP/wh1200.nc"
-ASV_FILENAMES = [] #["/home/pat/Dropbox/WaltonSmith/ASV/RHIB_status_GS1_UBOX01.txt"]
+ASV_FILENAMES = [file for file in os.listdir("/home/Pat/Dropbox/WaltonSmith/ASV") if file[:4] == "RHIB"] #["/home/pat/Dropbox/WaltonSmith/ASV/RHIB_status_GS1_UBOX01.txt"]
 PELICAN_FTMET_NC = "/home/pat/Dropbox/Pelican/MIDAS/Pelican_FTMET.nc"
 WS_FTMET_NC = "/home/pat/Dropbox/WaltonSmith/FTMET/WS_FTMET.nc"
 
@@ -131,6 +131,8 @@ except:
 # Now surface summary plots
 try:
     if plots["Pelican_surface"] or plots["WS_surface"]:
+        if not os.isdir(os.join(directory,"ASV_surface")):
+            os.mkdir(os.join(directory,"ASV_surface"))
         sunrise.ShipSurface_png(P_FT,WS_FT,P_PMV,WS_PMV,start,end,directory,
             plot_P=plots["Pelican_surface"], plot_WS=plots["WS_surface"],
             sal_lims=sal_lims, temp_lims=temp_lims, density_lims=density_lims)
@@ -184,7 +186,7 @@ except:
 ASV = {}
 try:
     for filename in ASV_FILENAMES:
-        ASV[filename[-10:-4]] = sunrise.parse_ASV(filename,start,end)
+        ASV[filename[-25:-4]] = sunrise.parse_ASV(filename,start,end)
 except:
     raise
 # ASV surface plots

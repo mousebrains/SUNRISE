@@ -1139,7 +1139,7 @@ def ASVSurface_png(ASVdata,start,end,directory,sal_lims=DEFAULT_LIMS,temp_lims=D
         # fig.colorbar(pmp, ax=axs[1,1])
         fig.suptitle("ASV " + name + ": " + start.strftime("%d-%b %H:%M") + " - " + end.strftime("%d-%b %H:%M"))
         fig.tight_layout()
-        fig.savefig(os.path.join(directory,"ASV_" + name + ".png"),dpi=100)
+        fig.savefig(os.path.join(directory,"ASV_surface","ASV_" + name + ".png"),dpi=100)
         plt.close(fig)
 
 def ADCP_vector(filepath,start,end,directory,name,MAX_SPEED=1,VECTOR_LENGTH=1./20.,DEPTH_LEVELS=-1, CMAP=cmo.thermal):
