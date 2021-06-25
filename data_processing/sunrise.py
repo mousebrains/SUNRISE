@@ -495,16 +495,17 @@ def parse_ASV(filename, start, end):
                 temperatures.append(temp)
                 sigmas.append(sigma)
 
-    # Calc salt grad
-    if latitudes:
-        seg_distance = np.zeros(len(latitudes)-1)
-        for i in range(seg_distance.size):
-            seg_distance[i] = distance((latitudes[i+1],longitudes[i+1]),(latitudes[i],longitudes[i])).km
-        distances = np.zeros(len(latitudes))
-        distances[1:] = np.cumsum(seg_distance)
-        salt_grad = np.abs(np.gradient(np.asarray(salinities),distances))
-    else:
-        salt_grad = []
+    # # Calc salt grad
+    # if salinities:
+    #     seg_distance = np.zeros(len(latitudes)-1)
+    #     for i in range(seg_distance.size):
+    #         seg_distance[i] = distance((latitudes[i+1],longitudes[i+1]),(latitudes[i],longitudes[i])).km
+    #     distances = np.zeros(len(latitudes))
+    #     distances[1:] = np.cumsum(seg_distance)
+    #     salt_grad = np.abs(np.gradient(np.asarray(salinities),distances))
+    # else:
+    #     salt_grad = []
+    salt_grad = []
 
     return {"longitudes": longitudes,
         "latitudes": latitudes,
