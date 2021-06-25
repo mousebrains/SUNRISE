@@ -18,6 +18,7 @@ User=pat
 WorkingDirectory=/home/pat/
 #
 ExecStart=/home/pat/SUNRISE/AIS.py \
+    --logfile=/home/pat/logs/AIS.log \
     --json=/home/pat/Dropbox/WaltonSmith/AIS/ais.json
 	
 RestartSec=300

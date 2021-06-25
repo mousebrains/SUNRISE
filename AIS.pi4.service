@@ -10,7 +10,7 @@
 # May-2021, Pat Welch, pat@mousebrains.com
 
 [Unit]
-Description=Collect AIS datagrams on the Pelican
+Description=Collect AIS datagrams on the pi4
 
 [Service]
 # Type=simple # Default
@@ -19,7 +19,7 @@ WorkingDirectory=/home/pat/
 #
 ExecStart=/home/pat/SUNRISE/AIS.py \
     --logfile=/home/pat/logs/AIS.log \
-    --json=/home/pat/Dropbox/Pelican/AIS/ais.json
+    --json=/home/pat/Dropbox/pi4/AIS/ais.json
 	
 RestartSec=300
 Restart=always
