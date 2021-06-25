@@ -31,7 +31,6 @@ class iNotify(MyThread.MyThread):
     # Modified version of MyInotify.py
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger):
         MyThread.MyThread.__init__(self, "INotify", args, logger)
-        self.queue = queue.Queue()
         self.__mapping = {}
         self.__inotify = ins.INotify()
         self.__flags = ins.flags.CLOSE_WRITE | ins.flags.MOVED_TO

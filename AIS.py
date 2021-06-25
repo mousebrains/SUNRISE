@@ -17,9 +17,11 @@ import logging
 import argparse
 import os
 import csv
+import math
 from datetime import date
-import pandas as pd
+#import pandas as pd
 from MyThread import MyThread,waitForException
+
 class Reader(MyThread):
     ''' Read datagrams from a socket and forward them to a socket so we catch all the datagrams '''
     def __init__(self, queue:queue.Queue,
@@ -99,6 +101,12 @@ class Writer(MyThread):
             for f in fields:
                 toRemove = []
                 for entry in f.keys():
+                    if entry == "sog":
+                        f[entry] = round(f[entry], 1)
+                    if entry == "cog":
+                        f[entry] = int(f[entry])
+                    if entry == "x" or entry == "y":
+                        f[entry] = round(f[entry], 6)
                     if entry not in required:
                        toRemove.append(entry)
                 for entry in toRemove:
