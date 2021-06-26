@@ -74,14 +74,12 @@ class Writer(MyThread):
         with open(self.args.json, "a") as fp:
             for d in fields:
                 logger.info("Datagram: %s\n Writing to %s\n", d, self.args.json)
-                json.dump(d, fp)
+                json.dump(d, fp, separators=(",", ":"))
                 fp.write("\n")
             
 
     def runIt(self) -> None:
         '''Called on thread start '''
-        required = ['mmsi', 'sog', 'cog', 'name', 'x', 'y', 'utc_hour', 'utc_min', 'timestamp']
-        known = {}
         qIn = self.qIn
         logger = self.logger
         logger.info("Starting %s", self.args.json)
@@ -100,29 +98,34 @@ class Writer(MyThread):
             rf = []
             #dont save the fields we don't need
             for f in fields:
-                toRemove = []
-                for entry in f.keys():
-                    if entry == "sog":
-                        f[entry] = round(f[entry], 1)
-                    if entry == "cog":
-                        f[entry] = int(f[entry])
-                    if entry == "x" or entry == "y":
-                        f[entry] = round(f[entry], 6)
-                    if entry not in required:
-                       toRemove.append(entry)
-                for entry in toRemove:
-                    f.pop(entry)
-                today = date.today()
-                f["date"] = str(today)
-                rf.append(f)
+                if ("mmsi" not in f) or \
+                        ("x" not in f) or \
+                        ("y" not in f) or \
+                        ("timestamp" not in f): 
+                    logger.info("Skipping %s", f)
+                    continue # Skip this entry, nothing to do
+                toKeep = {
+                        "mmsi": f["mmsi"],
+                        "x": round(f["x"], 6),
+                        "y": round(f["y"], 6),
+                        }
+                if "sog" in f: toKeep["sog"] = round(f["sog"], 1)
+                if "cog" in f: toKeep["cog"] = int(f["sog"])
+                now = datetime.datetime.now(tz=timezone.utc).replace(microsecond=0)
+                t0 = now.replace(second=int(f["timestamp"]))
+                if "utc_min" in f: t0.replace(minute=int(f["utc_min"]))
+                if "utc_hour" in f: t0.replace(hour=int(f["utc_hour"]))
+                if t0 > now: t0 -= datetime.timedelta(days=1)
+                toKeep["t"] = int(t0.timestamp())
+                rf.append(toKeep)
             #RF now contains only necessary fields
             #set the name for known mmsi id's
             #if str(rf[0]['mmsi']) in known:
             #    rf[0]['name'] = known[str(rf[0]['mmsi'])]
-            self.__writeJSON(rf)
+            if rf: self.__writeJSON(rf)
             qIn.task_done()
 
-parser = argparse.ArgumentParser(description="Listen for a LiveGPS message")
+parser = argparse.ArgumentParser(description="Listen for a AIS datagrams")
 MyLogger.addArgs(parser)
 Writer.addArgs(parser)
 Reader.addArgs(parser)
