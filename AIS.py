@@ -22,6 +22,8 @@ from datetime import date
 #import pandas as pd
 from MyThread import MyThread,waitForException
 
+qSeen = set()
+
 class Reader(MyThread):
     ''' Read datagrams from a socket and forward them to a socket so we catch all the datagrams '''
     def __init__(self, queue:queue.Queue,
@@ -117,6 +119,8 @@ class Writer(MyThread):
                 if "utc_hour" in f: t0.replace(hour=int(f["utc_hour"]))
                 if t0 > now: t0 -= datetime.timedelta(days=1)
                 toKeep["t"] = int(t0.timestamp())
+                if toKeep in qSeen: continue
+                qSeen.add(toKeep)
                 rf.append(toKeep)
             #RF now contains only necessary fields
             #set the name for known mmsi id's
