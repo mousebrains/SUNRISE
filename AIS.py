@@ -111,7 +111,7 @@ class Writer(MyThread):
                         }
                 if "sog" in f: toKeep["sog"] = round(f["sog"], 1)
                 if "cog" in f: toKeep["cog"] = int(f["sog"])
-                now = datetime.datetime.now(tz=timezone.utc).replace(microsecond=0)
+                now = datetime.datetime.now(tz=datetime.timezone.utc).replace(microsecond=0)
                 t0 = now.replace(second=int(f["timestamp"]) % 60)
                 if "utc_min" in f: t0.replace(minute=int(f["utc_min"]))
                 if "utc_hour" in f: t0.replace(hour=int(f["utc_hour"]))
