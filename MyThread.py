@@ -13,9 +13,17 @@ myQueue = queue.Queue()
 def isQueueEmpty() -> bool:
     return myQueue.empty()
 
-def waitForException():
-    e = myQueue.get()
-    raise e
+def waitForException(timeout=None):
+    if timeout is None:
+        e = myQueue.get()
+        raise e
+    try:
+        e = myQueue.get(timeout=timeout)
+        print(e)
+    except queue.Empty:
+        return
+    except Exception as e:
+        raise e
 
 class MyThread(Thread):
     def __init__(self, name:str, args:ArgumentParser, logger:logging.Logger) -> None:
