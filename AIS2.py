@@ -213,6 +213,9 @@ class Decrypter(MyThread.MyThread):
 
             info = ais.decode(fields[5], fields[6])
             if info is None: continue
+            # Don't deal with timestamp, utc_min, and utc_hour, just use the time received
+            t0 = datetime.datetime.fromtimestamp(round(t), tz=datetime.timezone.utc)
+            info["t"] = t0.strftime("%Y-%m-%d %H:%M:%S")
             logger.info("Info %s", info)
             for q in queues: q.put((t, info))
 
@@ -268,12 +271,12 @@ class BaseOutput(MyThread.MyThread):
         self.dt = dt
         self.qSeen = {}
         self.requiredFields = set(["mmsi", "x", "y"])
-        self.fields = (("t", 0), ("mmsi", None), ("x", 6), ("y", 6))
+        self.fields = (("t", None), ("mmsi", None), ("x", 6), ("y", 6))
         self.optional = (("cog", 0), ("sog", 1))
 
     def roundIt(self, val, rnd:int):
         if rnd is None: return val
-        if rnd is 0: return int(val)
+        if rnd == 0: return int(val)
         return round(val, rnd)
 
     def makeDirs(self, fn:str) -> None:
@@ -398,8 +401,10 @@ CSV.addArgs(parser)
 JSON.addArgs(parser)
 args = parser.parse_args()
 
-logger = MyLogger.mkLogger(args, name="AIS2")
+logger = MyLogger.mkLogger(args)
 logger.info("args=%s", args)
+import sys
+sys.exit(1)
 
 try:
     threads = []
