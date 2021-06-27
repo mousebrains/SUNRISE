@@ -10,7 +10,7 @@
 # May-2021, Pat Welch, pat@mousebrains.com
 
 [Unit]
-Description=Collect AIS datagrams on the Walton Smith
+Description=Collect AIS datagrams on the pi4
 
 [Service]
 # Type=simple # Default
@@ -21,7 +21,7 @@ ExecStart=/home/pat/SUNRISE/AIS2.py \
     --logfile=/home/pat/logs/AIS.log \
     --raw=/home/pat/Processed/AIS/ais.raw.db \
     --db=/home/pat/Processed/AIS/ais.db \
-    --csv=/home/pat/Dropbox/WaltonSmith/AIS/ais.csv
+    --csv=/home/pat/Dropbox/pi4/AIS/ais.csv
 	
 RestartSec=300
 Restart=always

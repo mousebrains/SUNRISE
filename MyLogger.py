@@ -26,8 +26,10 @@ def addArgs(parser:argparse.ArgumentParser) -> None:
     grp.add_argument("--smtpHost", type=str, default="localhost", metavar="foo.bar.com",
             help="SMTP server to mail to")
 
-def mkLogger(args:argparse.ArgumentParser, fmt:str=None) -> logging.Logger:
-    logger = logging.getLogger()
+def mkLogger(args:argparse.ArgumentParser, fmt:str=None, name:str=None) -> logging.Logger:
+    logger = logging.getLogger(name)
+    logger.handlers.clear() # Clear any pre-existing handlers out
+
     if args.logfile:
         ch = logging.handlers.RotatingFileHandler(args.logfile,
                 maxBytes=args.logBytes,
@@ -61,3 +63,10 @@ def mkLogger(args:argparse.ArgumentParser, fmt:str=None) -> logging.Logger:
         logger.addHandler(ch)
 
     return logger
+
+if __name__ == "__main__": # Called from command line
+    parser = argparse.ArgumentParser()
+    addArgs(parser)
+    args = parser.parse_args()
+    logger = mkLogger(args)
+    logger.info("args %s", args)

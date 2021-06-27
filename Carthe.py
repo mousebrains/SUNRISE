@@ -97,7 +97,7 @@ class DBupdater:
                 "_{} ON " + self.args.table + " ({});"
         cur.execute(sql.format("tRecv", "tRecv"))
         cur.execute(sql.format("qCSV", "qCSV"))
-        logging.info("Created table\n%s", sql)
+        self.logger.info("Created table\n%s", sql)
 
     def saveData(self, cur:sqlite3.Cursor, df:pd.DataFrame) -> None:
         sql = "INSERT OR IGNORE INTO " + self.args.table + " VALUES(?,?,?,?,?,?,0);"
