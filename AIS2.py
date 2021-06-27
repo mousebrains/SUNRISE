@@ -399,6 +399,7 @@ Decrypter.addArgs(parser)
 DB.addArgs(parser)
 CSV.addArgs(parser)
 JSON.addArgs(parser)
+parser.add_argument("--dt", type=float, help="Stop collecting data after this many seconds")
 args = parser.parse_args()
 
 logger = MyLogger.mkLogger(args)
@@ -434,6 +435,6 @@ try:
 
     for thrd in threads: thrd.start() # Start all the threads
 
-    MyThread.waitForException() # This will only raise an exception from a thread
+    MyThread.waitForException(timeout=args.dt) # This will only raise an exception from a thread
 except:
     logger.exception("Unexpected exception while listening")
