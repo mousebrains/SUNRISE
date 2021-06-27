@@ -25,6 +25,12 @@ import sqlite3
 import re
 import ais # This adds a stream handler to logging for some dumb/stupid reason!
 
+def makeDirs(fn:str, logger:logging.Logger) -> None:
+    dirName = os.path.dirname(fn)
+    if dirName and not os.path.isdir(dirName):
+        logger.info("Making %s", dirName)
+        os.makedirs(dirName, mode=0o775, exist_ok=True) # Multi-threaded
+
 class Reader(MyThread.MyThread):
     ''' Read datagrams from a socket and forward them to a various queues. '''
     def __init__(self, queues:list[queue.Queue],
@@ -126,6 +132,7 @@ class Raw2DB(MyThread.MyThread):
         args = self.args
         q = self.qIn
         logger.info("Starting %s", args.raw)
+        makeDirs(args.raw, logger)
         self.__mkTable()
         while True:
             msg = q.get()
@@ -275,6 +282,7 @@ class DB(MyThread.MyThread):
         args = self.args
         q = self.qIn
         logger.info("Starting %s", args.db)
+        makeDirs(args.db, logger)
         self.__mkTable()
         while True:
             (t,msg) = q.get()
@@ -303,12 +311,6 @@ class BaseOutput(MyThread.MyThread):
         if rnd is None: return val
         if rnd == 0: return int(val)
         return round(val, rnd)
-
-    def makeDirs(self, fn:str) -> None:
-        dirName = os.path.dirname(fn)
-        if dirName and not os.path.isdir(dirName):
-            logger.info("Making %s", dirName)
-            os.makedirs(dirName, mode=0o775)
 
     def qOutput(self, t:float, msg:tuple) -> bool:
         for key in self.requiredFields:
@@ -361,7 +363,7 @@ class CSV(BaseOutput):
         logger = self.logger
         args = self.args
         logger.info("Starting %s %s", args.csv, args.dtCSV)
-        self.makeDirs(args.csv)
+        makeDirs(args.csv, logger)
         self.__writeHeader()
 
         while True: # Loop forever
@@ -408,7 +410,7 @@ class JSON(BaseOutput):
         logger = self.logger
         args = self.args
         logger.info("Starting %s %s", args.json, args.dtJSON)
-        self.makeDirs(args.json)
+        makeDirs(args.json, logger)
 
         while True: # Loop forever
             (t, msg) = qIn.get()
