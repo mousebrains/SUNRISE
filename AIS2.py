@@ -403,8 +403,6 @@ args = parser.parse_args()
 
 logger = MyLogger.mkLogger(args)
 logger.info("args=%s", args)
-import sys
-sys.exit(1)
 
 try:
     threads = []
