@@ -1211,13 +1211,15 @@ def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes"
     if not sal_lims["lower"]:
         sal_min = min(np.nanmin(P_FT["salinities"]),np.nanmin(WS_FT["salinities"]))
         for ASV in ASV_data:
-            sal_min = min(sal_min,np.nanmin(ASV_data[ASV]["salinities"]))
+            if ASV_data[ASV]["salinities"]:
+                sal_min = min(sal_min,np.nanmin(ASV_data[ASV]["salinities"]))
     else:
         sal_min = sal_lims["lowerLim"]
     if not sal_lims["upper"]:
         sal_max = max(np.nanmax(P_FT["salinities"]),np.nanmax(WS_FT["salinities"]))
         for ASV in ASV_data:
-            sal_max = max(sal_max,np.nanmax(ASV_data[ASV]["salinities"]))
+            if ASV_data[ASV]["salinities"]:
+                sal_max = max(sal_max,np.nanmax(ASV_data[ASV]["salinities"]))
     else:
         sal_max = sal_lims["upperLim"]
 
@@ -1260,13 +1262,15 @@ def Hovmoller_Temperature(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitud
     if not temp_lims["lower"]:
         temp_min = min(np.nanmin(P_FT["temperatures"]),np.nanmin(WS_FT["temperatures"]))
         for ASV in ASV_data:
-            temp_min = min(temp_min,np.nanmin(ASV_data[ASV]["temperatures"]))
+            if ASV_data[ASV]["temperatures"]:
+                temp_min = min(temp_min,np.nanmin(ASV_data[ASV]["temperatures"]))
     else:
         temp_min = temp_lims["lowerLim"]
     if not temp_lims["upper"]:
         temp_max = max(np.nanmax(P_FT["temperatures"]),np.nanmax(WS_FT["temperatures"]))
         for ASV in ASV_data:
-            temp_max = max(temp_max,np.nanmax(ASV_data[ASV]["temperatures"]))
+            if ASV_data[ASV]["temperatures"]:
+                temp_max = max(temp_max,np.nanmax(ASV_data[ASV]["temperatures"]))
     else:
         temp_max = temp_lims["upperLim"]
 
@@ -1308,13 +1312,15 @@ def Hovmoller_Density(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes",
     if not density_lims["lower"]:
         sigma_min = min(np.nanmin(P_FT["sigmas"]),np.nanmin(WS_FT["sigmas"]))
         for ASV in ASV_data:
-            sigma_min = min(sigma_min,np.nanmin(ASV_data[ASV]["sigmas"]))
+            if ASV_data[ASV]["sigmas"]:
+                sigma_min = min(sigma_min,np.nanmin(ASV_data[ASV]["sigmas"]))
     else:
         sigma_min = density_lims["lowerLim"]
     if not density_lims["upper"]:
         sigma_max = max(np.nanmax(P_FT["sigmas"]),np.nanmax(WS_FT["sigmas"]))
         for ASV in ASV_data:
-            sigma_max = max(sigma_max,np.nanmax(ASV_data[ASV]["sigmas"]))
+            if ASV_data[ASV]["sigmas"]:
+                sigma_max = max(sigma_max,np.nanmax(ASV_data[ASV]["sigmas"]))
     else:
         sigma_max = density_lims["upperLim"]
 
