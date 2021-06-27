@@ -268,13 +268,23 @@ class DB(MyThread.MyThread):
         sql+= "  t REAL,\n"
         sql+= "  mmsi TEXT,\n"
         sql+= "  json TEXT,\n"
-        sql+= "  PRIMARY KEY(t, json)\n"
+        sql+= "  PRIMARY KEY(t, mmsi)\n"
         sql+= ");\n"
+
+        sql0 = "CREATE TABLE IF NOT EXISTS latest (\n"
+        sql0+= "  mmsi TEXT,\n"
+        sql0+= "  field TEXT,\n"
+        sql0+= "  t TEXT,\n"
+        sql0+= "  value TEXT,\n"
+        sql0+= "  PRIMARY KEY(mmsi, field)\n"
+        sql0+= ");"
+
         with sqlite3.connect(self.args.db) as db:
             cur = db.cursor()
             cur.execute("BEGIN;")
-            cur.execute(sql)
+            cur.execute(sql) # json table
             cur.execute("CREATE INDEX IF NOT EXISTS json_mmsi ON json (mmsi);")
+            cur.execute(sql0) # Latest table
             cur.execute("COMMIT;")
 
     def runIt(self) -> None: # Called on thread start
@@ -286,12 +296,19 @@ class DB(MyThread.MyThread):
         self.__mkTable()
         while True:
             (t,msg) = q.get()
+
+            mmsi = msg["mmsi"] if "mmsi" in msg else None
+
             txt = json.dumps(msg, separators=(",",":"))
             with sqlite3.connect(args.db) as db:
                 cur = db.cursor()
                 cur.execute("BEGIN;")
-                cur.execute("INSERT OR IGNORE INTO json VALUES(?,?,?);", 
-                        (t, msg["mmsi"] if "mmsi" in msg else None, txt))
+                cur.execute("INSERT OR IGNORE INTO json VALUES(?,?,?);", (t, mmsi, txt))
+                if mmsi is not None:
+                    tStr = msg["t"] if "t" in msg else t 
+                    for key in msg:
+                        cur.execute("INSERT OR REPLACE INTO latest VALUES(?,?,?,?);",
+                                (mmsi, key, tStr, msg[key]))
                 cur.execute("COMMIT;")
             q.task_done()
 
