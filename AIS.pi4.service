@@ -19,7 +19,9 @@ WorkingDirectory=/home/pat/
 #
 ExecStart=/home/pat/SUNRISE/AIS.py \
     --logfile=/home/pat/logs/AIS.log \
-    --json=/home/pat/Dropbox/pi4/AIS/ais.json
+    --raw=/home/pat/Processed/AIS/ais.raw.db \
+    --db=/home/pat/Processed/AIS/ais.db \
+    --csv=/home/pat/Dropbox/pi4/AIS/ais.csv
 	
 RestartSec=300
 Restart=always

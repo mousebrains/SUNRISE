@@ -17,9 +17,11 @@ Description=Collect AIS datagrams on the Pelican
 User=pat
 WorkingDirectory=/home/pat/
 #
-ExecStart=/home/pat/SUNRISE/AIS.py \
+ExecStart=/home/pat/SUNRISE/AIS2.py \
     --logfile=/home/pat/logs/AIS.log \
-    --json=/home/pat/Dropbox/Pelican/AIS/ais.json
+    --raw=/home/pat/Processed/AIS/ais.raw.db \
+    --db=/home/pat/Processed/AIS/ais.db \
+    --csv=/home/pat/Dropbox/Pelican/AIS/ais.csv
 	
 RestartSec=300
 Restart=always
