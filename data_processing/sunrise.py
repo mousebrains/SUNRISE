@@ -1235,10 +1235,11 @@ def Hovmoller_Salinity(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes"
         textcoords="offset pixels", xytext=(5, 0), size=20)
 
     for ASV in ASV_data:
-        ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["salinities"],
-            vmax=sal_max,vmin=sal_min,marker="^",cmap=cmo.haline)
-        ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
-            textcoords="offset pixels", xytext=(5, 0), size=12)
+        if ASV_data[ASV]["salinities"]:
+            ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["salinities"],
+                vmax=sal_max,vmin=sal_min,marker="^",cmap=cmo.haline)
+            ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
+                textcoords="offset pixels", xytext=(5, 0), size=12)
     cb = plt.colorbar(sc)
 
     ax.set_title("Hovmoller Salinity " + start.strftime("%Y-%m-%d %H:%M:%S") + " - " + end.strftime("%Y-%m-%d %H:%M:%S"))
@@ -1286,10 +1287,11 @@ def Hovmoller_Temperature(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitud
         textcoords="offset pixels", xytext=(5, 0), size=20)
 
     for ASV in ASV_data:
-        ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["temperatures"],
-            vmax=temp_max,vmin=temp_min,marker="^",cmap=cmo.thermal)
-        ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
-            textcoords="offset pixels", xytext=(5, 0), size=12)
+        if ASV_data[ASV]["temperatures"]:
+            ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["temperatures"],
+                vmax=temp_max,vmin=temp_min,marker="^",cmap=cmo.thermal)
+            ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
+                textcoords="offset pixels", xytext=(5, 0), size=12)
     cb = plt.colorbar(sc)
 
     ax.set_title("Hovmoller Temperature " + start.strftime("%Y-%m-%d %H:%M:%S") + " - " + end.strftime("%Y-%m-%d %H:%M:%S"))
@@ -1336,10 +1338,11 @@ def Hovmoller_Density(P_FT,WS_FT,ASV_data,start,end,directory,xaxis="latitudes",
         textcoords="offset pixels", xytext=(5, 0), size=20)
 
     for ASV in ASV_data:
-        ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["sigmas"],
-            vmax=sigma_max,vmin=sigma_min,marker="^",cmap=cmo.dense)
-        ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
-            textcoords="offset pixels", xytext=(5, 0), size=12)
+        if ASV_data[ASV]["sigmas"]:
+            ax.scatter(ASV_data[ASV][xaxis],ASV_data[ASV]["times"],s=2,c=ASV_data[ASV]["sigmas"],
+                vmax=sigma_max,vmin=sigma_min,marker="^",cmap=cmo.dense)
+            ax.annotate(ASV,(ASV_data[ASV][xaxis][-1], ASV_data[ASV]["times"][-1]),
+                textcoords="offset pixels", xytext=(5, 0), size=12)
     cb = plt.colorbar(sc)
 
     ax.set_title("Hovmoller Potential Density " + start.strftime("%Y-%m-%d %H:%M:%S") + " - " + end.strftime("%Y-%m-%d %H:%M:%S"))
