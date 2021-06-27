@@ -17,7 +17,7 @@ Description=Collect AIS datagrams on the pi4
 User=pat
 WorkingDirectory=/home/pat/
 #
-ExecStart=/home/pat/SUNRISE/AIS.py \
+ExecStart=/home/pat/SUNRISE/AIS2.py \
     --logfile=/home/pat/logs/AIS.log \
     --raw=/home/pat/Processed/AIS/ais.raw.db \
     --db=/home/pat/Processed/AIS/ais.db \
