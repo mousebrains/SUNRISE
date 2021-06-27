@@ -37,8 +37,10 @@ class Reader(MyThread.MyThread):
         grp = parser.add_argument_group(description="UDP Listener options")
         grp.add_argument("--port", type=int, default=8982, metavar='port', 
                 help='UDP port to listen on')
-        # NEMA sentences have a maximum size of 82 bytes, so double that
-        grp.add_argument("--size", type=int, default=2*85, help="Datagram size")
+        # NEMA sentences have a maximum size of 82 bytes, but there can
+        # be multiple NEMA sentences in a datagram for multipart payloads.
+        # so take a guess at 20 * NEMA+3
+        grp.add_argument("--size", type=int, default=20*85, help="Datagram size")
 
     def put(self, t, ipAddr, port, data) -> None:
         ''' send this information to the queues I know about, for replaying and real '''
@@ -50,7 +52,6 @@ class Reader(MyThread.MyThread):
         logger = self.logger
         args = self.args
         logger.info("Starting %s %s", args.port, args.size)
-        logger.info("queues %s", self.__queues)
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             logger.debug("Opened UDP socket")
             s.bind(('', args.port))
@@ -142,6 +143,7 @@ class Decrypter(MyThread.MyThread):
         MyThread.MyThread.__init__(self, "Decrypt", args, logger)
         self.qIn = queue.Queue()
         self.__queues = queues # Output queues
+        self.__partials = {} # For accumulating multipart messages
 
     @staticmethod
     def addArgs(parser:argparse.ArgumentParser) -> None:
@@ -174,50 +176,70 @@ class Decrypter(MyThread.MyThread):
         fields[6] = int(fields[6]) # Fill bits
         return fields
 
+    def __agePartials(self, t:float) -> None: # Maximum age to avoid memory leaks
+        info = self.__partials # Partial message information
+
+        for ident in info:
+            tAge = info[ident]["age"]
+            # Give 1 minute for partial messages to accumulate
+            if tAge > (t - 60): continue 
+            logger.warning("Aged out %s", ident)
+            del info[ident]
+
+    def __accumulate(self, t, fields:list) -> bool:
+        if fields[1] == 1: return fields # No need to Accumulate
+
+        info = self.__partials # previous information on partial messages
+        ident = fields[3] # Partial message identifier
+
+        if ident not in info:  # First time this ident has been seen
+            info[ident] = {"payloads": {}, "fillBits": 0, "age": t}
+
+        info[ident]["payloads"][fields[2]] = fields[5] # Accumulate payloads
+
+        if fields[1] == fields[2]: # Number of fill bits on last segment
+            info[ident]["fillBits"] = fields[6]
+
+        if len(info[ident]["payloads"]) != fields[1]: # Need to accumulate some more
+            self.__agePartials(t) # Avoid memory leaks
+            return None
+
+        # Build 
+        payload = ""
+        for key in sorted(info[ident]["payloads"]): # Make parts are assembled in correct order
+            payload += info[ident]["payloads"][key]
+
+        fields[5] = payload
+        fields[6] = info[ident]["fillBits"]
+        del info[ident]
+        return fields
+
     def runIt(self) -> None: # Called on thread start
         qIn = self.qIn
         queues = self.__queues
         self.logger.info("Starting")
-        partials = {}
-        fillBits = {}
-        age = {}
 
         while True:
-            (t, addr, port, msg) = qIn.get()
+            (t, addr, port, data) = qIn.get()
             qIn.task_done()
-            logger.info("Received %s %s %s %s", t, addr, port, msg)
-            fields = self.__denema(msg)
-            if fields[1] != 1: # Need to Accumulate
-                ident = fields[3]
-                if ident not in partials: 
-                    partials[ident] = {}
-                    fillBits[ident] = 0
-                    age[ident] = t
-                partials[ident][fields[2]] = fields[5]
-                if fields[1] == fields[2]: fillBits[ident] = fields[6]
-                if len(partials[ident]) != fields[1]: continue # Need to accumulate some more
-                payload = ""
-                for key in sorted(partials[ident]): payload += partials[ident][key]
-                fields[5] = payload
-                fields[6] = fillBits[ident]
-                del partials[ident]
-                del fillBits[ident]
+            logger.debug("Received %s %s %s %s", t, addr, port, data)
+            # there might be multiple messages in a single datagram
+            for sentence in data.strip().split(b"\n"):
+                fields = self.__denema(sentence)
+                if fields is None: # Not a valid sentence, so skip it
+                    logger.info("Bad NEMA %s %s %s %s", t, addr, port, sentence)
+                    continue
+                if fields[1] != 1: # Need to accumulate
+                    fields = self.__accumulate(t, fields)
+                    if fields is None: continue # Partial payload, so wait for more
 
-            # Maximum age to avoid memory leaks
-            for ident in sorted(list(age.keys())):
-                tAge = age[ident]
-                if tAge < (t - 300):
-                    del age[ident]
-                    del partials[ident]
-                    del fillBits[ident]
-
-            info = ais.decode(fields[5], fields[6])
-            if info is None: continue
-            # Don't deal with timestamp, utc_min, and utc_hour, just use the time received
-            t0 = datetime.datetime.fromtimestamp(round(t), tz=datetime.timezone.utc)
-            info["t"] = t0.strftime("%Y-%m-%d %H:%M:%S")
-            logger.info("Info %s", info)
-            for q in queues: q.put((t, info))
+                info = ais.decode(fields[5], fields[6])
+                if info is None: continue
+                # Don't deal with timestamp, utc_min, and utc_hour, just use the time received
+                t0 = datetime.datetime.fromtimestamp(round(t), tz=datetime.timezone.utc)
+                info["t"] = t0.strftime("%Y-%m-%d %H:%M:%S")
+                logger.debug("Info %s", info)
+                for q in queues: q.put((t, info))
 
 class DB(MyThread.MyThread):
     ''' Wait on a queue and save the resulting JSON to an SQLite3 database '''
@@ -237,6 +259,7 @@ class DB(MyThread.MyThread):
         ''' Create a JSON table if it does not exist '''
         sql = "CREATE TABLE IF NOT EXISTS json (\n"
         sql+= "  t REAL,\n"
+        sql+= "  mmsi TEXT,\n"
         sql+= "  json TEXT,\n"
         sql+= "  PRIMARY KEY(t, json)\n"
         sql+= ");\n"
@@ -244,6 +267,7 @@ class DB(MyThread.MyThread):
             cur = db.cursor()
             cur.execute("BEGIN;")
             cur.execute(sql)
+            cur.execute("CREATE INDEX IF NOT EXISTS json_mmsi ON json (mmsi);")
             cur.execute("COMMIT;")
 
     def runIt(self) -> None: # Called on thread start
@@ -254,11 +278,12 @@ class DB(MyThread.MyThread):
         self.__mkTable()
         while True:
             (t,msg) = q.get()
-            msg = json.dumps(msg, separators=(",",":"))
+            txt = json.dumps(msg, separators=(",",":"))
             with sqlite3.connect(args.db) as db:
                 cur = db.cursor()
                 cur.execute("BEGIN;")
-                cur.execute("INSERT OR IGNORE INTO json VALUES(?,?);", (t,msg))
+                cur.execute("INSERT OR IGNORE INTO json VALUES(?,?,?);", 
+                        (t, msg["mmsi"] if "mmsi" in msg else None, txt))
                 cur.execute("COMMIT;")
             q.task_done()
 
@@ -317,16 +342,18 @@ class CSV(BaseOutput):
             fp.write(",".join(hdr) + "\n")
 
     def __writeRow(self, row:dict) -> None:
+        record = []
+        for (key, rnd) in self.fields:
+            if key not in row: 
+                record.append("")
+            else:
+                record.append(str(self.roundIt(row[key], rnd)))
+
+        record = ",".join(record)
+        logger.info("%s", record)
+
         with open(self.args.csv, "a") as fp:
-            qFirst = True
-            for (key, rnd) in self.fields:
-                if not qFirst:
-                    fp.write(",")
-                qFirst = False
-                if key not in row:
-                    fp.write("")
-                else:
-                    fp.write(str(self.roundIt(row[key], rnd)))
+            fp.write(record)
             fp.write("\n")
 
     def runIt(self) -> None: # Called on thread start
@@ -339,7 +366,6 @@ class CSV(BaseOutput):
 
         while True: # Loop forever
             (t, msg) = qIn.get()
-            logger.info("t %s %s", t, msg)
             if self.qOutput(t, msg):
                 self.__writeRow(msg)
             qIn.task_done()
@@ -369,11 +395,12 @@ class JSON(BaseOutput):
             if key not in row: continue
             toKeep[key] = self.roundIt(row[key], rnd)
 
-
         if not toKeep: return
 
         with open(self.args.json, "a") as fp:
-            json.dump(toKeep, fp, separators=(",",":"), sort_keys=True) # Compact output
+            msg = json.dumps(toKeep, separators=(",",":"), sort_keys=True) # Compact form
+            logger.info("%s", msg)
+            fp.write(msg)
             fp.write("\n")
 
     def runIt(self) -> None: # Called on thread start
@@ -385,7 +412,6 @@ class JSON(BaseOutput):
 
         while True: # Loop forever
             (t, msg) = qIn.get()
-            logger.info("t %s %s", t, msg)
             if self.qOutput(t, msg):
                 self.__writeRow(msg)
             qIn.task_done()
