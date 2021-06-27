@@ -28,6 +28,8 @@ def addArgs(parser:argparse.ArgumentParser) -> None:
 
 def mkLogger(args:argparse.ArgumentParser, fmt:str=None, name:str=None) -> logging.Logger:
     logger = logging.getLogger(name)
+    logger.handlers.clear() # Clear any pre-existing handlers out
+
     if args.logfile:
         ch = logging.handlers.RotatingFileHandler(args.logfile,
                 maxBytes=args.logBytes,
@@ -61,3 +63,10 @@ def mkLogger(args:argparse.ArgumentParser, fmt:str=None, name:str=None) -> loggi
         logger.addHandler(ch)
 
     return logger
+
+if __name__ == "__main__": # Called from command line
+    parser = argparse.ArgumentParser()
+    addArgs(parser)
+    args = parser.parse_args()
+    logger = mkLogger(args)
+    logger.info("args %s", args)
