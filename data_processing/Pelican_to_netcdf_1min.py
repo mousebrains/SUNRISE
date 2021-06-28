@@ -66,14 +66,13 @@ try:
         with open(os.path.join(MIDAS_DIRECTORY,filename), newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                print(row)
                 time = row["Time"]
                 date = row["Date"]
                 date = datetime.datetime.strptime(date,"%m/%d/%Y")
                 time = datetime.time.fromisoformat(time)
                 time = datetime.datetime.combine(date, time, tzinfo=datetime.timezone.utc)
                 time_seconds = (time - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
-                if current_minute == 0 and (time_seconds > last_minute):
+                if (current_minute == 0) and (time_seconds > last_minute):
                     current_minute = time_seconds//60
                 if (time_seconds//60 > current_minute) and (time_seconds > last_minute):
                     for var in minute_data:
