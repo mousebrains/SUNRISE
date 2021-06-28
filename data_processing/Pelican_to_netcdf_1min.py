@@ -7,18 +7,36 @@ import datetime
 NETCDF_FILE = r"/mnt/NAS/PE21_24_Shearman/data/met/2021 SUNRISE data"
 MIDAS_DIRECTORY = "/mnt/GOM/DATALOG40/EventData/MIDAS/"
 
-variables = ["Heading", "Depth", "Temperature", "Salinity", "Conductivity", "AirTemp", "BaroPressure",
-    "RelHumidity", "WindDirection", "WindSpeed"]
+variables = ["Heading", "Heading2", "Depth", "Temperature", "Salinity", "Conductivity", "SoundVelocity",
+    "Transmission", "Fluorescence", "SPAR-Voltage", "SPAR-Microeinsteins", "BaroPressure", "AirTemp",
+    "RelHumidity", "WindDirection", "WindSpeed", "AirTemp2", "BaroPressure2", "RelHumidity2",
+    "WindDirection2", "WindSpeed2", "TWSpd-5sAvg", "ShortWaveRadiation", "LongWaveRadiation", "timeDerived"]
 midas = {"Heading": "Sperry-MK1-Gyro-Hdg-deg",
+    "Heading2": "Furuno-SC50-GPS-Hdg-Hdg",
     "Depth": "Knudsen-True-Depth-DRV-VALUE",
     "Temperature": "Thermosalinograph-Data-Temp",
     "Salinity": "Thermosalinograph-Data-Salinity",
     "Conductivity": "Thermosalinograph-Data-Conductivity",
+    "SoundVelocity": "Thermosalinograph-Data-Sound-Velocity",
+    "Transmission": "Transmissometer-percent-DRV-VALUE",
+    "Fluorescence": "Wetstar-Flourometer-microgperL-DRV-VALUE",
+    "SPAR_Voltage": "SPAR-Voltage-DRV-VALUE",
+    "SPAR-Microeinsteins": "SPAR-Microeinsteins-DRV-VALUE",
     "AirTemp": "Air-Temp-1",
     "BaroPressure": "BaromPress-1",
     "RelHumidity": "Rel-Humidity-1",
     "WindDirection": "TrueWindDirection-1-DRV-DIRECTION",
-    "WindSpeed": "TrueWindDirection-1-DRV-SPEED"}
+    "WindSpeed": "TrueWindDirection-1-DRV-SPEED",
+    "AirTemp2": "Air-Temp-2",
+    "BaroPressure2": "BaromPress-2",
+    "RelHumidity2": "Rel-Humidity-2",
+    "WindDirection2": "TrueWindDirection-2-DRV-DIRECTION",
+    "WindSpeed2": "TrueWindDirection-2-DRV-SPEED",
+    "TWSpd-5sAvg": "TWSpd-5sAvg2-DRV-VALUE",
+    "ShortWaveRadiation": "Radiometer-Feed--Short Wave Radiation from PSP in Watts Per M^2",
+    "LongWaveRadiation": "Radiometer-Feed--Long Wave Radiation Watts Per Square Meter",
+    "timeDerived": "time-DRV-VALUE"
+    }
 data = {"time": [],
     "Lon": [],
     "Lat": []}
