@@ -4,6 +4,6 @@
 #
 # June-2021, Pat Welch, pat@mousebrains.com
 
-SERVICES="syncLocal syncPush syncPull"
+SERVICES="syncPush syncPull syncLocal Trigger positionHarvester"
 sudo systemctl enable $SERVICES
 sudo systemctl restart $SERVICES
