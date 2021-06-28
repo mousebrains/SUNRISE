@@ -70,7 +70,7 @@ try:
                 time = datetime.time.fromisoformat(time)
                 time = datetime.datetime.combine(date, time, tzinfo=datetime.timezone.utc)
                 time_seconds = (time - datetime.datetime(year=2021,month=1,day=1,tzinfo=datetime.timezone.utc)).total_seconds()
-                if time_seconds//60 > current_minute and time_seconds > last_time:
+                if time_seconds//60 > current_minute and time_seconds > last_minute:
                     for var in minute_data:
                         data[var].append(np.nanmean(minute_data[var]))
                         minute_data[var] = []
