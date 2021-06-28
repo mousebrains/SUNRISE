@@ -76,6 +76,7 @@ try:
                     current_minute = time_seconds//60
                 if (time_seconds//60 > current_minute) and (time_seconds > last_minute):
                     for var in minute_data:
+                        print(var)
                         data[var].append(np.nanmean(minute_data[var]))
                         minute_data[var] = []
                     current_minute = time_seconds//60
