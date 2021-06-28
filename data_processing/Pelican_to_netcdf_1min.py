@@ -59,7 +59,7 @@ try:
     minute_data = {"time": [],
         "Lon": [],
         "Lat": []}
-    for var in variables:
+    for var in midas:
         minute_data[var] = []
 
     for filename in files:
@@ -85,7 +85,7 @@ try:
                     lon = row["ADU800-GGA-Lon"]
                     minute_data["Lon"].append(-1*float(lon[0:3]) - float(lon[3:-1])/60)
                     minute_data["time"].append((time_seconds//60)*60)
-                    for var in variables:
+                    for var in midas:
                         value = row[midas[var]]
                         if not value:
                             value = "nan"
