@@ -5,7 +5,7 @@ import os
 import datetime
 
 NETCDF_FILE = r"/mnt/NAS/PE21_24_Shearman/data/met/2021 SUNRISE data/Pelican_FTMET_1min.nc"
-MIDAS_DIRECTORY = "home/pat/Dropbox/Pelican/MIDAS"#"/mnt/GOM/DATALOG40/EventData/MIDAS/"
+MIDAS_DIRECTORY = "/home/pat/Dropbox/Pelican/MIDAS"#"/mnt/GOM/DATALOG40/EventData/MIDAS/"
 
 variables = ["Heading", "Heading2", "Depth", "Temperature", "Salinity", "Conductivity", "SoundVelocity",
     "Transmission", "Fluorescence", "SPAR-Voltage", "SPAR-Microeinsteins", "BaroPressure", "AirTemp",
