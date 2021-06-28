@@ -28,11 +28,11 @@ def discoverByHostname(args:argparse.ArgumentParser) -> None:
         args.primary = False
         args.secondary = False
         args.syncLocal = False
-    elif hostname == "pelican0":
+    elif hostname == "pelican0" or hostname == "pelicanais":
         args.pelican = True
         args.primary = False
         args.secondary = True
-        args.syncLocal = True
+        args.syncLocal = False
     elif hostname == "pelican1":
         args.pelican = True
         args.primary = True
