@@ -18,7 +18,11 @@ import socket
 import sys
 
 def discoverByHostname(args:argparse.ArgumentParser) -> None:
-    hostname = socket.gethostname() # Get this comptuer's hostname
+    if args.hostname is None:
+        hostname = socket.gethostname() # Get this comptuer's hostname
+    else:
+        hostname = args.hostname
+
     if hostname == "glidervm3":
         args.shore = True
         args.primary = False
@@ -28,12 +32,12 @@ def discoverByHostname(args:argparse.ArgumentParser) -> None:
         args.pelican = True
         args.primary = False
         args.secondary = True
-        args.syncLocal = False
+        args.syncLocal = True
     elif hostname == "pelican1":
         args.pelican = True
-        args.primary = False
-        args.secondary = True
-        args.syncLocal = True
+        args.primary = True
+        args.secondary = False
+        args.syncLocal = False
     elif hostname == "waltonsmith0":
         args.waltonsmith = True
         args.primary = True
@@ -174,6 +178,7 @@ grp.add_argument("--waltonsmith", "--ws", action="store_true",
 grp.add_argument("--pelican", action="store_true", help="Services for the R/V Pelican")
 grp.add_argument("--shore", action="store_true", help="Services for the shore side server")
 grp.add_argument("--pi4", action="store_true", help="Services for the test pi4")
+grp.add_argument("--hostname", type=str, help="don't use gethostname")
 grp = parser.add_mutually_exclusive_group(required=False)
 grp.add_argument("--primary", action="store_true", help="This is a primary server")
 grp.add_argument("--secondary", action="store_true", help="This is a secondary server")
@@ -182,7 +187,7 @@ grp.add_argument("--syncLocal", action="store_true",
 parser.add_argument("--dryrun", action="store_true", help="Don't actually do anything.")
 args = parser.parse_args()
 
-if args.discover: # Use hostname to set arguments
+if args.discover or args.hostname: # Use hostname to set arguments
     discoverByHostname(args)
 
 if args.shore:
