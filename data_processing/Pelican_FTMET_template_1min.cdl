@@ -94,11 +94,11 @@ variables:
 	    RelHumidity2:units = "%" ;
 
 	  double WindDirection2(time) ;
-	    WindDirection2:long_name = "TrueWindDirection-2-DRV-DIRECTION" ;
+	    WindDirection2:long_name = "True-Wind-2-DRV-DIRECTION" ;
 	    WindDirection2:units = "deg" ;
 
 	  double WindSpeed2(time) ;
-	    WindSpeed2:long_name = "TrueWindDirection-2-DRV-SPEED" ;
+	    WindSpeed2:long_name = "True-Wind-2-DRV-SPEED" ;
 	    WindSpeed2:units = "kn" ;
 
 		double TWSpd-5sAvg(time) ;
