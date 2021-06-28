@@ -66,6 +66,7 @@ try:
         with open(os.path.join(MIDAS_DIRECTORY,filename), newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
+                print(row)
                 time = row["Time"]
                 date = row["Date"]
                 date = datetime.datetime.strptime(date,"%m/%d/%Y")
