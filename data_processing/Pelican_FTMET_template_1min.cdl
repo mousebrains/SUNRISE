@@ -1,0 +1,122 @@
+netcdf flowthrough {
+
+dimensions:
+	time = UNLIMITED ; // (0 currently)
+
+variables:
+
+  double time(time) ;
+    time:long_name = "Date,Time" ;
+    time:units = "seconds since 2021-01-01 00:00:00 GMT" ;
+
+  double Lon(time) ;
+    Lon:long_name = "ADU800-GGA-Lat" ;
+    Lon:units = "deg E" ;
+
+  double Lat(time) ;
+    Lat:long_name = "ADU800-GGA-Lon" ;
+    Lat:units = "deg N" ;
+
+  double Heading(time) ;
+    Heading:long_name = "Sperry-MK1-Gyro-Hdg-deg" ;
+    Heading:units = "deg" ;
+
+	double Heading2(time) ;
+		Heading2:long_name = "Furuno-SC50-GPS-Hdg-Hdg" ;
+		Heading2:units = "deg" ;
+
+  double Depth(time) ;
+    Depth:long_name = "Knudsen-True-Depth-DRV-VALUE" ;
+    Depth:units = "m" ;
+
+  double Temperature(time) ;
+    Temperature:long_name = "Thermosalinograph-Data-Temp" ;
+    Temperature:units = "ITS-90, deg C" ;
+
+  double Salinity(time) ;
+    Salinity:long_name = "Thermosalinograph-Data-Salinity" ;
+    Salinity:units = "PSU" ;
+
+  double Conductivity(time) ;
+    Conductivity:long_name = "Thermosalinograph-Data-Conductivity" ;
+    Conductivity:units = "mS/mm" ;
+
+	double SoundVelocity(time) ;
+		SoundVelocity:long_name = "Thermosalinograph-Data-Sound-Velocity" ;
+		SoundVelocity:units = "m/s"
+
+	double Transmission(time) ;
+		Transmission:long_name = "Transmissometer-percent-DRV-VALUE" ;
+		Transmission:units = "%" ;
+
+	double Fluorescence(time) ;
+		Fluorescence:long_name = "Wetstar-Flourometer-microgperL-DRV-VALUE" ;
+		Fluorescence:units = "microg/L" ;
+
+	double SPAR-Voltage(time) ;
+		SPAR-Voltage:long_name = "SPAR-Voltage-DRV-VALUE" ;
+		SPAR-Voltage:units = "V" ;
+
+	double SPAR-Microeinsteins(time) ;
+		SPAR-Microeinsteins:long_name = "SPAR-Microeinsteins-DRV-VALUE" ;
+		SPAR-Microeinsteins:units = "Microeinsteins" ;
+
+  double AirTemp(time) ;
+    AirTemp:long_name = "Air-Temp-1" ;
+    AirTemp:units = "deg C" ;
+
+  double BaroPressure(time) ;
+    BaroPressure:long_name = "BaromPress-1" ;
+    BaroPressure:units = "mBar" ;
+
+  double RelHumidity(time) ;
+    RelHumidity:long_name = "Rel-Humidity-1" ;
+    RelHumidity:units = "%" ;
+
+  double WindDirection(time) ;
+    WindDirection:long_name = "TrueWindDirection-1-DRV-DIRECTION" ;
+    WindDirection:units = "deg" ;
+
+  double WindSpeed(time) ;
+    WindSpeed:long_name = "TrueWindDirection-1-DRV-SPEED" ;
+    WindSpeed:units = "kn" ;
+
+		double AirTemp2(time) ;
+	    AirTemp2:long_name = "Air-Temp-2" ;
+	    AirTemp2:units = "deg C" ;
+
+	  double BaroPressure2(time) ;
+	    BaroPressure2:long_name = "BaromPress-2" ;
+	    BaroPressure2:units = "mBar" ;
+
+	  double RelHumidity2(time) ;
+	    RelHumidity2:long_name = "Rel-Humidity-2" ;
+	    RelHumidity2:units = "%" ;
+
+	  double WindDirection2(time) ;
+	    WindDirection2:long_name = "TrueWindDirection-2-DRV-DIRECTION" ;
+	    WindDirection2:units = "deg" ;
+
+	  double WindSpeed2(time) ;
+	    WindSpeed2:long_name = "TrueWindDirection-2-DRV-SPEED" ;
+	    WindSpeed2:units = "kn" ;
+
+		double TWSpd-5sAvg(time) ;
+			TWSpd-5sAvg:long_name = "TWSpd-5sAvg2-DRV-VALUE" ;
+			TWSpd-5sAvg:units = "kn" ;
+
+		double ShortWaveRadiation(time) ;
+			ShortWaveRadiation:long_name = "Radiometer-Feed--Short Wave Radiation from PSP in Watts Per M^2" ;
+			ShortWaveRadiation:units = "W/m^2" ;
+
+		double LongWaveRadiation(time) ;
+			LongWaveRadiation:long_name = "Radiometer-Feed--Long Wave Radiation Watts Per Square Meter" ;
+			LongWaveRadiation:units = "W/m^2" ;
+
+		double timeDerived(time) ;
+			timeDerived:long_name = "time-DRV-VALUE" ;
+			timeDerived:units = "UNKNOWN" ;
+
+// global attributes:
+		:title = "Pelican Flowthrough Data 1 Minute Averages" ;
+}
