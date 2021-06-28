@@ -75,7 +75,7 @@ try:
                         data[var].append(np.nanmean(minute_data[var]))
                         minute_data[var] = []
                     current_minute = time_seconds//60
-                if time_seconds > last_time:
+                if time_seconds > last_minute:
                     lat = row["ADU800-GGA-Lat"]
                     minute_data["Lat"].append(float(lat[0:2]) + float(lat[2:-1])/60)
                     lon = row["ADU800-GGA-Lon"]
