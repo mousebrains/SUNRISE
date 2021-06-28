@@ -43,7 +43,7 @@ variables:
 
 	double SoundVelocity(time) ;
 		SoundVelocity:long_name = "Thermosalinograph-Data-Sound-Velocity" ;
-		SoundVelocity:units = "m/s"
+		SoundVelocity:units = "m/s" ;
 
 	double Transmission(time) ;
 		Transmission:long_name = "Transmissometer-percent-DRV-VALUE" ;
