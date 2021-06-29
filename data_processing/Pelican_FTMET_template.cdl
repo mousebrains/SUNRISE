@@ -35,7 +35,7 @@ variables:
 
   double Conductivity(time) ;
     Conductivity:long_name = "Thermosalinograph-Data-Conductivity" ;
-    Conductivity:units = "mS/cm" ;
+    Conductivity:units = "mS/mm" ;
 
   double AirTemp(time) ;
     AirTemp:long_name = "Air-Temp-1" ;

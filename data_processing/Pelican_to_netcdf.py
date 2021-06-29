@@ -4,7 +4,8 @@ import csv
 import os
 import datetime
 
-NETCDF_FILE = "/home/pat/Dropbox/Pelican/MIDAS/Pelican_FTMET.nc"
+NETCDF_FILE = "/mnt/NAS/PE21_24_Shearman/data/met/2021 SUNRISE data/Pelican_FTMET.nc"
+#"/home/pat/Dropbox/Pelican/MIDAS/Pelican_FTMET.nc"
 MIDAS_DIRECTORY = "/mnt/GOM/DATALOG40/EventData/MIDAS/"
 
 variables = ["Heading", "Depth", "Temperature", "Salinity", "Conductivity", "AirTemp", "BaroPressure",
