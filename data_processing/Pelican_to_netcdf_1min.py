@@ -95,9 +95,9 @@ try:
                             print("Error converting " + var + "to float")
                             minute_data[var].append(float("nan"))
     for key in minute_data:
-        minute_data[key] = np.array(minute_data[key])
-    tidx = minute_data["time"].size
-    for key in minute_data:
-        rootgrp[key][skip_old:skip_old+tidx] = minute_data[key]
+        data[key] = np.array(mdata[key])
+    tidx = data["time"].size
+    for key in data:
+        rootgrp[key][skip_old:skip_old+tidx] = data[key]
 except:
     raise
