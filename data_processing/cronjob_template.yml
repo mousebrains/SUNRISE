@@ -31,7 +31,7 @@ plots:
 - met_summary: true
 limits:
 - sal_lims:
-    lower: false
+    lower: true
     lowerLim: "32"
     upper: false
     upperLim: "36"
