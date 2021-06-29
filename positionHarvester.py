@@ -458,6 +458,73 @@ class WireWalker(MyThread.MyThread):
                     continue
                 self.__processFile(filename)
 
+class AIS(MyThread.MyThread):
+    def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
+            q:Writer, inotify:iNotify) -> None:
+        MyThread.MyThread.__init__(self, "AIS", args, logger)
+        self.__queue = q
+        self.__iNotify = inotify
+        self.__regexp = re.compile(r"^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})," \
+                + r"(\d+)," \
+                + r"([+-]?\d+[.]\d+)," \
+                + r"([+-]?\d+[.]\d+)")
+
+    @staticmethod
+    def addArgs(parser:argparse.ArgumentParser) -> None:
+        grp = parser.add_argument_group()
+        grp.add_argument("--ais", type=str, action='append',
+                help="Where the AIS files are")
+
+    def __processFile(self, fn:str) -> None:
+        pos = max(0, self.__queue.getPos(fn) - 200) # Position to start reading from
+        regexp = self.__regexp
+        try:
+            with open(fn, "r") as fp:
+                fp.seek(pos) # Start reading from this position
+                records = []
+                for line in fp:
+                    matches = regexp.match(line)
+                    if not matches: continue
+                    t = datetime.datetime(
+                            int(matches[1]), int(matches[2]), int(matches[3]),
+                            int(matches[4]), int(matches[5]), int(matches[6]))
+                    name = matches[7]
+                    lon = float(matches[8])
+                    lat = float(matches[9])
+                    logger.info("name %s t %s lat %s lon %s", name, t, lat, lon)
+                    records.append(("AIS", name, t, lat, lon))
+                self.__queue.setPos(fn, fp.tell())
+                if records:
+                    logger.info("Put %s records", len(records))
+                    self.__queue.put(records)
+        except:
+            self.logger.exception("Error processing %s", fn)
+
+    def runIt(self) -> None:
+        logger = self.logger
+        qWatch = queue.Queue()
+        if self.args.ais is None:
+            self.args.ais = [
+                    "/home/pat/Dropbox/Pelican/AIS",
+                    "/home/pat/Dropbox/WaltonSmith/AIS",
+                    ];
+
+        logger.info("Starting %s", self.args.ais)
+        for name in args.ais:
+            self.__iNotify.addWatch(name, qWatch)
+            fillQueue(qWatch, name, logger)
+
+        while True:
+            (t, files) = qWatch.get()
+            qWatch.task_done()
+            for filename in files:
+                fn = os.path.basename(filename)
+                if fn != "ais.csv":
+                    logger.info("skipping %s", filename)
+                    continue
+                logger.info("fn %s", filename)
+                self.__processFile(filename)
+
 class ASV(MyThread.MyThread):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
             q:Writer, inotify:iNotify) -> None:
@@ -536,6 +603,7 @@ Pelican.addArgs(parser)
 WaltonSmith.addArgs(parser)
 Drifter.addArgs(parser)
 WireWalker.addArgs(parser)
+AIS.addArgs(parser)
 ASV.addArgs(parser)
 args = parser.parse_args()
 
@@ -549,6 +617,7 @@ try:
     threads.append(WaltonSmith(args, logger, threads[0], threads[1]))
     threads.append(Drifter(args, logger, threads[0], threads[1]))
     threads.append(WireWalker(args, logger, threads[0], threads[1]))
+    threads.append(AIS(args, logger, threads[0], threads[1]))
     threads.append(ASV(args, logger, threads[0], threads[1]))
 
     for thrd in threads:
