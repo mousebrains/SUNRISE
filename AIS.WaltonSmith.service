@@ -20,7 +20,6 @@ WorkingDirectory=/home/pat/
 ExecStart=/home/pat/SUNRISE/AIS2.py \
     --logfile=/home/pat/logs/AIS.log \
     --raw=/home/pat/Processed/AIS/ais.raw.db \
-    --db=/home/pat/Processed/AIS/ais.db \
     --csv=/home/pat/Dropbox/WaltonSmith/AIS/ais.csv
 	
 RestartSec=300

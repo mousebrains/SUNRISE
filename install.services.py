@@ -18,35 +18,46 @@ import socket
 import sys
 
 def discoverByHostname(args:argparse.ArgumentParser) -> None:
-    hostname = socket.gethostname() # Get this comptuer's hostname
+    if args.hostname is None:
+        hostname = socket.gethostname() # Get this comptuer's hostname
+    else:
+        hostname = args.hostname
+
     if hostname == "glidervm3":
         args.shore = True
         args.primary = False
         args.secondary = False
-    elif hostname == "pelican0":
-        args.pelican = True
-        args.primary = True
-        args.secondary = False
-    elif hostname == "pelican1":
+        args.syncLocal = False
+    elif hostname == "pelican0" or hostname == "pelicanais":
         args.pelican = True
         args.primary = False
         args.secondary = True
+        args.syncLocal = False
+    elif hostname == "pelican1":
+        args.pelican = True
+        args.primary = True
+        args.secondary = False
+        args.syncLocal = False
     elif hostname == "waltonsmith0":
         args.waltonsmith = True
         args.primary = True
         args.secondary = False
+        args.syncLocal = True
     elif hostname == "waltonsmith1":
         args.waltonsmith = True
         args.primary = False
         args.secondary = True
+        args.syncLocal = False
     elif hostname == "pi4":
         args.pi4 = True
         args.primary = True
         args.secondary = False
+        args.syncLocal = True
     elif hostname == "pi5":
         args.pi4 = True
         args.primary = False
         args.secondary = True
+        args.syncLocal = False
     else:
         print("Unrecognized hostname,", hostname)
         sys.exit(1)
@@ -58,16 +69,21 @@ def discoverByHostname(args:argparse.ArgumentParser) -> None:
     if args.pi4: opts.append("--pi4")
     if args.primary: opts.append("--primary")
     if args.secondary: opts.append("--secondary")
+    if args.syncLocal: opts.append("--syncLocal")
     print("Discovered options:", " ".join(opts))
 
-def execCmd(args:tuple, qIgnoreReturn:bool=False) -> bool:
-    sp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
+def execCmd(cmd:tuple, args:argparse.ArgumentParser, qIgnoreReturn:bool=False) -> bool:
+    if args.dryrun:
+        print("Not going to run", cmd)
+        return True
+
+    sp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
 
     if sp.returncode:
         print("Failure while executing, {}:".format(sp.returncode))
-        print(args)
+        print(cmd)
     else:
-        print(" ".join(args))
+        print(" ".join(cmd))
 
     if sp.stdout:
         output = sp.stdout
@@ -82,32 +98,32 @@ def execCmd(args:tuple, qIgnoreReturn:bool=False) -> bool:
 
     return True
 
-def execSystemctl(cmd:str, services:list=None, qIgnoreReturn:bool=False) -> bool:
+def execSystemctl(cmd:str, args:argparse.ArgumentParser, services:list=None, qIgnoreReturn:bool=False) -> bool:
     systemctl = "/usr/bin/systemctl"
     items = [systemctl, cmd]
     if services is not None: items.extend(services)
-    return execCmd(items, qIgnoreReturn=qIgnoreReturn)
+    return execCmd(items, args, qIgnoreReturn=qIgnoreReturn)
 
-def copyService(src:str, service:str) -> bool:
+def copyService(src:str, service:str, args:argparse.ArgumentParser) -> bool:
     cpCmd = "/usr/bin/cp"
     dest = os.path.join("/etc/systemd/system", service + ".service")
-    return execCmd((cpCmd, src, dest))
+    return execCmd((cpCmd, src, dest), args)
 
-def statusServices(services:tuple[str], dt:float=5) -> bool:
+def statusServices(services:tuple[str], args:argparse.ArgumentParser, dt:float=5) -> bool:
     if dt is not None:
         print("Waiting", dt, "seconds for services to start")
         time.sleep(dt)
-    return execSystemctl("status", services)
+    return execSystemctl("status", args, services)
 
-def enableServices(services:tuple[str]) -> bool:
-    execSystemctl("enable", services)
-    execSystemctl("restart", services)
+def enableServices(services:tuple[str], args:argparse.ArgumentParser) -> bool:
+    execSystemctl("enable", args, services)
+    execSystemctl("restart", args, services)
 
-def disableServices(services:tuple[str]) -> bool:
-    execSystemctl("stop", services, qIgnoreReturn=True)
-    execSystemctl("disable", services)
+def disableServices(services:tuple[str], args:argparse.ArgumentParser) -> bool:
+    execSystemctl("stop", args, services, qIgnoreReturn=True)
+    execSystemctl("disable", args, services)
 
-def shoreInstall() -> None:
+def shoreInstall(args:argparse.ArgumentParser) -> None:
     services = (
             "Carthe", 
             "LiveViewGPS", 
@@ -118,41 +134,41 @@ def shoreInstall() -> None:
             "wirewalker",
             "wirewalker",
             )
-    for service in services: copyService(f"{service}.service", service)
+    for service in services: copyService(f"{service}.service", service, args)
 
-    execSystemctl("daemon-reload")
-    enableServices(services)
-    statusServices(services)
+    execSystemctl("daemon-reload", args)
+    enableServices(services, args)
+    statusServices(services, args)
 
-def shipInstall(name:str, qPrimary:bool) -> None:
+def shipInstall(name:str, args:argparse.ArgumentParser) -> None:
     special = {} # Ship specific services
     special["waltonsmith0"] = ["asvDigest"]
     special["waltonsmith1"] = special["waltonsmith0"]
 
     services = ["syncPush", "syncPull"] # Named services
-    services.append("syncLocal") # Sync to my local backup server
+    if args.syncLocal: services.append("syncLocal") # Sync to my local backup server
     services.append("Trigger") # Trigger plot generation on section files being created
     services.append("positionHarvester") # Harvest GPS fixes and store them in Processed
     services.append("AIS") # Harvest GPS fixes and store them in Processed
 
     for service in services:
         src = f"{service}.{name}.service"
-        copyService(src, service)
+        copyService(src, service, args)
 
     monServices = ["monitorPi"]
     for service in monServices: # Unnamed services
-        copyService(service + ".service", service)
+        copyService(service + ".service", service, args)
 
-    execSystemctl("daemon-reload")
+    execSystemctl("daemon-reload", args)
 
-    if qPrimary: # Start the services
-        enableServices(services)
+    if args.primary: # Start the services
+        enableServices(services, args)
     else:
-        disableServices(services)
+        disableServices(services, args)
 
-    enableServices(monServices) # Always running
+    enableServices(monServices, args) # Always running
     services.extend(monServices) # All services to check the status of
-    statusServices(services)
+    statusServices(services, args)
 
 parser = argparse.ArgumentParser()
 grp = parser.add_mutually_exclusive_group(required=True)
@@ -162,12 +178,16 @@ grp.add_argument("--waltonsmith", "--ws", action="store_true",
 grp.add_argument("--pelican", action="store_true", help="Services for the R/V Pelican")
 grp.add_argument("--shore", action="store_true", help="Services for the shore side server")
 grp.add_argument("--pi4", action="store_true", help="Services for the test pi4")
+grp.add_argument("--hostname", type=str, help="don't use gethostname")
 grp = parser.add_mutually_exclusive_group(required=False)
 grp.add_argument("--primary", action="store_true", help="This is a primary server")
 grp.add_argument("--secondary", action="store_true", help="This is a secondary server")
+grp.add_argument("--syncLocal", action="store_true", 
+        help="Enable syncing from the primary server to the secondary server")
+parser.add_argument("--dryrun", action="store_true", help="Don't actually do anything.")
 args = parser.parse_args()
 
-if args.discover: # Use hostname to set arguments
+if args.discover or args.hostname: # Use hostname to set arguments
     discoverByHostname(args)
 
 if args.shore:
@@ -182,4 +202,4 @@ if args.shore:
     shoreInstall()
 else:
     name = "WaltonSmith" if args.waltonsmith else "Pelican" if args.pelican else "pi4"
-    shipInstall(name, args.primary)
+    shipInstall(name, args)
