@@ -246,6 +246,8 @@ class Decrypter(MyThread.MyThread):
 
                 info = ais.decode(fields[5], fields[6])
                 if info is None: continue
+                if "x" in info and abs(info["x"]) > 180: continue # Skip longitudes that are >180
+                if "y" in info and abs(info["y"]) > 90: continue # Skip latitudes that are >90
                 # Don't deal with timestamp, utc_min, and utc_hour, just use the time received
                 t0 = datetime.datetime.fromtimestamp(round(t), tz=datetime.timezone.utc)
                 info["t"] = t0.strftime("%Y-%m-%d %H:%M:%S")
