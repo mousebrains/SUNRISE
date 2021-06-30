@@ -84,7 +84,7 @@ class MyInotify(MyThread.MyThread):
                         continue
                     path = items[wd] if event.name == "" else os.path.join(items[wd], event.name)
                     files.add(path)
-                    logger.info("event wd=%s name=%s %s %s", wd, event.name, path,
+                    logger.debug("event wd=%s name=%s %s %s", wd, event.name, path,
                             ",".join(map(str, ins.flags.from_mask(event.mask))))
 
                     if event.mask & ins.flags.DELETE_SELF:
