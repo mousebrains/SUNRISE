@@ -8,8 +8,6 @@
 # June-2021, Pat Welch
 
 import argparse
-import MyThread
-import MyInotify
 import MyLogger
 import logging
 import time
@@ -20,13 +18,15 @@ import sqlite3
 import datetime
 import os.path
 
-class MIDAS(MyThread.MyThread):
-    def __init__(self, inotify:MyInotify.MyInotify,
-            args:argparse.ArgumentParser, logger:logging.Logger) -> None:
-        MyThread.MyThread.__init__(self, "MIDAS", args, logger)
-        self.__inotify = inotify
+class MIDAS:
+    def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger) -> None:
+        self.args = args
+        self.logger = logger
         self.__reLine = re.compile(r"(Date,Time|\d{2}/\d{2}/\d{4},\d{2}:\d{2}:\d{2}),")
         self.__reDate = re.compile(r"(\d{2})/(\d{2})/(\d{4}),(\d{2}):(\d{2}):(\d{2})")
+        self.__mkDir(args.db)
+        self.__mkDir(args.csv)
+        self.__mkTable()
         
     @staticmethod
     def addArgs(parser:argparse.ArgumentParser) -> None:
@@ -40,8 +40,6 @@ class MIDAS(MyThread.MyThread):
         grp.add_argument("--csv", type=str, metavar="filename",
                 default="/home/pat/Dropbox/Pelican/MIDAS/MIDAS_001.elg",
                 help="CSV file to append records to")
-        grp.add_argument("--delay", type=int, default=10,
-                help="Seconds after an inotify event until copying is started")
 
     def __mkDir(self, fn:str) -> None:
         dirname = os.path.dirname(fn)
@@ -49,11 +47,10 @@ class MIDAS(MyThread.MyThread):
         self.logger.info("Making %s", dirname)
         os.makedirs(dirname, mode=0o775, exist_ok=True)
 
-    def __fillQueue(self) -> None: # Populate queue with the existing filenames
-        files = set()
+    def run(self) -> None: # Populate queue with the existing filenames
         for fn in glob.glob(os.path.join(self.args.src, "*")):
-            files.add(fn)
-        self.__inotify.queue.put(("INITIAL", time.time(), files))
+            if re.match("MIDAS_\d+.elg", os.path.basename(fn)):
+                self.__doit(fn)
 
     def __mkTable(self) -> None:
         sql = "CREATE TABLE IF NOT EXISTS rows (\n"
@@ -176,61 +173,23 @@ class MIDAS(MyThread.MyThread):
                 if self.__digestFile(fn, cur):
                     self.__expelCSV(cur)
 
-    def runIt(self) -> None: # Called by MyThread on thread start
-        args = self.args
-        logger = self.logger
-        inotify = self.__inotify
-        q = inotify.queue
-        delay = args.delay # Delay after a notification before starting a sync
-        logger.info("Starting db=%s src=%s csv=%s delay=%s", args.db, args.src, args.csv, delay)
-        inotify.addTree(args.src)
-        self.__fillQueue() # Add all the existing files to the queue
-        self.__mkDir(args.db)
-        self.__mkDir(args.csv)
-        self.__mkTable() # Create the SQLite3 database
-
-        dt = None # Timeout
-        tMin = None
-        toSync = set() # Filenames to sync
-        while True:
-            now = time.time()
-            dt = None if tMin is None else (delay - (now - tMin))
-            try:
-                logger.debug("dt %s", dt)
-                if dt is not None and isinstance(dt, float) and dt < 0.1:
-                    dt = 0.1
-                (action, t, files) = q.get(timeout=dt)
-                if tMin is None:
-                    tMin = t
-                toSync.update(files) # Add in new files to sync
-            except queue.Empty:
-                tMin = None
-                for fn in toSync:
-                    if re.match("MIDAS_\d+.elg", os.path.basename(fn)):
-                        try:
-                            self.__doit(fn)
-                        except:
-                            logger.exception("Unable to process %s", fn)
-                    else:
-                        logger.info("Skipping %s", fn)
-
-parser = argparse.ArgumentParser(description="SUNRISE Cruise syncing")
+parser = argparse.ArgumentParser(description="SUNRISE Cruise syncing of Pelican MIDAS data")
 MyLogger.addArgs(parser)
 MIDAS.addArgs(parser)
-
+# Since we don't get inotify events for MIDAS_*.elg periodically check it
+parser.add_argument("--delay", type=float, default=60, help="Seconds between directoy scans")
 args = parser.parse_args()
 
 logger = MyLogger.mkLogger(args)
 
 logger.info("args %s", args)
 
-try:
-    inotify = MyInotify.MyInotify(args, logger)
-    midas = MIDAS(inotify, args, logger)
+midas = MIDAS(args, logger)
 
-    inotify.start()
-    midas.start()
-
-    MyThread.waitForException() # Wait for any errors from the threads
-except:
-    logger.exception("Unexpected exception")
+while True:
+    try:
+        midas.run()
+    except:
+        logger.exception("Midas failed")
+    logger.info("Sleeping for %s seconds", args.delay)
+    time.sleep(args.delay)
