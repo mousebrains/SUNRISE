@@ -21,6 +21,7 @@ class Pusher(MyThread.MyThread):
         self.__queue = queue
         self.__preCmd = [
                 args.rsync,
+                "--temp-dir", args.tempdir,
                 "--archive",
                 "--mkpath",
                 "--copy-unsafe-links",
@@ -52,6 +53,8 @@ class Pusher(MyThread.MyThread):
                 help="Target machine to push/pull information from/to")
         grp.add_argument("--prefix", type=str, default=".",
                 help="Path prefix on host machine")
+        grp.add_argument("--tempdir", type=str, default="/home/pat/rsync.temp",
+                help="Temporary directory for rsync transfers")
         grp.add_argument("--rsync", type=str, default="/usr/bin/rsync",
                 help="Rsync command to use")
         grp.add_argument("--dryrun", action="store_true", help="Don't actually execute rsync")

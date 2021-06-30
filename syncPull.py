@@ -17,6 +17,7 @@ class Pull:
         self.logger = logger
         cmd = [
                 args.rsync,
+                "--tempdir", args.tempdir,
                 "--archive",
                 "--mkpath",
                 "--relative",
@@ -44,6 +45,8 @@ class Pull:
         grp.add_argument("--rsync", type=str, default="/usr/bin/rsync",
                 help="Rsync command to use")
         grp.add_argument("--remote", type=str, default="bin/mkFiles.py",
+                help="--rsync-path argument")
+        grp.add_argument("--tempdir", type=str, default="/home/pat/rsync.temp",
                 help="--rsync-path argument")
 
         grp = parser.add_argument_group(description="Pulling related options")
