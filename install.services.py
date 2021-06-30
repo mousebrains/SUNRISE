@@ -20,6 +20,7 @@ import sys
 def discoverByHostname(args:argparse.ArgumentParser) -> None:
     if args.hostname is None:
         hostname = socket.gethostname() # Get this comptuer's hostname
+        args.hostname = hostname
     else:
         hostname = args.hostname
 
@@ -144,12 +145,15 @@ def shipInstall(name:str, args:argparse.ArgumentParser) -> None:
     special = {} # Ship specific services
     special["waltonsmith0"] = ["asvDigest"]
     special["waltonsmith1"] = special["waltonsmith0"]
+    special["Pelican"] = ["PelicanMidasCopy"]
 
     services = ["syncPush", "syncPull"] # Named services
     if args.syncLocal: services.append("syncLocal") # Sync to my local backup server
     services.append("Trigger") # Trigger plot generation on section files being created
     services.append("positionHarvester") # Harvest GPS fixes and store them in Processed
     services.append("AIS") # Harvest GPS fixes and store them in Processed
+
+    if name in special: services.extend(special[name])
 
     for service in services:
         src = f"{service}.{name}.service"
