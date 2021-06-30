@@ -17,7 +17,7 @@ class Pull:
         self.logger = logger
         cmd = [
                 args.rsync,
-                "--tempdir", args.tempdir,
+                "--temp-dir", args.tempdir,
                 "--archive",
                 "--mkpath",
                 "--relative",
