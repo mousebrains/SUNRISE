@@ -111,8 +111,8 @@ class Writer(MyThread.MyThread):
 
         sqlPos = "CREATE TABLE IF NOT EXISTS filepos (\n"
         sqlPos+= "  fn TEXT PRIMARY KEY,\n"
-        sqlPos+= "  pos INTEGER"
-        sqlPos+= ");"
+        sqlPos+= "  pos INTEGER\n"
+        sqlPos+= ");\n"
 
         logger.info("Creating table in %s\n%s", self.args.db, sql)
         with sqlite3.connect(self.args.db) as db:
