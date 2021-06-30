@@ -21,7 +21,7 @@ ExecStart=/home/pat/SUNRISE/syncPush.py \
         --logfile=/home/pat/logs/syncLocal.log \
 	--bwlimit=-1 \
 	--prefix='' \
-	--host=pelican1.local \
+	--host=pelicanais.local \
 	--nocompression \
 	Dropbox \
 	Processed
