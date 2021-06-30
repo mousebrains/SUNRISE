@@ -96,7 +96,7 @@ class Writer(MyThread.MyThread):
                 help="CSV filename")
 
     def put(self, records) -> None:
-        self.__queue.put(records)
+        self.__queue.put(("records", records))
 
     def __mkTable(self) -> None:
         sql = "CREATE TABLE IF NOT EXISTS fixes (\n"
@@ -123,9 +123,8 @@ class Writer(MyThread.MyThread):
             cur.execute(sqlPos)
             cur.execute("COMMIT;")
 
-    def __writeRecords(self, db:sqlite3.Connection, sqlSelect:str, sqlq:str):
+    def __writeRecords(self, db:sqlite3.Connection, cur0:sqlite3.Cursor, sqlSelect:str, sqlq:str):
         fn = self.args.csv
-        cur0 = db.cursor()
         cur1 = None
         fp = None
         cur0.execute(sqlSelect)
@@ -137,24 +136,32 @@ class Writer(MyThread.MyThread):
             fp.write(",".join(map(str, row)) + "\n")
             cur1.execute(sqlq, row[0:3])
         if fp is not None:
-            cur0.execute("COMMIT;")
+            cur1.execute("COMMIT;")
             fp.close()
 
-    def getPos(self, fn:str) -> int:
-        with sqlite3.connect("file:" + self.args.db + "?mode=ro", uri=True) as db:
-            cur = db.cursor()
-            cur.execute("SELECT pos FROM filepos WHERE fn=?;", (fn,))
-            for row in cur:
-                return row[0]
-            return 0
-
-    def setPos(self, fn:str, pos:int) -> None:
+    def __writePos(self, fn:str, pos:int) -> None:
         try:
             with sqlite3.connect(self.args.db) as db:
                 cur = db.cursor()
-                cur.execute("INSERT OR REPLACE INTO filepos VALUES(?,?);", (fn, pos)) 
+                cur.execute("BEGIN;")
+                cur.execute("INSERT OR REPLACE INTO filepos VALUES(?,?);", (fn, pos))
+                cur.execute("COMMIT;")
         except:
-            pass
+            self.logger.exception("Unable to save positon, %s, for %s", pos, fn)
+
+    def getPos(self, fn:str) -> int:
+        try:
+            with sqlite3.connect("file:" + self.args.db + "?mode=ro", uri=True) as db:
+                cur = db.cursor()
+                cur.execute("SELECT pos FROM filepos WHERE fn=?;", (fn,))
+                for row in cur: return row[0]
+        except:
+            self.logger.exception("Error getting position for %s", fn)
+        return 0
+
+
+    def setPos(self, fn:str, pos:int) -> None:
+        self.__queue.put(("pos", (fn, pos)))
 
     def runIt(self) -> None:
         logger = self.logger
@@ -174,11 +181,14 @@ class Writer(MyThread.MyThread):
                 fp.write(columns + "\n")
             with sqlite3.connect(args.db) as db:
                 cur = db.cursor()
-                self.__writeRecords(db, sqlCSV0, sqlCSV2)
+                self.__writeRecords(db, cur, sqlCSV0, sqlCSV2)
 
         while True:
-            rows = q.get()
+            (action, rows) = q.get()
             q.task_done()
+            if action == "pos":
+                self.__writePos(rows[0], rows[1])
+                continue
             with sqlite3.connect(args.db) as db:
                 cur = db.cursor()
                 cur.execute("BEGIN;")
@@ -189,7 +199,7 @@ class Writer(MyThread.MyThread):
                     items.append(round(row[4], 6)) # Truncate longitude to 6 digits
                     cur.execute(sqlFiles, items)
                 cur.execute("COMMIT;")
-                self.__writeRecords(db, sqlCSV1, sqlCSV2)
+                self.__writeRecords(db, cur, sqlCSV1, sqlCSV2)
 
 class Pelican(MyThread.MyThread):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
@@ -537,7 +547,7 @@ class ASV(MyThread.MyThread):
                 + r"LAT ([+-]?\d+[.]\d*) " \
                 + r"LON ([+-]?\d+[.]\d*) " \
                 + r"HD1")
-        self.__reName = re.compile(r"RHIB_status_(GS\d_UBOX\d{2}).txt")
+        self.__reName = re.compile(r"RHIB_status_(GS\d_UBOX\d{2})_(\w+)_\d{8}_\d{6}.txt")
 
     @staticmethod
     def addArgs(parser:argparse.ArgumentParser) -> None:
@@ -593,8 +603,8 @@ class ASV(MyThread.MyThread):
                 if not matches:
                     logger.info("skipping %s", filename)
                     continue
-                logger.info("fn %s", filename, matches[1])
-                self.__processFile(filename, matches[1])
+                logger.info("fn %s %s %s", filename, matches[1], matches[2])
+                self.__processFile(filename, matches[2])
 
 parser = argparse.ArgumentParser()
 MyLogger.addArgs(parser)
