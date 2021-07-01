@@ -185,11 +185,11 @@ except:
 
 # Get ASV data
 ASV = {}
-try:
-    for filename in ASV_FILENAMES:
-        ASV[filename[-25:-4]] = sunrise.parse_ASV(os.path.join(ASV_DIRECTORY,filename),start,end)
-except:
-    raise
+# try:
+#     for filename in ASV_FILENAMES:
+#         ASV[filename[-25:-4]] = sunrise.parse_ASV(os.path.join(ASV_DIRECTORY,filename),start,end)
+# except:
+#     raise
 # ASV surface plots
 try:
     if plots["ASV_surface"]:
