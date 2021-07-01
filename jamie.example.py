@@ -10,7 +10,8 @@ import sqlite3
 import pandas as pd
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--db", type=str, required=True, help="SQLite3 database to access")
+parser.add_argument("--db", type=str, default="/home/pat/Processed/ASV/asv.db", 
+        help="SQLite3 database to access")
 parser.add_argument("--etime", type=str, 
         default=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
         help="End of time interval")
