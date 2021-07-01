@@ -177,7 +177,7 @@ parser = argparse.ArgumentParser(description="SUNRISE Cruise syncing of Pelican 
 MyLogger.addArgs(parser)
 MIDAS.addArgs(parser)
 # Since we don't get inotify events for MIDAS_*.elg periodically check it
-parser.add_argument("--delay", type=float, default=60, help="Seconds between directoy scans")
+parser.add_argument("--delay", type=float, default=300, help="Seconds between directoy scans")
 args = parser.parse_args()
 
 logger = MyLogger.mkLogger(args)
