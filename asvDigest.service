@@ -1,0 +1,31 @@
+#
+# Extract data from ASV files into an SQLite3 database and a set of CSV files
+#
+# sudo cp asvDigest.service /etc/systemd/system/asvDigest.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable asvDigest.service
+# sudo systemctl start asvDigest.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Extract ASV information into Processed/ASV
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+ExecStart=/home/pat/SUNRISE/asvDigest.py \
+        --logfile=logs/asvDigest.log \
+	--dir=/home/pat/Dropbox/WaltonSmith/ASV \
+	--db=/home/pat/Processed/ASV/asv.db \
+	--csv=/home/pat/Processed/ASV
+        
+RestartSec=300
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
