@@ -48,7 +48,7 @@ class Reader(MyThread.MyThread):
         # so take a guess at 20 * NEMA+3
         grp.add_argument("--size", type=int, default=20*85, help="Datagram size")
 
-    def put(self, t, ipAddr, port, data) -> None:
+    def put(self, t:float, ipAddr:str, port:int, data:bytes) -> None:
         ''' send this information to the queues I know about, for replaying and real '''
         msg = (t, ipAddr, port, data)
         for q in self.__queues: q.put(msg)
@@ -94,7 +94,7 @@ class Replay(MyThread.MyThread):
             cur.execute("SELECT t,addr,port,msg FROM raw ORDER by t;")
             for row in cur:
                 (t, addr, port, msg) = row
-                rdr.put(t, addr, port, msg)
+                rdr.put(t, addr, port, bytes(msg, "UTF-8") if isinstance(msg, str) else msg)
                 cnt += 1
         logger.info("Sent %s messages to the Reader's queue", cnt)
 
@@ -166,18 +166,23 @@ class Decrypter(MyThread.MyThread):
         # field[5] -> data payload
         # field[6] -> number of fill bits
         matches = re.match(b"\s*!(AIVD[MO],\d+,\d+,\d?,\w?,.*,[0-5])[*]([0-9A-Za-z]{2})\s*", msg)
-        if not matches: return None
+        if not matches:
+            if not re.match(b"[$](PFEC|AI(ALR|ABK|TXT)),", msg): # Ignore these messages
+                self.logger.warning("Unrecognized senentce %s", msg)
+            return None
 
         chksum = 0
         for c in matches[1]: chksum ^= c
 
         sentChkSum = int(str(matches[2], "UTF-8"), 16)
         if chksum != sentChkSum:
-            print("Bad checksum,", chksum, sentChkSum)
+            self.logger.warning("Bad checksum, %s != %s, %s", chksum, sentChkSum, msg)
             return None
 
         fields = str(matches[1], "UTF-8").split(",")
-        if len(fields) != 7: return None
+        if len(fields) != 7: 
+            self.logger.warning("There weren't 7 fields in %s", msg)
+            return None
         fields[1] = int(fields[1]) # Number of fragments
         fields[2] = int(fields[2]) # Fragment number
         fields[6] = int(fields[6]) # Fill bits
@@ -234,7 +239,6 @@ class Decrypter(MyThread.MyThread):
             for sentence in data.strip().split(b"\n"):
                 fields = self.__denema(sentence)
                 if fields is None: # Not a valid sentence, so skip it
-                    logger.info("Bad NEMA %s %s %s %s", t, addr, port, sentence)
                     continue
                 if fields[1] != 1: # Need to accumulate
                     fields = self.__accumulate(t, fields)
@@ -242,6 +246,8 @@ class Decrypter(MyThread.MyThread):
 
                 info = ais.decode(fields[5], fields[6])
                 if info is None: continue
+                if "x" in info and abs(info["x"]) > 180: continue # Skip longitudes that are >180
+                if "y" in info and abs(info["y"]) > 90: continue # Skip latitudes that are >90
                 # Don't deal with timestamp, utc_min, and utc_hour, just use the time received
                 t0 = datetime.datetime.fromtimestamp(round(t), tz=datetime.timezone.utc)
                 info["t"] = t0.strftime("%Y-%m-%d %H:%M:%S")

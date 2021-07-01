@@ -1,0 +1,31 @@
+#
+# Copy the Pelican's growing MIDAS file in an efficient fashion to dropbox
+#
+# sudo cp PelicanMidasCopy.Pelican.service /etc/systemd/system/PelicanMidasCopy.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable PelicanMidasCopy.service
+# sudo systemctl start PelicanMidasCopy.service
+#
+# Jun-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Sync Pelican's MIDAS file to Dropbox
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+ExecStart=/home/pat/SUNRISE/PelicanMidasCopy.py \
+        --logfile=/home/pat/logs/PelicanMidasCopy.log \
+	--db=/home/pat/Processed/MIDAS/midas.db \
+	--src=/mnt/GOM/DATALOG40/EventData/MIDAS \
+	--csv=/home/pat/Dropbox/Pelican/MIDAS/MIDAS_001.elg
+        
+RestartSec=300
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

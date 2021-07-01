@@ -96,7 +96,7 @@ class Writer(MyThread.MyThread):
                 help="CSV filename")
 
     def put(self, records) -> None:
-        self.__queue.put(records)
+        self.__queue.put(("records", records))
 
     def __mkTable(self) -> None:
         sql = "CREATE TABLE IF NOT EXISTS fixes (\n"
@@ -111,8 +111,8 @@ class Writer(MyThread.MyThread):
 
         sqlPos = "CREATE TABLE IF NOT EXISTS filepos (\n"
         sqlPos+= "  fn TEXT PRIMARY KEY,\n"
-        sqlPos+= "  pos INTEGER"
-        sqlPos+= ");"
+        sqlPos+= "  pos INTEGER\n"
+        sqlPos+= ");\n"
 
         logger.info("Creating table in %s\n%s", self.args.db, sql)
         with sqlite3.connect(self.args.db) as db:
@@ -123,9 +123,8 @@ class Writer(MyThread.MyThread):
             cur.execute(sqlPos)
             cur.execute("COMMIT;")
 
-    def __writeRecords(self, db:sqlite3.Connection, sqlSelect:str, sqlq:str):
+    def __writeRecords(self, db:sqlite3.Connection, cur0:sqlite3.Cursor, sqlSelect:str, sqlq:str):
         fn = self.args.csv
-        cur0 = db.cursor()
         cur1 = None
         fp = None
         cur0.execute(sqlSelect)
@@ -137,24 +136,32 @@ class Writer(MyThread.MyThread):
             fp.write(",".join(map(str, row)) + "\n")
             cur1.execute(sqlq, row[0:3])
         if fp is not None:
-            cur0.execute("COMMIT;")
+            cur1.execute("COMMIT;")
             fp.close()
 
-    def getPos(self, fn:str) -> int:
-        with sqlite3.connect("file:" + self.args.db + "?mode=ro", uri=True) as db:
-            cur = db.cursor()
-            cur.execute("SELECT pos FROM filepos WHERE fn=?;", (fn,))
-            for row in cur:
-                return row[0]
-            return 0
-
-    def setPos(self, fn:str, pos:int) -> None:
+    def __writePos(self, fn:str, pos:int) -> None:
         try:
             with sqlite3.connect(self.args.db) as db:
                 cur = db.cursor()
-                cur.execute("INSERT OR REPLACE INTO filepos VALUES(?,?);", (fn, pos)) 
+                cur.execute("BEGIN;")
+                cur.execute("INSERT OR REPLACE INTO filepos VALUES(?,?);", (fn, pos))
+                cur.execute("COMMIT;")
         except:
-            pass
+            self.logger.exception("Unable to save positon, %s, for %s", pos, fn)
+
+    def getPos(self, fn:str) -> int:
+        try:
+            with sqlite3.connect("file:" + self.args.db + "?mode=ro", uri=True) as db:
+                cur = db.cursor()
+                cur.execute("SELECT pos FROM filepos WHERE fn=?;", (fn,))
+                for row in cur: return row[0]
+        except:
+            self.logger.exception("Error getting position for %s", fn)
+        return 0
+
+
+    def setPos(self, fn:str, pos:int) -> None:
+        self.__queue.put(("pos", (fn, pos)))
 
     def runIt(self) -> None:
         logger = self.logger
@@ -174,11 +181,14 @@ class Writer(MyThread.MyThread):
                 fp.write(columns + "\n")
             with sqlite3.connect(args.db) as db:
                 cur = db.cursor()
-                self.__writeRecords(db, sqlCSV0, sqlCSV2)
+                self.__writeRecords(db, cur, sqlCSV0, sqlCSV2)
 
         while True:
-            rows = q.get()
+            (action, rows) = q.get()
             q.task_done()
+            if action == "pos":
+                self.__writePos(rows[0], rows[1])
+                continue
             with sqlite3.connect(args.db) as db:
                 cur = db.cursor()
                 cur.execute("BEGIN;")
@@ -189,7 +199,7 @@ class Writer(MyThread.MyThread):
                     items.append(round(row[4], 6)) # Truncate longitude to 6 digits
                     cur.execute(sqlFiles, items)
                 cur.execute("COMMIT;")
-                self.__writeRecords(db, sqlCSV1, sqlCSV2)
+                self.__writeRecords(db, cur, sqlCSV1, sqlCSV2)
 
 class Pelican(MyThread.MyThread):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
@@ -458,6 +468,73 @@ class WireWalker(MyThread.MyThread):
                     continue
                 self.__processFile(filename)
 
+class AIS(MyThread.MyThread):
+    def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
+            q:Writer, inotify:iNotify) -> None:
+        MyThread.MyThread.__init__(self, "AIS", args, logger)
+        self.__queue = q
+        self.__iNotify = inotify
+        self.__regexp = re.compile(r"^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})," \
+                + r"(\d+)," \
+                + r"([+-]?\d+[.]\d+)," \
+                + r"([+-]?\d+[.]\d+)")
+
+    @staticmethod
+    def addArgs(parser:argparse.ArgumentParser) -> None:
+        grp = parser.add_argument_group()
+        grp.add_argument("--ais", type=str, action='append',
+                help="Where the AIS files are")
+
+    def __processFile(self, fn:str) -> None:
+        pos = max(0, self.__queue.getPos(fn) - 200) # Position to start reading from
+        regexp = self.__regexp
+        try:
+            with open(fn, "r") as fp:
+                fp.seek(pos) # Start reading from this position
+                records = []
+                for line in fp:
+                    matches = regexp.match(line)
+                    if not matches: continue
+                    t = datetime.datetime(
+                            int(matches[1]), int(matches[2]), int(matches[3]),
+                            int(matches[4]), int(matches[5]), int(matches[6]))
+                    name = matches[7]
+                    lon = float(matches[8])
+                    lat = float(matches[9])
+                    logger.info("name %s t %s lat %s lon %s", name, t, lat, lon)
+                    records.append(("AIS", name, t, lat, lon))
+                self.__queue.setPos(fn, fp.tell())
+                if records:
+                    logger.info("Put %s records", len(records))
+                    self.__queue.put(records)
+        except:
+            self.logger.exception("Error processing %s", fn)
+
+    def runIt(self) -> None:
+        logger = self.logger
+        qWatch = queue.Queue()
+        if self.args.ais is None:
+            self.args.ais = [
+                    "/home/pat/Dropbox/Pelican/AIS",
+                    "/home/pat/Dropbox/WaltonSmith/AIS",
+                    ];
+
+        logger.info("Starting %s", self.args.ais)
+        for name in args.ais:
+            self.__iNotify.addWatch(name, qWatch)
+            fillQueue(qWatch, name, logger)
+
+        while True:
+            (t, files) = qWatch.get()
+            qWatch.task_done()
+            for filename in files:
+                fn = os.path.basename(filename)
+                if fn != "ais.csv":
+                    logger.info("skipping %s", filename)
+                    continue
+                logger.info("fn %s", filename)
+                self.__processFile(filename)
+
 class ASV(MyThread.MyThread):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
             q:Writer, inotify:iNotify) -> None:
@@ -470,7 +547,7 @@ class ASV(MyThread.MyThread):
                 + r"LAT ([+-]?\d+[.]\d*) " \
                 + r"LON ([+-]?\d+[.]\d*) " \
                 + r"HD1")
-        self.__reName = re.compile(r"RHIB_status_(GS\d_UBOX\d{2}).txt")
+        self.__reName = re.compile(r"RHIB_status_(GS\d_UBOX\d{2})_(\w+)_\d{8}_\d{6}.txt")
 
     @staticmethod
     def addArgs(parser:argparse.ArgumentParser) -> None:
@@ -526,8 +603,8 @@ class ASV(MyThread.MyThread):
                 if not matches:
                     logger.info("skipping %s", filename)
                     continue
-                logger.info("fn %s", filename, matches[1])
-                self.__processFile(filename, matches[1])
+                logger.info("fn %s %s %s", filename, matches[1], matches[2])
+                self.__processFile(filename, matches[2])
 
 parser = argparse.ArgumentParser()
 MyLogger.addArgs(parser)
@@ -536,6 +613,7 @@ Pelican.addArgs(parser)
 WaltonSmith.addArgs(parser)
 Drifter.addArgs(parser)
 WireWalker.addArgs(parser)
+AIS.addArgs(parser)
 ASV.addArgs(parser)
 args = parser.parse_args()
 
@@ -549,6 +627,7 @@ try:
     threads.append(WaltonSmith(args, logger, threads[0], threads[1]))
     threads.append(Drifter(args, logger, threads[0], threads[1]))
     threads.append(WireWalker(args, logger, threads[0], threads[1]))
+    threads.append(AIS(args, logger, threads[0], threads[1]))
     threads.append(ASV(args, logger, threads[0], threads[1]))
 
     for thrd in threads:
