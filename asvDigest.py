@@ -107,7 +107,7 @@ class Regurgitate(MyThread.MyThread):
     def __makeDir(self, dirname:str) -> None:
         if dirname and not os.path.isdir(dirname):
             self.logger.info("Making %s", dirname)
-            os.makedirs(dirname, mode=0o775, exists_ok=True)
+            os.makedirs(dirname, mode=0o775, exist_ok=True)
 
     def __fillQueue(self, q:queue.Queue, root:str) -> None:
         files = []
@@ -166,60 +166,56 @@ class Regurgitate(MyThread.MyThread):
             cur.execute(sqlPos)
             cur.execute("COMMIT;")
 
-    def __getPos(self, cur:sqlite3.Cursor, fn:str) -> int:
-        cur.execute("SELECT pos FROM filePos WHERE fn=?;", (fn,))
-        for row in cur:
-            pos = row[0]
-            try:
-                sz = os.stat(fn).st_size
-                if pos == sz: return None
+    def __getPos(self, fn:str) -> int:
+        try:
+            sz = os.stat(fn).st_size
+        except:
+            return None # File does not exist
+
+        with sqlite3.connect(args.db) as db:
+            cur = db.cursor()
+            cur.execute("SELECT pos FROM filePos WHERE fn=?;", (fn,))
+            for row in cur:
+                pos = row[0]
+                if pos == sz: return None # Same place, so do nothing
                 return max(0, pos - 200)
-            except:
-                return 0
         return 0
 
-    def __navinfo(self, cur:sqlite3.Cursor, boat:str, t:datetime.datetime, body:str) -> bool:
+    def __navinfo(self, boat:str, t:datetime.datetime, body:str) -> tuple:
         matches = self.__reNAV.match(body)
-        if not matches: return False
+        if not matches: return None
         lat = float(matches[1])
         lon = float(matches[2])
-        cur.execute("INSERT OR IGNORE INTO nav VALUES(?,?,?,?,0);", (boat, t, lat, lon))
-        return True
+        return (boat, t, lat, lon)
 
-    def __keelctd(self, cur:sqlite3.Cursor, boat:str, t:datetime.datetime, body:str) -> bool:
+    def __keelctd(self, boat:str, t:datetime.datetime, body:str) -> tuple:
         matches = self.__reCTD.match(body)
-        if not matches: return False
+        if not matches: return None
         temp = float(matches[1])
         sal = float(matches[2])
-        if temp != 0:
-            cur.execute("INSERT OR IGNORE INTO ctd VALUES(?,?,?,?,0);", (boat, t, temp, sal))
-            return True
-        return False
+        if temp == 0: return None
+        return (boat, t, temp, sal)
 
-    def __adcp(self, cur:sqlite3.Cursor, boat:str, t:datetime.datetime, body:str) -> bool:
+    def __adcp(self, boat:str, t:datetime.datetime, body:str) -> tuple:
         matches = self.__reADCP.match(body)
-        if not matches: return False
+        if not matches: return None
         u = float(matches[1])
         v = float(matches[2])
         w = float(matches[3])
-        if u != 0 or v != 0 or w != 0:
-            cur.execute("INSERT OR IGNORE INTO adcp VALUES(?,?,?,?,?,0);", (boat, t, u, v, w))
-            return True
-        return False
+        if u == 0 and v == 0 and w == 0: return None
+        return (boat, t, u, v, w)
 
-    def __processFile(self, cur:sqlite3.Cursor, fn:str, boat:str) -> bool:
+    def __processFile(self, fn:str, boat:str) -> bool:
         logger = self.logger
         args = self.args
         reLine = self.__reLine
 
-        pos = self.__getPos(cur, fn)
+        pos = self.__getPos(fn)
         if pos is None: return # Nothing new to look at here
 
-        counts = {}
-        qReturn = False
+        records = {"nav": [], "ctd": [], "adcp": []}
         with open(fn, "r") as fp:
             fp.seek(pos)
-            cur.execute("BEGIN;")
             for line in fp:
                 matches = reLine.match(line)
                 if not matches: continue # Not a match
@@ -228,70 +224,85 @@ class Regurgitate(MyThread.MyThread):
                         int(matches[2]), int(matches[3]), int(matches[4]),
                         int(matches[5]), int(matches[6]), int(matches[7]))
                 body = matches[8]
-                if action not in counts: counts[action] = 0
-                counts[action] += 1
                 if action == "navinfo":
-                    qReturn |= self.__navinfo(cur, boat, t, body)
+                    row = self.__navinfo(boat, t, body)
+                    if row is not None: records["nav"].append(row)
                 elif action == "keelctd":
-                    qReturn |= self.__keelctd(cur, boat, t, body)
+                    row = self.__keelctd(boat, t, body)
+                    if row is not None: records["ctd"].append(row)
                 elif action == "adcp":
-                    qReturn |= self.__adcp(cur, boat, t, body)
+                    row = self.__adcp(boat, t, body)
+                    if row is not None: records["adcp"].append(row)
                 else:
                     logger.warning("Unsupported action %s\n%s", action, line)
-            cur.execute("INSERT OR REPLACE INTO filePos VALUES(?,?);", (fn, fp.tell()))
+            with sqlite3.connect(self.args.db) as db:
+                cur = db.cursor()
+                cur.execute("BEGIN;")
+                cur.execute("INSERT OR REPLACE INTO filePos VALUES(?,?);", (fn, fp.tell()))
+                cur.execute("COMMIT;")
+
+        cnts = {
+                "nav": len(records["nav"]), 
+                "ctd": len(records["ctd"]), 
+                "adcp": len(records["adcp"]),
+                }
+
+        if not cnts["nav"] and not cnts["ctd"] and not cnts["adcp"]: return False
+
+        with sqlite3.connect(self.args.db) as db:
+            cur = db.cursor()
+            cur.execute("BEGIN;")
+            for row in records["nav"]:
+                cur.execute("INSERT OR IGNORE INTO nav VALUES (?,?,?,?,0);", row)
+            for row in records["ctd"]:
+                cur.execute("INSERT OR IGNORE INTO ctd VALUES (?,?,?,?,0);", row)
+            for row in records["adcp"]:
+                cur.execute("INSERT OR IGNORE INTO ctd VALUES (?,?,?,?,?,0);", row)
             cur.execute("COMMIT;")
         logger.info("Processed %s", fn)
-        logger.info("Starting at %s boat %s counts %s", pos, boat, counts)
-        return qReturn
+        logger.info("Starting at %s boat %s counts %s", pos, boat, cnts)
+        return True
 
-    def __processCSV(self, db:sqlite3.Connection, cur:sqlite3.Cursor, boat:str) -> None:
+    def __processCSVTable(self, boat:str, tbl:str, columns:tuple[str], rnd:int) -> None:
         logger = self.logger
-        prefix = os.path.join(self.args.csv, boat)
-        tables = {
-                "nav":  {"columns": ["t", "latitude", "longitude"], "round": 6},
-                "ctd":  {"columns": ["t", "temperature", "salinity"]},
-                "adcp": {"columns": ["t", "u", "v", "w"]},
-                }
-        logger.info("CSV %s", boat)
-        cur1 = None
-        for tbl in tables: # Walk through tables looking for new entries
-            columns = ",".join(tables[tbl]["columns"])
-            fn = prefix + "." + tbl + ".csv"
-            sql = "SELECT " + columns + " FROM " + tbl
-            sqlCSV = "UPDATE " + tbl + " SET qCSV=1 WHERE boat=? AND t=?;"
-            fp = None
-            if not os.path.exists(fn):
-                fp = open(fn, "w")
-                fp.write(columns + "\n")
-            else:
-                sql += " WHERE qCSV=0"
-            sql += " ORDER BY t desc;"
+        fn = os.path.join(self.args.csv, boat + "." + tbl + ".csv")
+        qHdr = not os.path.exists(fn)
+        columns = ",".join(columns)
+        sql = "SELECT " + columns + " FROM " + tbl
+        if os.path.exists(fn): sql += " WHERE qCSV=1"
+        sql += " ORDER BY t;"
 
-            cur.execute(sql) # Fetch rows to output
-            records = []
-            rnd = tables[tbl]["round"] if "round" in tables[tbl] else None
-            cnt = 0
-            for row in cur:
-                if fp is None: fp = open(fn, "a")
+        records = []
+        with sqlite3.connect(args.db) as db:
+            cur = db.cursor()
+            cur.execute(sql)
+            for row in cur: records.append(row)
+
+        if not records: return
+
+        with open(fn, "w" if qHdr else "a") as fp:
+            if qHdr:
+                fp.write(columns + "\n")
+            for row in records: 
                 if rnd is not None:
                     a = [row[0]]
-                    for i in range(1, len(row)):
-                        a.append(round(row[i], rnd))
+                    for i in range(1, len(row)): a.append(round(row[i], rnd))
                     row = a
                 fp.write(",".join(map(str, row)) + "\n")
-                if cur1 is None:
-                    cur1 = db.cursor()
-                    cur1.execute("BEGIN;")
-                cur1.execute(sqlCSV, (boat, row[0]))
-                cnt += 1
 
-            if fp is not None: 
-                fp.close()
-                fp = None
-            if cnt > 0: 
-                logger.info("Wrote tbl %s -> %s records to %s", tbl, cnt, fn)
-        if cur1 is not None:
-            cur1.execute("COMMIT;")
+        sql = "UPDATE " + tbl + " SET qCSV=1 WHERE boat=? AND t=?;"
+        with sqlite3.connect(args.db) as db:
+            cur = db.cursor()
+            cur.execute("BEGIN;")
+            for row in records: cur.execute(sql, (boat, row[0]))
+            cur.execute("COMMIT;")
+
+        self.logger.info("Wrote %s records to %s for %s", len(records), tbl, boat)
+
+    def __processCSV(self, boat:str) -> None:
+        self.__processCSVTable(boat, "nav", ("t", "latitude", "longitude"), 6)
+        self.__processCSVTable(boat, "ctd", ("t", "temperature", "salinity"), None)
+        self.__processCSVTable(boat, "adcp", ("t", "u", "v", "w"), None)
 
     def runIt(self) -> None: # Called on thread start
         logger = self.logger
@@ -317,10 +328,8 @@ class Regurgitate(MyThread.MyThread):
                     logger.info("Skipping %s", filename)
                     continue
                 boat = matches[1]
-                with sqlite3.connect(args.db) as db:
-                    cur = db.cursor()
-                    if self.__processFile(cur, filename, boat):
-                        self.__processCSV(db, cur, boat)
+                if self.__processFile(filename, boat):
+                    self.__processCSV(boat)
 
 parser = argparse.ArgumentParser()
 MyLogger.addArgs(parser)
