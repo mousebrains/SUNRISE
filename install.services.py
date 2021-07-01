@@ -204,7 +204,7 @@ else:
                 "with --waltonsmith, --pelican or --pi4")
 
 if args.shore:
-    shoreInstall()
+    shoreInstall(args)
 else:
     name = "WaltonSmith" if args.waltonsmith else "Pelican" if args.pelican else "pi4"
     shipInstall(name, args)
