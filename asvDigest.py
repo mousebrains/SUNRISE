@@ -21,13 +21,6 @@ import datetime
 import time
 import re
 
-def fillQueue(q:queue.Queue, root:str, logger:logging.Logger) -> None:
-    files = []
-    for fn in glob.glob(os.path.join(root, "*")):
-        logger.info("fn %s", fn)
-        files.append(fn)
-    if files: q.put((time.time(), files))
-
 class iNotify(MyThread.MyThread):
     # Modified version of MyInotify.py
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger):
@@ -110,7 +103,18 @@ class Regurgitate(MyThread.MyThread):
         parser.add_argument("--db", type=str, required=True, help="SQLite3 database name")
         parser.add_argument("--csv", type=str, required=True,
                 help="Directory to write CSV files to")
-        parser.add_argument("--testing", action="store_true", help="Start at beginning file")
+
+    def __makeDir(self, dirname:str) -> None:
+        if dirname and not os.path.isdir(dirname):
+            self.logger.info("Making %s", dirname)
+            os.makedirs(dirname, mode=0o775, exists_ok=True)
+
+    def __fillQueue(self, q:queue.Queue, root:str) -> None:
+        files = []
+        for fn in glob.glob(os.path.join(root, "*")):
+            files.append(fn)
+        if files:
+            q.put((time.time(), files))
 
     def __makeTable(self):
         logger = self.logger
@@ -152,6 +156,7 @@ class Regurgitate(MyThread.MyThread):
         with sqlite3.connect(args.db) as db:
             cur = db.cursor()
             cur.execute("BEGIN;")
+            cur.execute("PRAGMA journal_mode=wal2;")
             cur.execute(sqlNav)
             cur.execute("CREATE INDEX IF NOT EXISTS nav_qcsv ON nav (qCSV);")
             cur.execute(sqlADCP)
@@ -164,40 +169,54 @@ class Regurgitate(MyThread.MyThread):
     def __getPos(self, cur:sqlite3.Cursor, fn:str) -> int:
         cur.execute("SELECT pos FROM filePos WHERE fn=?;", (fn,))
         for row in cur:
-            return max(0, row[0] - 200)
+            pos = row[0]
+            try:
+                sz = os.stat(fn).st_size
+                if pos == sz: return None
+                return max(0, pos - 200)
+            except:
+                return 0
         return 0
 
-    def __navinfo(self, cur:sqlite3.Cursor, boat:str, t:datetime.datetime, body:str) -> None:
+    def __navinfo(self, cur:sqlite3.Cursor, boat:str, t:datetime.datetime, body:str) -> bool:
         matches = self.__reNAV.match(body)
-        if not matches: return
+        if not matches: return False
         lat = float(matches[1])
         lon = float(matches[2])
         cur.execute("INSERT OR IGNORE INTO nav VALUES(?,?,?,?,0);", (boat, t, lat, lon))
+        return True
 
-    def __keelctd(self, cur:sqlite3.Cursor, boat:str, t:datetime.datetime, body:str) -> None:
+    def __keelctd(self, cur:sqlite3.Cursor, boat:str, t:datetime.datetime, body:str) -> bool:
         matches = self.__reCTD.match(body)
-        if not matches: return
+        if not matches: return False
         temp = float(matches[1])
         sal = float(matches[2])
         if temp != 0:
             cur.execute("INSERT OR IGNORE INTO ctd VALUES(?,?,?,?,0);", (boat, t, temp, sal))
+            return True
+        return False
 
-    def __adcp(self, cur:sqlite3.Cursor, boat:str, t:datetime.datetime, body:str) -> None:
+    def __adcp(self, cur:sqlite3.Cursor, boat:str, t:datetime.datetime, body:str) -> bool:
         matches = self.__reADCP.match(body)
-        if not matches: return
+        if not matches: return False
         u = float(matches[1])
         v = float(matches[2])
         w = float(matches[3])
         if u != 0 or v != 0 or w != 0:
             cur.execute("INSERT OR IGNORE INTO adcp VALUES(?,?,?,?,?,0);", (boat, t, u, v, w))
+            return True
+        return False
 
-    def __processFile(self, cur:sqlite3.Cursor, fn:str, boat:str) -> None:
+    def __processFile(self, cur:sqlite3.Cursor, fn:str, boat:str) -> bool:
         logger = self.logger
         args = self.args
         reLine = self.__reLine
 
-        pos = self.__getPos(cur, fn) if not args.testing else 0
+        pos = self.__getPos(cur, fn)
+        if pos is None: return # Nothing new to look at here
+
         counts = {}
+        qReturn = False
         with open(fn, "r") as fp:
             fp.seek(pos)
             cur.execute("BEGIN;")
@@ -212,17 +231,18 @@ class Regurgitate(MyThread.MyThread):
                 if action not in counts: counts[action] = 0
                 counts[action] += 1
                 if action == "navinfo":
-                    self.__navinfo(cur, boat, t, body)
+                    qReturn |= self.__navinfo(cur, boat, t, body)
                 elif action == "keelctd":
-                    self.__keelctd(cur, boat, t, body)
+                    qReturn |= self.__keelctd(cur, boat, t, body)
                 elif action == "adcp":
-                    self.__adcp(cur, boat, t, body)
+                    qReturn |= self.__adcp(cur, boat, t, body)
                 else:
                     logger.warning("Unsupported action %s\n%s", action, line)
             cur.execute("INSERT OR REPLACE INTO filePos VALUES(?,?);", (fn, fp.tell()))
             cur.execute("COMMIT;")
         logger.info("Processed %s", fn)
         logger.info("Starting at %s boat %s counts %s", pos, boat, counts)
+        return qReturn
 
     def __processCSV(self, db:sqlite3.Connection, cur:sqlite3.Cursor, boat:str) -> None:
         logger = self.logger
@@ -232,6 +252,8 @@ class Regurgitate(MyThread.MyThread):
                 "ctd":  {"columns": ["t", "temperature", "salinity"]},
                 "adcp": {"columns": ["t", "u", "v", "w"]},
                 }
+        logger.info("CSV %s", boat)
+        cur1 = None
         for tbl in tables: # Walk through tables looking for new entries
             columns = ",".join(tables[tbl]["columns"])
             fn = prefix + "." + tbl + ".csv"
@@ -244,12 +266,12 @@ class Regurgitate(MyThread.MyThread):
             else:
                 sql += " WHERE qCSV=0"
             sql += " ORDER BY t desc;"
-            cur.execute(sql)
-            cur1 = None
-            cnt = 0
+
+            cur.execute(sql) # Fetch rows to output
+            records = []
             rnd = tables[tbl]["round"] if "round" in tables[tbl] else None
+            cnt = 0
             for row in cur:
-                cnt += 1
                 if fp is None: fp = open(fn, "a")
                 if rnd is not None:
                     a = [row[0]]
@@ -257,33 +279,34 @@ class Regurgitate(MyThread.MyThread):
                         a.append(round(row[i], rnd))
                     row = a
                 fp.write(",".join(map(str, row)) + "\n")
-                if cur1 is None: 
+                if cur1 is None:
                     cur1 = db.cursor()
                     cur1.execute("BEGIN;")
                 cur1.execute(sqlCSV, (boat, row[0]))
+                cnt += 1
 
-            if cur1 is not None: cur1.execute("COMMIT;")
-            if fp is not None: fp.close()
-            if cnt > 0: logger.info("Wrote %s records to %s", cnt, fn)
+            if fp is not None: 
+                fp.close()
+                fp = None
+            if cnt > 0: 
+                logger.info("Wrote tbl %s -> %s records to %s", tbl, cnt, fn)
+        if cur1 is not None:
+            cur1.execute("COMMIT;")
 
     def runIt(self) -> None: # Called on thread start
         logger = self.logger
         args = self.args
         qWatch = queue.Queue()
-        logger.info("Starting")
-        logger.info("ASV source directory %s", args.dir)
-        logger.info("DB %s", args.db)
-        logger.info("CSV directory %s", args.csv)
+        logger.info("Starting %s %s %s", args.dir, args.db, args.csv)
 
-        if not os.path.isdir(args.dir): os.makedirs(args.dir)
-        if not os.path.isdir(args.csv): os.makedirs(args.csv)
-        dbDir = os.path.dirname(args.db)
-        if dbDir and not os.path.isdir(dbDir): os.makedirs(dbDir)
+        self.__makeDir(args.dir)
+        self.__makeDir(args.csv)
+        self.__makeDir(os.path.dirname(args.db))
 
         self.__makeTable()
 
         self.__inotify.addWatch(args.dir, qWatch)
-        fillQueue(qWatch, args.dir, logger)
+        self.__fillQueue(qWatch, args.dir)
         reFile = re.compile(r"^.*/RHIB_status_GS\d_UBOX\d{2}_(\w+)_\d{8}_\d{6}.txt$")
         while True:
             (t, files) = qWatch.get()
@@ -291,15 +314,13 @@ class Regurgitate(MyThread.MyThread):
             for filename in files:
                 matches = reFile.match(filename)
                 if not matches:
-                    if not args.testing:
-                        logger.info("Skipping %s", filename)
-                        continue
-                    matches = ("Gotme", "Gotme1")
+                    logger.info("Skipping %s", filename)
+                    continue
                 boat = matches[1]
                 with sqlite3.connect(args.db) as db:
                     cur = db.cursor()
-                    self.__processFile(cur, filename, boat)
-                    self.__processCSV(db, cur, boat)
+                    if self.__processFile(cur, filename, boat):
+                        self.__processCSV(db, cur, boat)
 
 parser = argparse.ArgumentParser()
 MyLogger.addArgs(parser)
