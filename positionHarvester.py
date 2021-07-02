@@ -514,11 +514,11 @@ try:
     threads = []
     threads.append(Writer(args, logger))
     threads.append(iNotify(args, logger))
-    # threads.append(Pelican(args, logger, threads[0], threads[1]))
-    # threads.append(WaltonSmith(args, logger, threads[0], threads[1]))
-    # threads.append(Drifter(args, logger, threads[0], threads[1]))
-    # threads.append(WireWalker(args, logger, threads[0], threads[1]))
-    # threads.append(AIS(args, logger, threads[0], threads[1]))
+    threads.append(Pelican(args, logger, threads[0], threads[1]))
+    threads.append(WaltonSmith(args, logger, threads[0], threads[1]))
+    threads.append(Drifter(args, logger, threads[0], threads[1]))
+    threads.append(WireWalker(args, logger, threads[0], threads[1]))
+    threads.append(AIS(args, logger, threads[0], threads[1]))
     threads.append(ASV(args, logger, threads[0], threads[1]))
 
     for thrd in threads:
