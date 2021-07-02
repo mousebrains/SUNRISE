@@ -351,7 +351,7 @@ def parse_PFT(filenames, start, end):
                     # Handle empty temperature field
                     temp = "nan"
                 try:
-                    Pelican_temperatures.append(float(temp))
+                    Pelican_temperatures.append(float(temp) - 0.69)
                 except:
                     print("Unexpected Temperature Value")
                     Pelican_temperatures.append(float("nan"))
@@ -362,7 +362,7 @@ def parse_PFT(filenames, start, end):
                     # Handle empty salinity field
                     sal = "nan"
                 try:
-                    Pelican_salinities.append(float(sal))
+                    Pelican_salinities.append(float(sal) + 0.48)
                 except:
                     print("Unexpected Salinity Value")
                     Pelican_salinities.append(float("nan"))
