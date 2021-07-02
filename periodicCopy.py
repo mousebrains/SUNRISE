@@ -36,7 +36,9 @@ def mkCopy(src:str, targets:list, tempdir:str, chunksize:int, logger:logging.Log
         ofps = []
         names = []
         for tgt in targets: 
-            ofps.append(NamedTemporaryFile(delete=False, dir=tempdir, mode="wb", ))
+            ofps.append(NamedTemporaryFile(delete=False, 
+                dir=os.path.dirname(tgt) if tempdir is None else tempdir, 
+                mode="wb", ))
             names.append(ofps[-1].name)
         logger.info("names %s", names)
 
@@ -50,16 +52,14 @@ def mkCopy(src:str, targets:list, tempdir:str, chunksize:int, logger:logging.Log
                 for ofp in ofps: ofp.write(data)
             logger.info("Read %s bytes from %s", sz, src)
 
-        fn = os.path.basename(src)
         for i in range(len(targets)):
             os.fchmod(ofps[i].fileno(), 0o664)
             ofps[i].close()
-            filename = os.path.join(targets[i], fn)
             try:
-                os.replace(names[i], filename)
-                logger.info("Copied %s to %s", names[i], filename)
+                os.replace(names[i], targets[i])
+                logger.info("Copied %s to %s", names[i], targets[i])
             except:
-                logger.exception("Error copying %s to %s", names[i], filename)
+                logger.exception("Error copying %s to %s", names[i], targets[i])
                 try:
                     os.remove(names[i]) # Get rid of temporary file
                 except:
@@ -119,14 +119,16 @@ args = parser.parse_args()
 logger = MyLogger.mkLogger(args)
 logger.info("args %s", args)
 
-if args.tempdir is None: args.tempdir = "/tmp"
-
 for tgt in args.tgt:
-    if not os.path.isdir(tgt):
-        logger.error("Directory %s is not a directory", tgt)
+    dirname = os.path.dirname(tgt)
+    if not os.path.isdir(dirname):
+        logger.error("%s is not a directory", dirname)
         sys.exit(1)
+    if os.path.isdir(tgt):
+        logger.error("%s is a directory", tgt)
+        sys.exit(2)
 
-if not os.path.isdir(args.tempdir):
+if (args.tempdir is not None) and (not os.path.isdir(args.tempdir)):
     try:
         os.makedirs(args.tempdir, mode=0o775, exist_ok=True)
         logger.info("Made %s", args.tempdir)
