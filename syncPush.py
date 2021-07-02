@@ -80,9 +80,9 @@ class Pusher(MyThread.MyThread):
                 logger.info("action %s t %s files %s", action, t, files)
                 if tMin is None:
                     tMin = t
-                logger.info("t %s %s dt %s", t, tMin, dt)
+                # logger.info("t %s %s dt %s", t, tMin, dt)
                 toSync.update(files) # Add in new files to sync
-                logger.info("toSync %s", toSync)
+                # logger.info("toSync %s", toSync)
             except queue.Empty:
                 (tMin, toSync) = self.syncIt(toSync)
 
