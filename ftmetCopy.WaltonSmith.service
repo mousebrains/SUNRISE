@@ -1,0 +1,33 @@
+#
+# Copy WaltonSmith's flow through and MET data to Dropbox
+#
+# sudo cp ftmetCopy.WaltonSmith.service /etc/systemd/system/ftmetCopy.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable ftmetCopy.service
+# sudo systemctl start ftmetCopy.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Anytime the mtime changes on WS21163_Hetland-Full\ Vdl.dat, copy it into Dropbox
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+	# --tempdir=/home/pat/rsync.temp \
+ExecStart=/home/pat/SUNRISE/periodicCopy.py \
+        --logfile=/home/pat/logs/ftmetCopy.log \
+	--dtShort=30 \
+	--dtLong=1800 \
+	--src='/mnt/GOM/VIDS/Lister/WS21163_Hetland-Full Vdl.dat' \
+	--tgt='/home/pat/Dropbox/WaltonSmith/FTMET/WS21163_Hetland-Full Vdl.dat'
+        
+RestartSec=600
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
