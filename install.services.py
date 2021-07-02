@@ -145,7 +145,7 @@ def shipInstall(name:str, args:argparse.ArgumentParser) -> None:
     special = {} # Ship specific services
     special["waltonsmith0"] = ["asvDigest"]
     special["waltonsmith1"] = special["waltonsmith0"]
-    special["Pelican"] = ["PelicanMidasCopy"]
+    special["Pelican"] = ["PelicanMidasCopy", "wh300Copy", "wh600Copy", "wh1200Copy"]
 
     services = ["syncPush", "syncPull"] # Named services
     if args.syncLocal: services.append("syncLocal") # Sync to my local backup server
