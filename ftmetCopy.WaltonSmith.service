@@ -17,9 +17,9 @@ Description=Anytime the mtime changes on WS21163_Hetland-Full\ Vdl.dat, copy it 
 User=pat
 WorkingDirectory=/home/pat
 #
-	# --tempdir=/home/pat/rsync.temp \
 ExecStart=/home/pat/SUNRISE/periodicCopy.py \
         --logfile=/home/pat/logs/ftmetCopy.log \
+	--tempdir=/home/pat/rsync.temp \
 	--dtShort=30 \
 	--dtLong=1800 \
 	--src='/mnt/GOM/VIDS/Lister/WS21163_Hetland-Full Vdl.dat' \
