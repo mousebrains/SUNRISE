@@ -55,6 +55,7 @@ def mkCopy(src:str, targets:list, tempdir:str, chunksize:int, logger:logging.Log
         for i in range(len(targets)):
             os.fchmod(ofps[i].fileno(), 0o664)
             ofps[i].close()
+            os.utime(names[i], times=(time.time(), mtime))
             try:
                 os.replace(names[i], targets[i])
                 logger.info("Copied %s to %s", names[i], targets[i])
