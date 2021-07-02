@@ -146,12 +146,14 @@ def shipInstall(name:str, args:argparse.ArgumentParser) -> None:
     special["waltonsmith0"] = ["asvDigest"]
     special["waltonsmith1"] = special["waltonsmith0"]
     special["Pelican"] = ["PelicanMidasCopy", "wh300Copy", "wh600Copy", "wh1200Copy"]
+    special["WaltonSmith"] = ["wh600Copy", "wh1200Copy"]
 
     services = ["syncPush", "syncPull"] # Named services
     if args.syncLocal: services.append("syncLocal") # Sync to my local backup server
     services.append("Trigger") # Trigger plot generation on section files being created
     services.append("positionHarvester") # Harvest GPS fixes and store them in Processed
     services.append("asvDigest") # Harvest ASV store it in Processed
+    services.append("AIS") # Harvest GPS fixes and store them in Processed
     services.append("AIS") # Harvest GPS fixes and store them in Processed
 
     if name in special: services.extend(special[name])
