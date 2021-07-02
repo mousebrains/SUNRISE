@@ -150,7 +150,7 @@ def shipInstall(name:str, args:argparse.ArgumentParser) -> None:
     services = ["syncPush", "syncPull"] # Named services
     if args.syncLocal: services.append("syncLocal") # Sync to my local backup server
     services.append("Trigger") # Trigger plot generation on section files being created
-    # services.append("positionHarvester") # Harvest GPS fixes and store them in Processed
+    services.append("positionHarvester") # Harvest GPS fixes and store them in Processed
     services.append("asvDigest") # Harvest ASV store it in Processed
     services.append("AIS") # Harvest GPS fixes and store them in Processed
 
