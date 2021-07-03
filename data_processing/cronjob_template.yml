@@ -31,18 +31,18 @@ plots:
 - met_summary: true
 limits:
 - sal_lims:
-    lower: false
-    lowerLim: "32"
+    lower: true
+    lowerLim: "31"
     upper: false
     upperLim: "36"
 - temp_lims:
-    lower: false
-    lowerLim: "26"
+    lower: true
+    lowerLim: "28"
     upper: false
     upperLim: "33"
 - density_lims:
-    lower: false
-    lowerLim: "-5"
+    lower: true
+    lowerLim: "20"
     upper: false
     upperLim: "20"
 description: "48 hour rolling file"
