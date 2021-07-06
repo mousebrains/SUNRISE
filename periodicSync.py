@@ -36,6 +36,8 @@ parser.add_argument("--root", type=str, default="/home/pat/Dropbox/CruiseReport"
         help="Root of tree to work on")
 parser.add_argument("--pushdir", type=str, required=True, help="My directory to push")
 parser.add_argument("--hostname", type=str, default="vm3", help="hostname to push/pul to/from")
+parser.add_argument("--bwPush", type=int, help="Bandwidth limit while pushing")
+parser.add_argument("--bwPull", type=int, help="Bandwidth limit while pulling")
 parser.add_argument("--dt", type=float, default=600, help="Delay between syncing")
 args = parser.parse_args()
 
@@ -51,9 +53,11 @@ if args.tempdir is not None: preCmd.extend(["--temp-dir", args.tempdir])
 pushCmd = list(preCmd)
 pullCmd = list(preCmd)
 
+if args.bwPush is not None: pushCmd.extend(["--bwlimit", str(args.bwPush)])
 pushCmd.append(os.path.join(args.root, args.pushdir))
 pushCmd.append(args.hostname + ":" + args.root)
 
+if args.bwPull is not None: pushCmd.extend(["--bwlimit", str(args.bwPull)])
 pullCmd.extend(["--exclude", args.pushdir])
 pullCmd.append(args.hostname + ":" + args.root)
 pullCmd.append(args.root)
