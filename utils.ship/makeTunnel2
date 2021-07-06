@@ -1,0 +1,14 @@
+#! /usr/bin/bash -x
+#
+# ssh to shore with a tunnel so someone on the shore server can login to the ship server.
+#
+# The shore person would do something like:
+#
+#  ssh -p 9999 localhost
+#
+# which will set up a ssh connection to port 9999 on the shore side server, 
+# which connects to port 22 on the ship server.
+#
+# June-2021, Pat Welch, pat@mousebrains.com
+
+exec ssh -R 9998:localhost:22 vm3
