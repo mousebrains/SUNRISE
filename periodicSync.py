@@ -60,7 +60,7 @@ pushCmd.append(args.hostname + ":" + args.root)
 if args.bwPull is not None: pushCmd.extend(["--bwlimit", str(args.bwPull)])
 pullCmd.extend(["--exclude", args.pushdir])
 pullCmd.append(args.hostname + ":" + args.root)
-pullCmd.append(args.root)
+pullCmd.append(os.path.dirname(args.root))
 
 while True:
     try:
