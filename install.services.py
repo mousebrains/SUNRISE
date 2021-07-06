@@ -154,7 +154,7 @@ def shipInstall(name:str, args:argparse.ArgumentParser) -> None:
     services.append("positionHarvester") # Harvest GPS fixes and store them in Processed
     services.append("asvDigest") # Harvest ASV store it in Processed
     services.append("AIS") # Harvest GPS fixes and store them in Processed
-    services.append("AIS") # Harvest GPS fixes and store them in Processed
+    services.append("periodicSync") # CruiseReport bidirectional syncing
 
     if name in special: services.extend(special[name])
 
