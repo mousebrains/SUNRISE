@@ -1,0 +1,33 @@
+#
+# Copy wh600 ADCP updates to Dropbox
+#
+# sudo cp wh600Copy.Pelican.service /etc/systemd/system/wh600Copy.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable wh600Copy.service
+# sudo systemctl start wh600Copy.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Anytime the mtime changes on wh600.nc, copy it into Dropbox
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+ExecStart=/home/pat/SUNRISE/periodicCopy.py \
+        --logfile=/home/pat/logs/wh600Copy.log \
+	--tempdir=/home/pat/rsync.temp \
+	--dtShort=30 \
+	--dtLong=180 \
+	--src=/mnt/UHdas/PE21_24_Shearman_ADCP_part3/proc/wh600/contour/wh600.nc \
+	--tgt=/home/pat/Dropbox/Pelican/ADCP/wh600_part3.nc
+        
+RestartSec=300
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

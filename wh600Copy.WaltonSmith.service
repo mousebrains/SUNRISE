@@ -1,0 +1,34 @@
+#
+# Copy wh600 ADCP updates to Dropbox
+#
+# sudo cp wh600Copy.WaltonSmith.service /etc/systemd/system/wh600Copy.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable wh600Copy.service
+# sudo systemctl start wh600Copy.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Anytime the mtime changes on wh600.nc, copy it into Dropbox
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+	# --tempdir=/home/pat/rsync.temp \
+ExecStart=/home/pat/SUNRISE/periodicCopy.py \
+        --logfile=/home/pat/logs/wh600Copy.log \
+	--dtShort=30 \
+	--dtLong=3600 \
+	--src=/mnt/UHdas/WS21163_Hetland_SCI_part2/proc/wh600/contour/wh600.nc \
+	--tgt=/home/pat/Dropbox/WaltonSmith/ADCP/wh600.nc \
+	--tgt=/mnt/GOM/data/adcp/wh600.nc
+        
+RestartSec=300
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

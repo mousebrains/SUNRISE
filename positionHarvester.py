@@ -19,13 +19,8 @@ import inotify_simple as ins
 import re
 import glob
 import os
-
-def fillQueue(q:queue.Queue, root:str, logger:logging.Logger) -> None:
-    files = []
-    for fn in glob.glob(os.path.join(root, "*")):
-        logger.info("fn %s", fn)
-        files.append(fn)
-    if files: q.put((time.time(), files))
+import enum
+from functools import total_ordering
 
 class iNotify(MyThread.MyThread):
     # Modified version of MyInotify.py
@@ -44,7 +39,6 @@ class iNotify(MyThread.MyThread):
     def addWatch(self, dirName:str, q:queue.Queue) -> None:
         wd = self.__inotify.add_watch(dirName, self.__flags)
         self.__mapping[wd] = [dirName, q]
-        self.logger.debug("add %s %s %s", wd, dirName, q)
 
     def runIt(self) -> None: # Called on thread start
         inotify = self.__inotify
@@ -75,10 +69,26 @@ class iNotify(MyThread.MyThread):
             except:
                 logger.exception("GotMe")
 
+@total_ordering
+class WriterAction(enum.IntEnum):
+    Pos = 0
+    Records = 1
+    CSV = 2
+    def __lt__(lhs, rhs): return lhs.value < rhs.value
+    def __eq__(lhs, rhs): return lhs.value == rhs.value
+
+class PriorityItem:
+    def __init__(self, action:WriterAction, data:tuple):
+        self.action = action
+        self.data = data
+
+    def __lt__(lhs, rhs): return lhs.action < rhs.action
+    def __eq__(lhs, rhs): return lhs.action == rhs.action
+
 class Writer(MyThread.MyThread):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger) -> None:
         MyThread.MyThread.__init__(self, "Writer", args, logger)
-        self.__queue = queue.Queue()
+        self.__queue = queue.PriorityQueue()
         logger.info("makeing directory %s", os.path.dirname(args.db))
         if os.path.dirname(args.db):
             os.makedirs(os.path.dirname(args.db), mode=0o775, exist_ok=True)
@@ -96,7 +106,14 @@ class Writer(MyThread.MyThread):
                 help="CSV filename")
 
     def put(self, records) -> None:
-        self.__queue.put(("records", records))
+        self.__queue.put(PriorityItem(WriterAction.Records, records))
+
+    def __putCSV(self) -> None:
+        self.__queue.put(PriorityItem(WriterAction.CSV, None))
+
+    def setPos(self, fn:str, pos:int) -> None:
+        self.__queue.put(PriorityItem(WriterAction.Pos, (fn, pos)))
+
 
     def __mkTable(self) -> None:
         sql = "CREATE TABLE IF NOT EXISTS fixes (\n"
@@ -115,6 +132,7 @@ class Writer(MyThread.MyThread):
         sqlPos+= ");\n"
 
         logger.info("Creating table in %s\n%s", self.args.db, sql)
+
         with sqlite3.connect(self.args.db) as db:
             cur = db.cursor()
             cur.execute("BEGIN;")
@@ -123,31 +141,62 @@ class Writer(MyThread.MyThread):
             cur.execute(sqlPos)
             cur.execute("COMMIT;")
 
-    def __writeRecords(self, db:sqlite3.Connection, cur0:sqlite3.Cursor, sqlSelect:str, sqlq:str):
+    def __expelCSV(self):
         fn = self.args.csv
-        cur1 = None
-        fp = None
-        cur0.execute(sqlSelect)
-        for row in cur0:
-            if fp is None: # First row
-                fp = open(fn, "a")
-                cur1 = db.cursor()
-                cur1.execute("BEGIN;")
-            fp.write(",".join(map(str, row)) + "\n")
-            cur1.execute(sqlq, row[0:3])
-        if fp is not None:
-            cur1.execute("COMMIT;")
-            fp.close()
+        qHdr = not os.path.exists(fn)
+        columns = ",".join(("t", "name", "latitude", "longitude"))
+        sql = "SELECT ship," + columns + " FROM fixes"
+        if not qHdr: sql+= " WHERE qCSV=0"
+        sql+= " ORDER by t;"
 
-    def __writePos(self, fn:str, pos:int) -> None:
-        try:
-            with sqlite3.connect(self.args.db) as db:
-                cur = db.cursor()
-                cur.execute("BEGIN;")
-                cur.execute("INSERT OR REPLACE INTO filepos VALUES(?,?);", (fn, pos))
-                cur.execute("COMMIT;")
-        except:
-            self.logger.exception("Unable to save positon, %s, for %s", pos, fn)
+        records = []
+        with sqlite3.connect(self.args.db) as db:
+            cur = db.cursor()
+            cur.execute(sql)
+            for row in cur: 
+                records.append((row[0], row[1], row[2],
+                    str(round(row[3], 6)), str(round(row[4], 6))))
+
+        if not records:
+            self.logger.debug("No CSV records for %s", fn)
+            return
+
+        with open(fn, "w" if qHdr else "a") as fp:
+            if qHdr: fp.write(columns + "\n")
+            for row in records: fp.write(",".join(row[1:]) + "\n")
+
+        with sqlite3.connect(self.args.db) as db:
+            cur = db.cursor()
+            cur.execute("BEGIN;")
+            for row in records:
+                cur.execute("UPDATE fixes SET qCSV=1 WHERE ship=? AND t=? AND name=?;", row[:3])
+            cur.execute("COMMIT;")
+
+        self.logger.info("Wrote %s records to %s", len(records), fn)
+
+    def __writeRows(self, rows:list) -> bool:
+        if not rows: return False
+        with sqlite3.connect(self.args.db) as db:
+            cur = db.cursor()
+            cur.execute("BEGIN;")
+            cur.execute("SELECT MAX(rowid) FROM fixes;")
+            srowid = cur.fetchone()[0]
+            if srowid is None: srowid = 0 # First time
+
+            for row in rows: 
+                cur.execute("INSERT OR IGNORE INTO fixes VALUES(?,?,?,?,?,0);", row)
+            cur.execute("SELECT MAX(rowid) FROM fixes;")
+            nRows = cur.fetchone()[0] - srowid
+            cur.execute("COMMIT;")
+            self.logger.info("Wrote %s rows to %s", nRows, self.args.db)
+        return nRows
+
+    def __savePos(self, fn:str, pos:int) -> None:
+        with sqlite3.connect(self.args.db) as db:
+            cur = db.cursor()
+            cur.execute("BEGIN;")
+            cur.execute("INSERT OR REPLACE INTO filepos VALUES(?,?);", (fn, pos))
+            cur.execute("COMMIT;")
 
     def getPos(self, fn:str) -> int:
         try:
@@ -160,9 +209,6 @@ class Writer(MyThread.MyThread):
         return 0
 
 
-    def setPos(self, fn:str, pos:int) -> None:
-        self.__queue.put(("pos", (fn, pos)))
-
     def runIt(self) -> None:
         logger = self.logger
         args = self.args
@@ -171,42 +217,110 @@ class Writer(MyThread.MyThread):
 
         sqlFiles = "INSERT OR IGNORE INTO fixes VALUES(?,?,?,?,?,0);"
 
-        columns = ",".join(("t", "name", "latitude", "longitude"))
-        sqlCSV0 = "SELECT " + columns + " FROM fixes ORDER BY t,name;"
-        sqlCSV1 = "SELECT " + columns + " FROM fixes WHERE qCSV=0 ORDER BY t,name;"
-        sqlCSV2 = "UPDATE fixes SET qCSV=1 WHERE ship=? AND t=? AND name=?;"
-
-        if not os.path.isfile(args.csv): # File doesn't exist, so create and populate
-            with open(args.csv, "w") as fp:
-                fp.write(columns + "\n")
-            with sqlite3.connect(args.db) as db:
-                cur = db.cursor()
-                self.__writeRecords(db, cur, sqlCSV0, sqlCSV2)
+        self.__putCSV()
 
         while True:
-            (action, rows) = q.get()
+            item = q.get()
             q.task_done()
-            if action == "pos":
-                self.__writePos(rows[0], rows[1])
-                continue
-            with sqlite3.connect(args.db) as db:
-                cur = db.cursor()
-                cur.execute("BEGIN;")
-                # To avoid concurrency issues
-                for row in rows: 
-                    items = [row[0], row[1], row[2]] # ship, name, and time
-                    items.append(round(row[3], 6)) # Truncate latitude to 6 digits
-                    items.append(round(row[4], 6)) # Truncate longitude to 6 digits
-                    cur.execute(sqlFiles, items)
-                cur.execute("COMMIT;")
-                self.__writeRecords(db, cur, sqlCSV1, sqlCSV2)
+            if item.action == WriterAction.Pos:
+                self.__savePos(item.data[0], item.data[1])
+            elif item.action == WriterAction.Records:
+                if self.__writeRows(item.data): self.__putCSV()
+            elif item.action == WriterAction.CSV:
+                self.__expelCSV()
 
-class Pelican(MyThread.MyThread):
-    def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
-            q:Writer, inotify:iNotify) -> None:
-        MyThread.MyThread.__init__(self, "Pelican", args, logger)
+class CommonConsume(MyThread.MyThread):
+    def __init__(self, name:str, args:argparse.ArgumentParser, logger:logging.Logger,
+            q:Writer, inotify:iNotify, dirName, reLine:str, 
+            folderName:str, nBack:int=200) -> None:
+        MyThread.MyThread.__init__(self, name, args, logger)
         self.__queue = q
         self.__iNotify = inotify
+        self.__directories = [dirName] if isinstance(dirName, str) else dirName
+        self.__reLine = re.compile(reLine)
+        self.folderName = folderName
+        self.__nBack = nBack
+        self.vesselName = self.name
+
+    def setVesselName(self, matches:re.Match) -> None:
+        pass
+
+    def __getPos(self, fn:str) -> int:
+        if not os.path.exists(fn):  # Shouldn't happen
+            self.logger.warning("Skipping %s since the file does not exist", fn)
+            return None
+        try:
+            pos = self.__queue.getPos(fn)
+            sz = os.stat(fn).st_size
+            if pos == sz: # File didn't change size
+                self.logger.debug("Skipping %s since the size didn't change", fn)
+                return None
+            if pos > sz: # File was shortened, shouldn't happen
+                self.logger.warning("File shortened, %s %s->%s", fn, pos, sz)
+                return 0 # Reread
+            return max(0, pos - self.__nBack)
+        except:
+            self.logger.exception("Error getting position for %s", fn)
+            return None
+
+    def __fillQueue(self, root:str, qWatch:queue.Queue) -> None:
+        files = []
+        for fn in glob.glob(os.path.join(root, "*")):
+            files.append(fn)
+        if files: qWatch.put((time.time(), files))
+
+    def processRecord(self, line:str) -> None: # Common for Drifter, WW, AIS
+        regexp = self.regexp
+        matches = regexp.match(line)
+        if not matches: return None
+        t = datetime.datetime(
+                int(matches[1]), int(matches[2]), int(matches[3]),
+                int(matches[4]), int(matches[5]), int(matches[6]))
+        name = matches[7]
+        lat = float(matches[8])
+        lon = float(matches[9])
+        # logger.info("name %s t %s lat %s lon %s", name, t, lat, lon)
+        return (self.folderName, name, t, lat, lon)
+
+    def __processFile(self, fn:str, pos:int) -> None:
+        logger.info("Process File %s %s", fn, pos)
+        records = []
+        with open(fn, "r") as fp:
+            fp.seek(pos)
+            for line in fp:
+                row = self.processRecord(line)
+                if row: records.append(row)
+            self.__queue.setPos(fn, fp.tell())
+        self.__queue.put(records)
+        self.logger.info("Read %s records from %s pos %s", len(records), fn, pos)
+
+    def runIt(self) -> None: # Called on thread start
+        logger = self.logger
+        qWatch = queue.Queue()
+        reLine = self.__reLine
+        logger.info("Starting %s %s", self.__directories, self.__nBack)
+        for name in self.__directories:
+            self.__iNotify.addWatch(name, qWatch)
+            self.__fillQueue(name, qWatch)
+
+        while True:
+            (t, files) = qWatch.get()
+            qWatch.task_done()
+            for filename in files:
+                matches = reLine.match(os.path.basename(filename))
+                if not matches:
+                    logger.debug("Skipping %s", filename)
+                    continue
+                self.setVesselName(matches)
+                pos = self.__getPos(filename)
+                if pos is None: continue
+                self.__processFile(filename, pos)
+
+class Pelican(CommonConsume):
+    def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
+            q:Writer, inotify:iNotify) -> None:
+        CommonConsume.__init__(self, "Pelican", args, logger, q, inotify,
+                args.pelican, r"MIDAS_\d+.elg$", "Ships")
         self.__regexp = re.compile(r"(\d{2})/(\d{2})/(\d{4}),(\d{2}):(\d{2}):(00)," \
                 + "(\d{4}[.]\d+)([NS]),(\d{5}[.]\d+)([EW]),")
 
@@ -225,55 +339,25 @@ class Pelican(MyThread.MyThread):
         if direction in ["W", "S", "w", "s"]: degrees *= -1
         return degrees
 
-    def __processFile(self, fn:str) -> None:
-        pos = max(0, self.__queue.getPos(fn) - 200)
-        regexp = self.__regexp
-        try:
-            with open(fn, "r") as fp:
-                fp.seek(pos) # Start reading from this position
-                records = []
-                for line in fp:
-                    matches = regexp.match(line)
-                    if not matches: continue
-                    month = int(matches[1])
-                    dom = int(matches[2])
-                    year = int(matches[3])
-                    hour = int(matches[4])
-                    minute = int(matches[5])
-                    seconds = int(matches[6])
-                    t = datetime.datetime(year, month, dom, hour, minute, seconds)
-                    lat = self.__mkDeg(matches[7], matches[8])
-                    lon = self.__mkDeg(matches[9], matches[10])
-                    logger.info("ts %s lat %s lon %s", t, lat, lon)
-                    records.append(("Ships", self.name, t, lat, lon))
-                self.__queue.setPos(fn, fp.tell())
-                if records: 
-                    logger.info("Put %s records", len(records))
-                    self.__queue.put(records)
-        except:
-            self.logger.exception("Error processing %s", fn)
+    def processRecord(self, line:str) -> tuple:
+        matches = self.__regexp.match(line)
+        if not matches: return None
+        month = int(matches[1])
+        dom = int(matches[2])
+        year = int(matches[3])
+        hour = int(matches[4])
+        minute = int(matches[5])
+        seconds = int(matches[6])
+        t = datetime.datetime(year, month, dom, hour, minute, seconds)
+        lat = self.__mkDeg(matches[7], matches[8])
+        lon = self.__mkDeg(matches[9], matches[10])
+        return (self.folderName, self.vesselName, t, lat, lon)
 
-    def runIt(self) -> None:
-        logger = self.logger
-        qWatch = queue.Queue()
-        self.__iNotify.addWatch(self.args.pelican, qWatch)
-        logger.info("Starting")
-        fillQueue(qWatch, self.args.pelican, logger)
-        while True:
-            (t, files) = qWatch.get()
-            qWatch.task_done()
-            for filename in files:
-                fn = os.path.basename(filename)
-                logger.info("fn %s", fn)
-                if re.match("MIDAS_\d+.elg", fn):
-                    self.__processFile(filename)
-
-class WaltonSmith(MyThread.MyThread):
+class WaltonSmith(CommonConsume):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
             q:Writer, inotify:iNotify) -> None:
-        MyThread.MyThread.__init__(self, "WS", args, logger)
-        self.__queue = q
-        self.__iNotify = inotify
+        CommonConsume.__init__(self, "WS", args, logger, q, inotify,
+                args.waltonsmith, r"WS21163_Hetland-Full Vdl.dat$", "Ships")
         self.__regexp = {
                  0: (re.compile(r"^\s*(\d{2})\s*(\w+)\s*$"), ("dom", "month")),
                  1: (re.compile(r"^\s*(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s*$"),
@@ -295,66 +379,37 @@ class WaltonSmith(MyThread.MyThread):
         if direction in ("S", "W", "s", "w"): deg *= -1
         return deg
 
-    def __processFile(self, fn:str) -> None:
-        pos = max(0, self.__queue.getPos(fn) - 200) # Position to start reading from
+    def processRecord(self, line:str) -> tuple:
         regexp = self.__regexp
-        try:
-            with open(fn, "r") as fp:
-                fp.seek(pos) # Start reading from this position
-                records = []
-                for line in fp:
-                    fields = line.split("\t")
-                    if len(fields) != 65: continue # Not a data record
-                    info = {}
-                    qFail = False
-                    for index in regexp:
-                        (reLine, keys) = regexp[index]
-                        matches = reLine.match(fields[index])
-                        if matches is None:
-                            qFail = True
-                            break
-                        for j in range(len(keys)):
-                            info[keys[j]] = matches[j+1]
-                    if qFail: 
-                        logger.info("Skipping %s", line)
-                        continue # Skip this line
-                    timestring = " ".join((info["year"], info["month"], info["dom"],
-                        info["hour"], info["minute"], info["seconds"]))
-                    t = datetime.datetime.strptime(timestring, "%Y %B %d %H %M %S")
-                    lat = self.__mkDeg(info["latDeg"], info["latMin"], info["latDir"])
-                    lon = self.__mkDeg(info["lonDeg"], info["lonMin"], info["lonDir"])
-                    logger.info("t %s lat %s lon %s", t, lat, lon)
-                    records.append(("Ships", self.name, t, lat, lon))
-                self.__queue.setPos(fn, fp.tell())
-                if records:
-                    logger.info("Put %s records", len(records))
-                    self.__queue.put(records)
-        except:
-            self.logger.exception("Error processing %s", fn)
+        fields = line.split("\t")
+        if len(fields) != 65: return None # Not a data record
+        info = {}
+        qFail = False
+        for index in regexp:
+            (reLine, keys) = regexp[index]
+            matches = reLine.match(fields[index])
+            if matches is None:
+                qFail = True
+                break
+            for j in range(len(keys)):
+                info[keys[j]] = matches[j+1]
+        if qFail:
+            logger.info("Skipping %s", line)
+            return None # Skip this line
+        timestring = " ".join((
+            info["year"], info["month"], info["dom"],
+            info["hour"], info["minute"], info["seconds"]))
+        t = datetime.datetime.strptime(timestring, "%Y %B %d %H %M %S")
+        lat = self.__mkDeg(info["latDeg"], info["latMin"], info["latDir"])
+        lon = self.__mkDeg(info["lonDeg"], info["lonMin"], info["lonDir"])
+        return ("Ships", self.name, t, lat, lon)
 
-    def runIt(self) -> None:
-        logger = self.logger
-        qWatch = queue.Queue()
-        self.__iNotify.addWatch(self.args.waltonsmith, qWatch)
-        logger.info("Starting")
-        fillQueue(qWatch, self.args.waltonsmith, logger)
-        while True:
-            (t, files) = qWatch.get()
-            logger.info("files %s", files)
-            qWatch.task_done()
-            for filename in files:
-                fn = os.path.basename(filename)
-                logger.info("fn %s", fn)
-                if re.match("WS21163_Hetland-Full Vdl.dat", fn):
-                    self.__processFile(filename)
-
-class Drifter(MyThread.MyThread):
+class Drifter(CommonConsume):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
             q:Writer, inotify:iNotify) -> None:
-        MyThread.MyThread.__init__(self, "Drifter", args, logger)
-        self.__queue = q
-        self.__iNotify = inotify
-        self.__regexp = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[.]\d+," \
+        CommonConsume.__init__(self, "Drifter", args, logger, q, inotify,
+                args.drifter, r"(carthe|LiveViewGPS).csv$", "Drifter")
+        self.regexp = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[.]\d+," \
                 + r"(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})," \
                 + r"(\d+-\d+)," \
                 + r"([+-]?\d+[.]\d+)," \
@@ -366,55 +421,12 @@ class Drifter(MyThread.MyThread):
         grp.add_argument("--drifter", type=str, default="/home/pat/Dropbox/Shore/Drifter",
                 help="Where the drifter files are")
 
-    def __processFile(self, fn:str) -> None:
-        pos = max(0, self.__queue.getPos(fn) - 200) # Position to start reading from
-        regexp = self.__regexp
-        try:
-            with open(fn, "r") as fp:
-                fp.seek(pos) # Start reading from this position
-                records = []
-                for line in fp:
-                    matches = regexp.match(line)
-                    if not matches: continue
-                    t = datetime.datetime(
-                            int(matches[1]), int(matches[2]), int(matches[3]),
-                            int(matches[4]), int(matches[5]), int(matches[6]))
-                    name = matches[7]
-                    lat = float(matches[8])
-                    lon = float(matches[9])
-                    logger.info("name %s t %s lat %s lon %s", name, t, lat, lon)
-                    records.append(("Drifters", name, t, lat, lon))
-                self.__queue.setPos(fn, fp.tell())
-                if records:
-                    logger.info("Put %s records", len(records))
-                    self.__queue.put(records)
-        except:
-            self.logger.exception("Error processing %s", fn)
-
-    def runIt(self) -> None:
-        logger = self.logger
-        qWatch = queue.Queue()
-        self.__iNotify.addWatch(self.args.drifter, qWatch)
-        logger.info("Starting %s", self.args.drifter)
-        fillQueue(qWatch, self.args.drifter, logger)
-        while True:
-            (t, files) = qWatch.get()
-            qWatch.task_done()
-            for filename in files:
-                fn = os.path.basename(filename)
-                if fn not in ("carthe.csv", "LiveViewGPS.csv"):
-                    logger.info("skipping %s", filename)
-                    continue
-                logger.info("fn %s", filename)
-                self.__processFile(filename)
-
-class WireWalker(MyThread.MyThread):
+class WireWalker(CommonConsume):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
             q:Writer, inotify:iNotify) -> None:
-        MyThread.MyThread.__init__(self, "WW", args, logger)
-        self.__queue = q
-        self.__iNotify = inotify
-        self.__regexp = re.compile( \
+        CommonConsume.__init__(self, "WW", args, logger, q, inotify,
+                args.wirewalker, r"wirewalker.csv$", "WireWalker")
+        self.regexp = re.compile( \
                 r"(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})," + \
                 r"([A-Za-z0-9 ]+)," + \
                 r"([+-]?\d+[.]\d+)," + \
@@ -426,55 +438,17 @@ class WireWalker(MyThread.MyThread):
         grp.add_argument("--wirewalker", type=str, default="/home/pat/Dropbox/Shore/WireWalker",
                 help="Where the wire walker files are")
 
-    def __processFile(self, fn:str) -> None:
-        pos = max(0, self.__queue.getPos(fn) - 200) # Position to start reading from
-        self.logger.info("fn %s pos %s", fn, pos)
-        regexp = self.__regexp
-        try:
-            with open(fn, "r") as fp:
-                fp.seek(pos) # Start reading from this position
-                records = []
-                for line in fp:
-                    matches = regexp.match(line)
-                    self.logger.info("line %s matches %s", line, matches)
-                    if not matches: continue
-                    t = datetime.datetime(
-                            int(matches[1]), int(matches[2]), int(matches[3]),
-                            int(matches[4]), int(matches[5]), int(matches[6]))
-                    name = matches[7]
-                    lat = float(matches[8])
-                    lon = float(matches[9])
-                    records.append(("WireWalker", name, t, lat, lon))
-                self.__queue.setPos(fn, fp.tell())
-                if records:
-                    logger.info("Put %s records", len(records))
-                    self.__queue.put(records)
-        except:
-            self.logger.exception("Error processing %s", fn)
-
-    def runIt(self) -> None:
-        logger = self.logger
-        qWatch = queue.Queue()
-        self.__iNotify.addWatch(self.args.wirewalker, qWatch)
-        logger.info("Starting %s", self.args.wirewalker)
-        fillQueue(qWatch, self.args.wirewalker, logger)
-        while True:
-            (t, files) = qWatch.get()
-            qWatch.task_done()
-            for filename in files:
-                fn = os.path.basename(filename)
-                if fn != "wirewalker.csv":
-                    logger.info("skipping %s", filename)
-                    continue
-                self.__processFile(filename)
-
-class AIS(MyThread.MyThread):
+class AIS(CommonConsume):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
             q:Writer, inotify:iNotify) -> None:
-        MyThread.MyThread.__init__(self, "AIS", args, logger)
-        self.__queue = q
-        self.__iNotify = inotify
-        self.__regexp = re.compile(r"^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})," \
+        if args.ais is None:
+            args.ais = [
+                    "/home/pat/Dropbox/Pelican/AIS",
+                    "/home/pat/Dropbox/WaltonSmith/AIS",
+                    ];
+        CommonConsume.__init__(self, "AIS", args, logger, q, inotify,
+                args.ais, r"ais.csv$", "AIS")
+        self.regexp = re.compile(r"^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})," \
                 + r"(\d+)," \
                 + r"([+-]?\d+[.]\d+)," \
                 + r"([+-]?\d+[.]\d+)")
@@ -485,126 +459,43 @@ class AIS(MyThread.MyThread):
         grp.add_argument("--ais", type=str, action='append',
                 help="Where the AIS files are")
 
-    def __processFile(self, fn:str) -> None:
-        pos = max(0, self.__queue.getPos(fn) - 200) # Position to start reading from
-        regexp = self.__regexp
-        try:
-            with open(fn, "r") as fp:
-                fp.seek(pos) # Start reading from this position
-                records = []
-                for line in fp:
-                    matches = regexp.match(line)
-                    if not matches: continue
-                    t = datetime.datetime(
-                            int(matches[1]), int(matches[2]), int(matches[3]),
-                            int(matches[4]), int(matches[5]), int(matches[6]))
-                    name = matches[7]
-                    lon = float(matches[8])
-                    lat = float(matches[9])
-                    logger.info("name %s t %s lat %s lon %s", name, t, lat, lon)
-                    records.append(("AIS", name, t, lat, lon))
-                self.__queue.setPos(fn, fp.tell())
-                if records:
-                    logger.info("Put %s records", len(records))
-                    self.__queue.put(records)
-        except:
-            self.logger.exception("Error processing %s", fn)
-
-    def runIt(self) -> None:
-        logger = self.logger
-        qWatch = queue.Queue()
-        if self.args.ais is None:
-            self.args.ais = [
-                    "/home/pat/Dropbox/Pelican/AIS",
-                    "/home/pat/Dropbox/WaltonSmith/AIS",
-                    ];
-
-        logger.info("Starting %s", self.args.ais)
-        for name in args.ais:
-            self.__iNotify.addWatch(name, qWatch)
-            fillQueue(qWatch, name, logger)
-
-        while True:
-            (t, files) = qWatch.get()
-            qWatch.task_done()
-            for filename in files:
-                fn = os.path.basename(filename)
-                if fn != "ais.csv":
-                    logger.info("skipping %s", filename)
-                    continue
-                logger.info("fn %s", filename)
-                self.__processFile(filename)
-
-class ASV(MyThread.MyThread):
+class ASV(CommonConsume):
     def __init__(self, args:argparse.ArgumentParser, logger:logging.Logger,
             q:Writer, inotify:iNotify) -> None:
-        MyThread.MyThread.__init__(self, "ASV", args, logger)
-        self.__queue = q
-        self.__iNotify = inotify
-        self.__regexp = re.compile(r"^\d{2}-\w+-\d{4} \d{2}:\d{2}:\d{2} " \
-                + r"UBOX\d{2} -- navinfo -- " \
-                + r"(\d{4})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2}) UTC -- " \
-                + r"LAT ([+-]?\d+[.]\d*) " \
-                + r"LON ([+-]?\d+[.]\d*) " \
-                + r"HD1")
-        self.__reName = re.compile(r"RHIB_status_(GS\d_UBOX\d{2})_(\w+)_\d{8}_\d{6}.txt")
+        CommonConsume.__init__(self, "ASV", args, logger, q, inotify,
+                args.asv, r"(\w+).nav.csv$", "ASVs")
+        self.__regexp = re.compile( \
+                r"\s*(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\s*," + \
+                r"\s*([+-]?\d+[.]?\d*)\s*," + \
+                r"\s*([+-]?\d+[.]?\d*)\s*$")
+        self.__seen = {}
 
     @staticmethod
     def addArgs(parser:argparse.ArgumentParser) -> None:
         grp = parser.add_argument_group()
-        grp.add_argument("--asv", type=str, default="/home/pat/Dropbox/WaltonSmith/ASV",
+        grp.add_argument("--asv", type=str, default="/home/pat/Processed/ASV",
                 help="Where the ASV files are")
         grp.add_argument("--asvdt", type=float, default=60,
                 help="Time spacing between samples to record")
 
-    def __processFile(self, fn:str, name:str) -> None:
-        pos = max(0, self.__queue.getPos(fn) - 200) # Position to start reading from
-        regexp = self.__regexp
-        dtMin = self.args.asvdt
-        try:
-            with open(fn, "r") as fp:
-                fp.seek(pos) # Start reading from this position
-                records = []
-                tPrev = None
-                for line in fp:
-                    matches = regexp.match(line)
-                    if not matches: continue
-                    t = datetime.datetime(
-                            int(matches[1]), int(matches[2]), int(matches[3]),
-                            int(matches[4]), int(matches[5]), int(matches[6]))
-                    lat = float(matches[7])
-                    lon = float(matches[8])
-                    if tPrev is not None:
-                        dt = (t - tPrev).seconds
-                        if dt < dtMin: continue # Skip adding since the same time
-                    tPrev = t if tPrev is None else max(tPrev, t) # Don't let it go backwards
-                    logger.info("name %s t %s lat %s lon %s", name, t, lat, lon)
-                    records.append(("ASVs", name, t, lat, lon))
-                self.__queue.setPos(fn, fp.tell())
-                if records:
-                    logger.info("Put %s records", len(records))
-                    self.__queue.put(records)
-        except:
-            self.logger.exception("Error processing %s", fn)
+    def setVesselName(self, matches:re.Match) -> None:
+        self.vesselName = matches[1]
 
-    def runIt(self) -> None:
-        logger = self.logger
-        qWatch = queue.Queue()
-        self.__iNotify.addWatch(self.args.asv, qWatch)
-        logger.info("Starting %s", self.args.asv)
-        fillQueue(qWatch, self.args.asv, logger)
-        reName = self.__reName
-        while True:
-            (t, files) = qWatch.get()
-            qWatch.task_done()
-            for filename in files:
-                fn = os.path.basename(filename)
-                matches = reName.match(fn)
-                if not matches:
-                    logger.info("skipping %s", filename)
-                    continue
-                logger.info("fn %s %s %s", filename, matches[1], matches[2])
-                self.__processFile(filename, matches[2])
+    def processRecord(self, line:str) -> None:
+        matches = self.__regexp.match(line)
+        if not matches: return None
+        key = self.vesselName
+        t = datetime.datetime(
+                int(matches[1]), int(matches[2]), int(matches[3]),
+                int(matches[4]), int(matches[5]), int(matches[6]))
+
+        if (key in self.__seen) and ((t - self.__seen[key]).seconds < self.args.asvdt):
+            return None
+        self.__seen[key] = t
+
+        lat = float(matches[7])
+        lon = float(matches[8])
+        return (self.folderName, key, t, lat, lon)
 
 parser = argparse.ArgumentParser()
 MyLogger.addArgs(parser)

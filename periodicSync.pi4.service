@@ -1,0 +1,31 @@
+#
+# push/pull changes in the Dropbox/CruiseReport to/from vm3
+#
+# sudo cp periodicSync.pi4.service /etc/systemd/system/periodicSync.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable periodicSync.service
+# sudo systemctl start periodicSync.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Rsync Cruise Report to/from the pi4
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+ExecStart=/home/pat/SUNRISE/periodicSync.py \
+        --logfile=/home/pat/logs/periodicSync.log \
+	--bwPush=100 \
+	--bwPull=250 \
+	--pushdir=pi4
+        
+RestartSec=600
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

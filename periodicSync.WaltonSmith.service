@@ -1,0 +1,31 @@
+#
+# push/pull changes in the Dropbox/CruiseReport to/from vm3
+#
+# sudo cp periodicSync.WaltonSmith.service /etc/systemd/system/periodicSync.service
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable periodicSync.service
+# sudo systemctl start periodicSync.service
+#
+# Apr-2021, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Rsync Cruise Report to/from the WaltonSmith
+
+[Service]
+# Type=simple # Default
+User=pat
+WorkingDirectory=/home/pat
+#
+ExecStart=/home/pat/SUNRISE/periodicSync.py \
+        --logfile=/home/pat/logs/periodicSync.log \
+	--bwPush=50 \
+	--bwPull=100 \
+	--pushdir=WaltonSmith
+        
+RestartSec=600
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
