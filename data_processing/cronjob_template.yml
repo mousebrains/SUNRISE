@@ -32,12 +32,12 @@ plots:
 limits:
 - sal_lims:
     lower: true
-    lowerLim: "31"
+    lowerLim: "24"
     upper: false
     upperLim: "36"
 - temp_lims:
     lower: true
-    lowerLim: "28"
+    lowerLim: "27.5"
     upper: false
     upperLim: "33"
 - density_lims:
